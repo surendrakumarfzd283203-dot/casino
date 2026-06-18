@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <h1>SOLO CASINO</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="login.html" class="active">Login</a>
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
+
+    <div class="container" style="max-width: 500px;">
+        <div class="form-box animate">
+            <h2>Welcome Back</h2>
+            <p style="text-align: center; color: var(--text-dim); margin-bottom: 30px;">Login to your account to continue playing</p>
+
+            <div style="position: relative;">
+                <i class="fas fa-envelope" style="position: absolute; left: 15px; top: 15px; color: var(--text-dim); font-size: 14px;"></i>
+                <input type="email" id="email" placeholder="Email Address" style="padding-left: 45px;">
+            </div>
+
+            <div style="position: relative;">
+                <i class="fas fa-lock" style="position: absolute; left: 15px; top: 15px; color: var(--text-dim); font-size: 14px;"></i>
+                <input type="password" id="password" placeholder="Password" style="padding-left: 45px;">
+            </div>
+
+            <button onclick="login()" class="button-primary" style="width: 100%; padding: 15px; font-size: 16px; margin-top: 10px;" id="loginBtn">
+                Login to Account
+            </button>
+
+            <p style="text-align: center; margin-top: 25px; color: var(--text-dim); font-size: 14px;">
+                New User? <a href="register.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Create Account</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : `http://${window.location.hostname}:5000`;
+
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const btn = document.getElementById("loginBtn");
+
+            if (!email || !password) {
+                return alert("Please fill all fields");
+            }
+
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            try {
+                const data = { email, password };
+                const res = await fetch(`${API_URL}/api/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    localStorage.setItem("token", result.token);
+                    location.href = "dashboard.html";
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Server Error. Please try again later.");
+            } finally {
+                btn.innerText = "Login to Account";
+                btn.disabled = false;
+            }
+        }
+    </script>
+
+</body>
+</html>

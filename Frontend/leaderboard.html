@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Leaderboard</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="form-box">
+
+<h2>Leaderboard</h2>
+
+<ul id="list"></ul>
+
+</div>
+
+<script>
+
+fetch(
+"http://localhost:5000/api/leaderboard"
+)
+.then(res=>res.json())
+.then(data=>{
+
+let html="";
+
+data.forEach(user=>{
+
+html +=
+`<li>${user.name}
+ - ${user.coins}</li>`;
+
+});
+
+document.getElementById("list")
+.innerHTML = html;
+
+});
+
+</script>
+
+</body>
+</html>
+<div class="form-box">
+
+<h2>Top Players</h2>
+
+<table border="1" width="100%">
+<thead>
+<tr>
+<th>Rank</th>
+<th>Name</th>
+<th>Coins</th>
+</tr>
+</thead>
+
+<tbody id="board"></tbody>
+
+</table>
+
+</div>
+
+<script>
+
+fetch("http://localhost:5000/api/leaderboard")
+.then(res=>res.json())
+.then(data=>{
+
+let html="";
+
+data.forEach((user,index)=>{
+
+html += `
+<tr>
+<td>${index+1}</td>
+<td>${user.name}</td>
+<td>${user.coins}</td>
+</tr>
+`;
+
+});
+
+document.getElementById("board").innerHTML = html;
+
+});
+
+</script>

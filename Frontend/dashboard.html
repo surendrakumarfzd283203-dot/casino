@@ -1,0 +1,156 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1>SOLO CASINO</h1>
+        <nav>
+            <a href="dashboard.html" class="active"><i class="fas fa-home"></i> Home</a>
+            <a href="wallet.html"><i class="fas fa-wallet"></i> Wallet</a>
+            <a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a>
+            <a href="profile.html"><i class="fas fa-user-circle"></i> Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="animate" style="margin-bottom: 40px;">
+            <h2 style="text-align: left; margin-bottom: 5px;">Welcome back, <span id="userName" style="color: var(--primary);">Player</span>!</h2>
+            <p style="color: var(--text-dim);">Select a game and start winning coins today.</p>
+        </div>
+
+        <div class="wallet-grid animate" style="margin-bottom: 40px;">
+            <div class="balance-card">
+                <h3>Current Balance</h3>
+                <div class="amount" id="coins">0.00</div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <a href="wallet.html" class="button-secondary" style="background: rgba(0,0,0,0.2); color: #fff; border: none; text-decoration: none; padding: 10px 20px; border-radius: 10px;">Deposit</a>
+                    <a href="wallet.html" class="button-secondary" style="background: rgba(255,255,255,0.9); color: #000; border: none; text-decoration: none; padding: 10px 20px; border-radius: 10px;">Withdraw</a>
+                </div>
+            </div>
+
+            <div class="card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-around; padding: 20px;">
+                <div style="text-align: left;">
+                    <h3 style="margin: 0;">Daily Bonus</h3>
+                    <p style="margin: 5px 0 0 0;">Claim your free 120 coins</p>
+                </div>
+                <button onclick="claimBonus()" class="button-primary" id="bonusBtn">Claim Now</button>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 20px;">Popular Games</h3>
+        <div class="games-grid">
+            <div class="card animate" onclick="location.href='aviator.html'">
+                <i class="fas fa-plane-departure" style="color: #ff3d00;"></i>
+                <h3>Aviator</h3>
+                <p>High risk, high reward. Cash out before the plane crashes!</p>
+                <span class="button-primary">Play Now</span>
+            </div>
+
+            <div class="card animate" onclick="location.href='teenpatti.html'" style="animation-delay: 0.1s;">
+                <div style="font-size: 40px; margin-bottom: 10px;">🃏</div>
+                <h3>Teen Patti</h3>
+                <p>Classic 3-card poker. Beat the dealer with your best hand.</p>
+                <span class="button-primary">Play Now</span>
+            </div>
+
+            <div class="card animate" onclick="location.href='bigsmall.html'" style="animation-delay: 0.2s;">
+                <i class="fas fa-dice" style="color: #2196f3;"></i>
+                <h3>Big Small</h3>
+                <p>Predict the sum of three dice. Simple and fast paced.</p>
+                <span class="button-primary">Play Now</span>
+            </div>
+
+            <div class="card animate" style="animation-delay: 0.3s; opacity: 0.6; cursor: default;">
+                <div style="font-size: 40px; margin-bottom: 10px;">🎰</div>
+                <h3>Slots</h3>
+                <p>Coming Soon! New machines arriving every week.</p>
+                <span class="button-secondary">Locked</span>
+            </div>
+        </div>
+
+        <div class="card animate" style="margin-top: 40px; text-align: left; background: rgba(244, 67, 54, 0.05); border-color: rgba(244, 67, 54, 0.2);">
+            <h4 style="color: var(--accent-red); margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> Responsible Gaming Warning</h4>
+            <p style="font-size: 13px; color: var(--text-dim);">
+                Casino games involve financial risk. Please play responsibly. This is a simulation game for entertainment purposes.
+                Users must be 18+ to participate. Any real money transactions are at the user's own risk.
+                Always deposit only what you can afford to lose.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : `http://${window.location.hostname}:5000`;
+
+        const token = localStorage.getItem("token");
+        if(!token){ location.href = "login.html"; }
+
+        async function fetchProfile() {
+            try {
+                console.log("Fetching profile...");
+                const res = await fetch(`${API_URL}/api/profile`, {
+                    headers: { "authorization": token }
+                });
+
+                if (res.status === 401) {
+                    console.log("Unauthorized, redirecting to login");
+                    localStorage.removeItem("token");
+                    return location.href = "login.html";
+                }
+
+                const data = await res.json();
+                if (!data.success) {
+                    console.log("Data success false:", data.message);
+                    localStorage.removeItem("token");
+                    return location.href = "login.html";
+                }
+                document.getElementById("userName").innerText = data.user.name;
+                document.getElementById("coins").innerText = data.user.coins.toLocaleString();
+            } catch (err) {
+                console.error("Fetch profile error:", err);
+            }
+        }
+
+        async function claimBonus() {
+            const btn = document.getElementById("bonusBtn");
+            btn.innerText = "Claiming...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/api/daily-bonus`, {
+                    method: "POST",
+                    headers: { authorization: token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message || "Bonus Claimed!");
+                    fetchProfile();
+                } else {
+                    alert(data.message || "Already claimed today");
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                btn.innerText = "Claim Now";
+                btn.disabled = false;
+            }
+        }
+
+        fetchProfile();
+
+        function logout(){
+            localStorage.removeItem("token");
+            location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

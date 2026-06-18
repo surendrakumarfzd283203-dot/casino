@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Avatar | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .preview-container {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 152, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #1e1e1e;
+        }
+        .preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        .preview-container .placeholder {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+        }
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #avatar {
+            display: none;
+        }
+        .custom-file-upload {
+            border: 1px solid #ff9800;
+            display: inline-block;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 12px;
+            text-align: center;
+            background: transparent;
+            color: #ff9800;
+            transition: all 0.3s ease;
+        }
+        .custom-file-upload:hover {
+            background: #ff9800;
+            color: #111;
+        }
+        .status-msg {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Solo Casino</h1>
+        <nav>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="profile.html">Profile</a>
+            <a href="login.html" onclick="logout()">Logout</a>
+        </nav>
+    </header>
+
+    <div class="form-box" style="max-width: 500px;">
+        <h2>Change Avatar</h2>
+
+        <div class="preview-container" id="previewContainer">
+            <span class="placeholder">Select an Image</span>
+            <img id="avatarPreview" src="" alt="Avatar Preview">
+        </div>
+
+        <form id="avatarForm" class="upload-form">
+            <label for="avatar" class="custom-file-upload">
+                Choose Image
+            </label>
+            <input type="file" id="avatar" accept="image/*" required>
+
+            <button type="submit" class="button-primary" id="uploadBtn">
+                Upload Now
+            </button>
+            <div id="status" class="status-msg"></div>
+        </form>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) { location.href = "login.html"; }
+
+        const avatarInput = document.getElementById("avatar");
+        const avatarPreview = document.getElementById("avatarPreview");
+        const placeholder = document.querySelector(".placeholder");
+        const statusDiv = document.getElementById("status");
+
+        avatarInput.addEventListener("change", function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.src = e.target.result;
+                    avatarPreview.style.display = "block";
+                    placeholder.style.display = "none";
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById("avatarForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const file = avatarInput.files[0];
+            if (!file) {
+                statusDiv.innerText = "Please select a file";
+                statusDiv.style.color = "red";
+                return;
+            }
+
+            const uploadBtn = document.getElementById("uploadBtn");
+            uploadBtn.innerText = "Uploading...";
+            uploadBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append("avatar", file);
+
+            try {
+                const res = await fetch("http://localhost:5000/api/upload-avatar", {
+                    method: "POST",
+                    headers: {
+                        authorization: token
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    statusDiv.innerText = "Avatar Uploaded Successfully!";
+                    statusDiv.style.color = "#4caf50";
+                    setTimeout(() => {
+                        location.href = "profile.html";
+                    }, 1500);
+                } else {
+                    statusDiv.innerText = "Upload failed. Try again.";
+                    statusDiv.style.color = "red";
+                    uploadBtn.innerText = "Upload Now";
+                    uploadBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                statusDiv.innerText = "Server error. Try again later.";
+                statusDiv.style.color = "red";
+                uploadBtn.innerText = "Upload Now";
+                uploadBtn.disabled = false;
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem("token");
+            location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>User Search</title>
+<link rel="stylesheet" href="../Frontend/css/style.css">
+</head>
+<body>
+<div class="form-box">
+<h2>User Search</h2>
+<input type="text" id="keyword" placeholder="Name or Email">
+<button onclick="searchUser()">Search</button>
+</div>
+<div id="result"></div>
+<script>
+async function searchUser(){
+    const keyword = document.getElementById("keyword").value;
+    const res = await fetch("http://localhost:5000/api/admin/search-user/" + encodeURIComponent(keyword), {
+        headers: { authorization: localStorage.getItem("adminToken") }
+    });
+    const data = await res.json();
+    let html = "";
+    data.forEach(user => {
+        html += `
+        <div class="card">
+            <h3>${user.name}</h3>
+            <p>${user.email}</p>
+            <p>${user.coins} Coins</p>
+        </div>`;
+    });
+    document.getElementById("result").innerHTML = html;
+}
+</script>
+</body>
+</html>

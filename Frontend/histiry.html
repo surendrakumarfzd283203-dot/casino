@@ -1,0 +1,39 @@
+<div id="history"></div>
+
+<script>
+
+const token =
+localStorage.getItem("token");
+
+fetch(
+"http://localhost:5000/api/game-history",
+{
+headers:{
+authorization:token
+}
+}
+)
+.then(res=>res.json())
+.then(data=>{
+
+let html="";
+
+data.forEach(item=>{
+
+html += `
+<div class="card">
+<h3>${item.game_name}</h3>
+<p>${item.result}</p>
+<p>${item.coins}</p>
+</div>
+`;
+
+});
+
+document
+.getElementById("history")
+.innerHTML = html;
+
+});
+
+</script>

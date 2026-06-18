@@ -1,0 +1,27 @@
+<div id="users"></div>
+
+<script>
+
+fetch("http://localhost:5000/api/admin/users")
+.then(res=>res.json())
+.then(data=>{
+
+let html = "";
+
+data.forEach(user=>{
+
+html += `
+<div>
+    ${user.name}
+    (${user.email})
+    - ${user.coins} Coins
+</div>
+`;
+
+});
+
+document.getElementById("users").innerHTML = html;
+
+});
+
+</script>

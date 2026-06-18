@@ -1,0 +1,241 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .wallet-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .action-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .action-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .qr-preview {
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            width: 180px;
+            height: 180px;
+            margin: 10px auto;
+        }
+        .qr-preview img { width: 100%; height: 100%; }
+
+        .txn-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid transparent;
+        }
+        .txn-item.pending { border-left-color: var(--primary); }
+        .txn-item.approved { border-left-color: var(--accent-green); }
+        .txn-item.rejected { border-left-color: var(--accent-red); }
+
+        .txn-info h4 { font-size: 14px; margin-bottom: 4px; }
+        .txn-info small { color: var(--text-dim); font-size: 11px; }
+        .txn-amount { font-weight: 700; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SOLO WALLET</h1>
+        <nav>
+            <a href="dashboard.html"><i class="fas fa-home"></i> Home</a>
+            <a href="wallet.html" class="active"><i class="fas fa-wallet"></i> Wallet</a>
+            <a href="profile.html"><i class="fas fa-user-circle"></i> Profile</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="balance-card animate" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div>
+                <h3>Total Balance</h3>
+                <div class="amount" id="mainBalance">0.00 INR</div>
+            </div>
+            <i class="fas fa-wallet" style="font-size: 50px; opacity: 0.3;"></i>
+        </div>
+
+        <div class="wallet-container animate" style="animation-delay: 0.1s;">
+            <!-- Deposit -->
+            <div class="action-card">
+                <h3><i class="fas fa-plus-circle" style="color: var(--accent-green);"></i> Add Funds</h3>
+                <p style="color: var(--text-dim); font-size: 13px;">First add coins to your wallet to start playing games.</p>
+
+                <label>Amount (INR)</label>
+                <input type="number" id="depositAmount" value="500" min="100" oninput="updateQR()">
+
+                <label>Payment Mode</label>
+                <select id="payMode" onchange="updateQR()">
+                    <option value="upi">Direct UPI (Mobile Only)</option>
+                    <option value="qr">Scan QR Code</option>
+                </select>
+
+                <div id="qrArea" style="display: none; text-align: center;">
+                    <div class="qr-preview">
+                        <img id="qrImg" src="" alt="QR">
+                    </div>
+                    <p style="font-size: 12px; margin-top: 5px;">Scan and Pay, then enter Reference ID below</p>
+                </div>
+
+                <div id="upiArea">
+                    <p style="font-size: 12px; color: var(--primary);">Admin UPI: <span id="adminUpi">954870514001@ybl</span></p>
+                    <button class="button-secondary" onclick="openUpi()" style="width: 100%; margin-top: 5px;"><i class="fas fa-mobile-alt"></i> Open UPI App</button>
+                </div>
+
+                <label style="margin-top: 10px;">UTR / Transaction ID</label>
+                <input type="text" id="utr" placeholder="12-digit Reference Number">
+
+                <button class="button-primary" onclick="submitDeposit()">Submit Deposit Request</button>
+            </div>
+
+            <!-- Withdraw -->
+            <div class="action-card">
+                <h3><i class="fas fa-minus-circle" style="color: var(--accent-red);"></i> Withdraw</h3>
+                <p style="color: var(--text-dim); font-size: 13px;">Transfer your winnings to your UPI ID instantly.</p>
+
+                <label>Withdraw Amount</label>
+                <input type="number" id="withdrawAmount" placeholder="Min 100 INR">
+
+                <label>Your UPI ID</label>
+                <input type="text" id="withdrawUpi" placeholder="example@ybl">
+
+                <button class="button-primary" style="margin-top: auto; background: var(--bg-dark); color: white; border: 1px solid var(--glass-border);" onclick="submitWithdraw()">Request Payout</button>
+
+                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; font-size: 12px; color: var(--text-dim);">
+                    <i class="fas fa-info-circle"></i> Payouts are usually processed within 2-4 hours by admin.
+                </div>
+            </div>
+        </div>
+
+        <div class="form-box animate" style="margin-top: 40px; animation-delay: 0.2s;">
+            <h3>Transaction History</h3>
+            <div id="txnHistory" style="margin-top: 20px;">
+                <!-- Txn items here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+        const DEFAULT_UPI = "954870514001@ybl";
+
+        async function fetchWallet() {
+            const res = await fetch("http://localhost:5000/api/wallet", {
+                headers: { authorization: token }
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('mainBalance').innerText = data.balance.toLocaleString() + " INR";
+            }
+        }
+
+        async function fetchHistory() {
+            const res = await fetch("http://localhost:5000/api/wallet/transactions", {
+                headers: { authorization: token }
+            });
+            const data = await res.json();
+            if(data.success) {
+                const html = data.transactions.map(t => `
+                    <div class="txn-item ${t.status}">
+                        <div class="txn-info">
+                            <h4>${t.payment_method === 'withdraw' ? 'Withdrawal' : 'Deposit'}</h4>
+                            <small>${new Date(t.created_at).toLocaleString()}</small>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="txn-amount" style="color: ${t.payment_method === 'withdraw' ? 'var(--accent-red)' : 'var(--accent-green)'}">
+                                ${t.payment_method === 'withdraw' ? '-' : '+'}${t.amount}
+                            </div>
+                            <span class="badge ${t.status === 'pending' ? 'badge-pending' : (t.status === 'approved' ? 'badge-success' : 'badge-failed')}">${t.status}</span>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('txnHistory').innerHTML = html || '<p style="text-align: center; color: var(--text-dim);">No transactions yet.</p>';
+            }
+        }
+
+        function updateQR() {
+            const mode = document.getElementById('payMode').value;
+            const amount = document.getElementById('depositAmount').value || 0;
+            const qrArea = document.getElementById('qrArea');
+            const upiArea = document.getElementById('upiArea');
+
+            if(mode === 'qr') {
+                qrArea.style.display = 'block';
+                upiArea.style.display = 'none';
+                const qrData = encodeURIComponent(`upi://pay?pa=${DEFAULT_UPI}&pn=Solo%20Casino&cu=INR&am=${amount}`);
+                document.getElementById("qrImg").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+            } else {
+                qrArea.style.display = 'none';
+                upiArea.style.display = 'block';
+            }
+        }
+
+        function openUpi() {
+            const amount = document.getElementById('depositAmount').value;
+            if(!amount || amount < 10) return alert("Enter amount");
+            window.location.href = `upi://pay?pa=${DEFAULT_UPI}&pn=Solo%20Casino&am=${amount}&cu=INR`;
+        }
+
+        async function submitDeposit() {
+            const amount = document.getElementById('depositAmount').value;
+            const utr = document.getElementById('utr').value;
+            if(!amount || !utr) return alert("Please enter amount and Reference ID");
+
+            const res = await fetch("http://localhost:5000/api/wallet/request-deposit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ amount, paymentMethod: 'upi', reference: utr })
+            });
+            const data = await res.json();
+            alert(data.message);
+            if(data.success) {
+                document.getElementById('utr').value = '';
+                fetchHistory();
+            }
+        }
+
+        async function submitWithdraw() {
+            const amount = document.getElementById('withdrawAmount').value;
+            const upiId = document.getElementById('withdrawUpi').value;
+            if(!amount || !upiId) return alert("Fill all fields");
+
+            const res = await fetch("http://localhost:5000/api/wallet/request-withdrawal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ amount, upiId })
+            });
+            const data = await res.json();
+            alert(data.message);
+            if(data.success) {
+                document.getElementById('withdrawAmount').value = '';
+                fetchHistory();
+            }
+        }
+
+        fetchWallet();
+        fetchHistory();
+    </script>
+</body>
+</html>
