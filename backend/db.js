@@ -10,29 +10,12 @@ if (!MONGODB_URI) {
 
 const connectDB = async () => {
     try {
-<<<<<<< HEAD
         console.log("⏳ Connecting to MongoDB...");
-        await mongoose.connect(MONGODB_URI, {
-            serverSelectionTimeoutMS: 5000,
-        });
-        console.log("✅ MongoDB Connected (Atlas)");
-    } catch (err) {
-        console.error("❌ MongoDB Connection Failed");
-        if (err.message.includes("authentication failed")) {
-            console.error("👉 ERROR: Aapka Password galat hai ya usme special characters (@, #, etc.) hain.");
-            console.error("👉 SOLUTION: Agar password me @ hai toh use %40 likhein.");
-        } else if (err.message.includes("ETIMEOUT") || err.message.includes("ENOTFOUND")) {
-            console.error("👉 ERROR: Network issue ya IP Whitelist problem.");
-            console.error("👉 SOLUTION: Atlas Dashboard -> Network Access -> Add IP Address -> 'Allow Access from Anywhere' karein.");
-        }
-        console.error("Full Error Details:", err.message);
-=======
         await mongoose.connect(MONGODB_URI);
         console.log("✅ MongoDB Connected (Atlas)");
     } catch (err) {
         console.error("❌ MongoDB Connection Failed");
-        console.error(err.message);
->>>>>>> 81ea4e7ca8d02de97a349dedc17379fdd50c9736
+        console.error("Full Error Details:", err.message);
         process.exit(1);
     }
 };
