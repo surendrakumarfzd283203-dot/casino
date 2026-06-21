@@ -49,7 +49,7 @@
             status.style.color = "var(--primary)";
 
             try {
-                <script src="../Frontend/js/config.js"></script>
+              const res = await fetch("https://casino-vri2.onrender.com/api/admin/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
