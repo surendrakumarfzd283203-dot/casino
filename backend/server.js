@@ -669,6 +669,8 @@ const server = app.listen(PORT, () => {
     console.log(`🚀 Server Running On Port ${PORT}`);
 });
 
+app.use("/admin", express.static(path.join(__dirname, "..", "admin")));
+
 server.on("error", (err) => {
     if (err.code === "EADDRINUSE") {
         const fallbackPort = PORT + 1;
