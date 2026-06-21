@@ -1,12 +1,8 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-    console.error("❌ MONGODB_URI is not defined in .env file");
-    process.exit(1);
-}
+// Temporary Hardcoded URI to bypass Render Env issues
+const MONGODB_URI = "mongodb+srv://sachinku1259_db_user:Va9AEm8sLgW0mgG0@cluster0.kgokl91.mongodb.net/solo_casino?retryWrites=true&w=majority";
 
 const connectDB = async () => {
     try {
@@ -16,7 +12,7 @@ const connectDB = async () => {
     } catch (err) {
         console.error("❌ MongoDB Connection Failed");
         console.error("Full Error Details:", err.message);
-        process.exit(1);
+        // Don't exit process, let server try to stay alive for debugging
     }
 };
 
