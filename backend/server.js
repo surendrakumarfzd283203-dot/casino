@@ -659,6 +659,7 @@ app.post("/api/daily-bonus", auth, async (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, "..", "Frontend")));
+app.use("/admin", express.static(path.join(__dirname, "..", "admin")));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "Frontend", "index.html"));
@@ -668,8 +669,6 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
 const server = app.listen(PORT, () => {
     console.log(`🚀 Server Running On Port ${PORT}`);
 });
-
-app.use("/admin", express.static(path.join(__dirname, "..", "admin")));
 
 server.on("error", (err) => {
     if (err.code === "EADDRINUSE") {
