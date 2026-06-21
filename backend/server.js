@@ -91,16 +91,22 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/login", async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log(`Login attempt for: ${email}`);
+
         const user = await User.findOne({ email });
         if (!user) {
+            console.log("User not found");
             return res.json({ success: false, message: "User Not Found" });
         }
 
+        console.log("Comparing password hash...");
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
+            console.log("Password mismatch");
             return res.json({ success: false, message: "Wrong Password" });
         }
 
+        console.log("Generating token...");
         const token = jwt.sign({ id: user._id }, SECRET, { expiresIn: "7d" });
         res.json({
             success: true,
@@ -113,8 +119,8 @@ app.post("/api/login", async (req, res) => {
             }
         });
     } catch (error) {
-        console.error("Login Error:", error);
-        res.status(500).json({ success: false, message: "Server Error" });
+        console.error("Login Error Details:", error);
+        res.status(500).json({ success: false, message: `Server Error: ${error.message}` });
     }
 });
 
