@@ -666,8 +666,16 @@ app.post("/api/daily-bonus", auth, async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 app.get("/api/health", (req, res) => {
     res.json({ success: true, message: "Solo Casino Demo API Running with MongoDB" });
+=======
+app.use(express.static(path.join(__dirname, "..", "Frontend")));
+app.use("/admin", express.static(path.join(__dirname, "..", "admin")));
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "Frontend", "index.html"));
+>>>>>>> 81ea4e7ca8d02de97a349dedc17379fdd50c9736
 });
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
@@ -689,4 +697,9 @@ server.on("error", (err) => {
     }
     console.error(err);
     process.exit(1);
+<<<<<<< HEAD
 });
+=======
+});
+
+>>>>>>> 81ea4e7ca8d02de97a349dedc17379fdd50c9736
