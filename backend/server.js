@@ -658,15 +658,6 @@ app.post("/api/daily-bonus", auth, async (req, res) => {
     }
 });
 
-app.get("/", (req, res) => {
-    res.json({ success: true, message: "Solo Casino Demo API Running with MongoDB" });
-});
-
-const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
-const server = app.listen(PORT, () => {
-    console.log(`🚀 Server Running On Port ${PORT}`);
-});
-
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
