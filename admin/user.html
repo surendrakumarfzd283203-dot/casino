@@ -12,22 +12,29 @@
 </div>
 <div id="result"></div>
 <script>
-async function searchUser(){
-    const keyword = document.getElementById("keyword").value;
-    const res = await fetch("http://localhost:5000/api/admin/search-user/" + encodeURIComponent(keyword), {
+const keyword = document.getElementById("keyword").value;
+
+const res = await fetch(
+    "https://casino-vri2.onrender.com/api/admin/search-user/" + encodeURIComponent(keyword),
+    {
         headers: { authorization: localStorage.getItem("adminToken") }
-    });
-    const data = await res.json();
-    let html = "";
-    data.forEach(user => {
-        html += `
-        <div class="card">
-            <h3>${user.name}</h3>
-            <p>${user.email}</p>
-            <p>${user.coins} Coins</p>
-        </div>`;
-    });
-    document.getElementById("result").innerHTML = html;
+    }
+);
+
+const data = await res.json();
+
+let html = "";
+
+data.forEach(user => {
+    html += `
+    <div class="card">
+        <h3>${user.name}</h3>
+        <p>${user.email}</p>
+        <p>${user.coins} Coins</p>
+    </div>`;
+});
+
+document.getElementById("result").innerHTML = html;
 }
 </script>
 </body>
