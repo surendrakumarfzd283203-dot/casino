@@ -273,6 +273,9 @@ app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
 // --- GAME ROUTES ---
 
 let forcedBigSmallResult = null;
+let activeBets = {
+    bigsmall: { BIG: 0, SMALL: 0 }
+};
 
 app.post("/api/play/aviator", auth, async (req, res) => {
     try {
@@ -347,6 +350,9 @@ app.post("/api/play/bigsmall", auth, async (req, res) => {
             return res.json({ success: false, message: "Insufficient coins" });
         }
 
+        // Track active bet for admin live view
+        activeBets.bigsmall[prediction.toUpperCase()] += Number(betAmount);
+
         const gameResult = playBigSmall(Number(betAmount), prediction, forcedBigSmallResult);
         const winAmount = gameResult.winAmount;
         const netChange = winAmount - betAmount;
@@ -366,6 +372,12 @@ app.post("/api/play/bigsmall", auth, async (req, res) => {
             details: `Predicted ${prediction}, Result: ${gameResult.total}`
         });
         await txn.save();
+
+        // Reset tracking after game (this is simplified, ideally tracked per round)
+        setTimeout(() => {
+            activeBets.bigsmall[prediction.toUpperCase()] -= Number(betAmount);
+            if (activeBets.bigsmall[prediction.toUpperCase()] < 0) activeBets.bigsmall[prediction.toUpperCase()] = 0;
+        }, 2000);
 
         res.json({
             success: true,
@@ -416,16 +428,11 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
         stats.totalUsers = totalUsers;
         stats.totalCoins = totalCoinsAgg.length > 0 ? totalCoinsAgg[0].total : 0;
 
-        const oneMinAgo = new Date(Date.now() - 60000);
-        const recentTxns = await Transaction.find({ type: "game_bigsmall", created_at: { $gt: oneMinAgo } });
-
-        let bigVol = 0;
-        let smallVol = 0;
-        recentTxns.forEach(t => {
-            if (t.details.includes('Predicted BIG')) bigVol += Math.abs(t.amount);
-            if (t.details.includes('Predicted SMALL')) smallVol += Math.abs(t.amount);
-        });
-        stats.betVolumes = { BIG: bigVol, SMALL: smallVol };
+        // Use live active bets instead of history for real-time monitoring
+        stats.betVolumes = {
+            BIG: activeBets.bigsmall.BIG,
+            SMALL: activeBets.bigsmall.SMALL
+        };
 
         const admin = await Admin.findOne({});
         stats.adminWalletBalance = admin ? admin.balance : 0;
