@@ -26,6 +26,14 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
+// Serve Frontend static files
+app.use(express.static(path.join(__dirname, "../Frontend")));
+app.use("/admin", express.static(path.join(__dirname, "../admin")));
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../Frontend", "index.html"));
+});
+
 // Ensure uploads directory exists
 const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
@@ -658,7 +666,7 @@ app.post("/api/daily-bonus", auth, async (req, res) => {
     }
 });
 
-app.get("/", (req, res) => {
+app.get("/api/health", (req, res) => {
     res.json({ success: true, message: "Solo Casino Demo API Running with MongoDB" });
 });
 

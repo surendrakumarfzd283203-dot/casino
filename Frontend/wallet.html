@@ -195,8 +195,21 @@
 
         function openUpi() {
             const amount = document.getElementById('depositAmount').value;
-            if(!amount || amount < 10) return alert("Enter amount");
-            window.location.href = `upi://pay?pa=${DEFAULT_UPI}&pn=Solo%20Casino&am=${amount}&cu=INR`;
+            if(!amount || amount < 100) return alert("Minimum amount is 100 INR");
+
+            // Standard UPI Intent URL to open any UPI app on mobile
+            const upiUrl = `upi://pay?pa=${DEFAULT_UPI}&pn=Solo%20Casino&am=${amount}&cu=INR`;
+
+            // Open the URL
+            window.location.href = upiUrl;
+
+            // Fallback for some browsers
+            setTimeout(() => {
+                if (confirm("If UPI app did not open, would you like to use the QR Code mode instead?")) {
+                    document.getElementById('payMode').value = 'qr';
+                    updateQR();
+                }
+            }, 3000);
         }
 
         async function submitDeposit() {
