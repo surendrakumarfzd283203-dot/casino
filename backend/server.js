@@ -681,6 +681,16 @@ app.post("/api/daily-bonus", auth, async (req, res) => {
     }
 });
 
+app.get("/api/db-status", async (req, res) => {
+    try {
+        const state = mongoose.connection.readyState;
+        const states = ["Disconnected", "Connected", "Connecting", "Disconnecting"];
+        res.json({ success: true, status: states[state], db: mongoose.connection.name });
+    } catch (e) {
+        res.json({ success: false, error: e.message });
+    }
+});
+
 app.get("/api/health", (req, res) => {
     res.json({ success: true, message: "Solo Casino Demo API Running with MongoDB" });
 });
