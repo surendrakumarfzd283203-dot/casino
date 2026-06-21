@@ -667,8 +667,6 @@ const server = app.listen(PORT, () => {
     console.log(`🚀 Server Running On Port ${PORT}`);
 });
 
-const path = require("path");
-
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
