@@ -1,87 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Leaderboard</title>
-<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="form-box">
+    <header>
+        <h1 style="color: var(--primary); font-size: 24px; padding: 15px 5%;">SOLO CASINO</h1>
+        <nav style="padding: 15px 5%;">
+            <a href="dashboard.html" style="color: var(--text-dim); text-decoration: none; margin-right: 20px;">Home</a>
+            <a href="leaderboard.html" class="active" style="color: var(--primary); text-decoration: none;">Leaderboard</a>
+        </nav>
+    </header>
 
-<h2>Leaderboard</h2>
+    <div class="container">
+        <div class="form-box animate">
+            <h2 style="margin-bottom: 30px;"><i class="fas fa-trophy"></i> Top Players</h2>
 
-<ul id="list"></ul>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr style="text-align: left; border-bottom: 1px solid var(--glass-border);">
+                        <th style="padding: 15px; color: var(--text-dim);">Rank</th>
+                        <th style="padding: 15px; color: var(--text-dim);">Player</th>
+                        <th style="padding: 15px; color: var(--text-dim); text-align: right;">Coins</th>
+                    </tr>
+                </thead>
+                <tbody id="board">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-</div>
-
-<script>
-
-fetch(
-"http://localhost:5000/api/leaderboard"
-)
-.then(res=>res.json())
-.then(data=>{
-
-let html="";
-
-data.forEach(user=>{
-
-html +=
-`<li>${user.name}
- - ${user.coins}</li>`;
-
-});
-
-document.getElementById("list")
-.innerHTML = html;
-
-});
-
-</script>
+    <script src="js/config.js"></script>
+    <script>
+        fetch(`${API_URL}/api/leaderboard`)
+            .then(res => res.json())
+            .then(data => {
+                let html = "";
+                data.forEach((user, index) => {
+                    html += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+                        <td style="padding: 15px; font-weight: 800; color: ${index < 3 ? 'var(--primary)' : 'var(--text-dim)'}">#${index + 1}</td>
+                        <td style="padding: 15px; font-weight: 600;">${user.name}</td>
+                        <td style="padding: 15px; text-align: right; color: var(--primary); font-weight: 700;">${user.coins.toLocaleString()}</td>
+                    </tr>
+                    `;
+                });
+                document.getElementById("board").innerHTML = html || '<tr><td colspan="3" style="text-align: center; padding: 20px;">No data available</td></tr>';
+            })
+            .catch(err => console.error(err));
+    </script>
 
 </body>
 </html>
-<div class="form-box">
-
-<h2>Top Players</h2>
-
-<table border="1" width="100%">
-<thead>
-<tr>
-<th>Rank</th>
-<th>Name</th>
-<th>Coins</th>
-</tr>
-</thead>
-
-<tbody id="board"></tbody>
-
-</table>
-
-</div>
-
-<script>
-
-fetch("http://localhost:5000/api/leaderboard")
-.then(res=>res.json())
-.then(data=>{
-
-let html="";
-
-data.forEach((user,index)=>{
-
-html += `
-<tr>
-<td>${index+1}</td>
-<td>${user.name}</td>
-<td>${user.coins}</td>
-</tr>
-`;
-
-});
-
-document.getElementById("board").innerHTML = html;
-
-});
-
-</script>

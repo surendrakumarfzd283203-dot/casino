@@ -22,7 +22,8 @@ This plan outlines the steps to migrate the Solo Casino project from a MySQL dat
 
 #### [.env](file:///C:/xampp/htdocs/solo__casino/.env)
 - Remove MySQL related variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`).
-- Add `MONGODB_URI`.
+- Add `MONGODB_URI=mongodb+srv://sachinku1259_db_user:<PASSWORD>@cluster0.kgokl91.mongodb.net/solo_casino?retryWrites=true&w=majority`
+- **Note**: The user must replace `<PASSWORD>` with their actual MongoDB Atlas password.
 
 #### [db.js](file:///C:/xampp/htdocs/solo__casino/backend/db.js)
 - Replace `mysql2` connection logic with `mongoose` connection logic.
