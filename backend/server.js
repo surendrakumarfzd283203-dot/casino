@@ -121,25 +121,34 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/admin/login", async (req, res) => {
     try {
         const { username, password } = req.body;
+        console.log(`Admin login attempt for: ${username}`);
 
         // Initial Admin Check
         let admin = await Admin.findOne({ username });
-        if (!admin && username === process.env.ADMIN_USERNAME) {
-            // Create default admin if not exists (migrating from env)
+        if (!admin && username === (process.env.ADMIN_USERNAME || "admin")) {
+            console.log("Admin not found in DB, creating default admin...");
+            // Create default admin if not exists
             const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 10);
-            admin = new Admin({ username, password: hash });
+            admin = new Admin({
+                username: process.env.ADMIN_USERNAME || "admin",
+                password: hash
+            });
             await admin.save();
+            console.log("Default admin created successfully.");
         }
 
         if (!admin) {
+            console.log("Admin login failed: User not found");
             return res.json({ success: false, message: "Admin Not Found" });
         }
 
         const match = await bcrypt.compare(password, admin.password);
         if (!match) {
+            console.log("Admin login failed: Wrong password");
             return res.json({ success: false, message: "Wrong Password" });
         }
 
+        console.log("Admin login successful!");
         const token = jwt.sign({ adminId: admin._id, role: "admin" }, SECRET, { expiresIn: "7d" });
         res.json({ success: true, token });
     } catch (error) {
