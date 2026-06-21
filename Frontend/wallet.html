@@ -137,12 +137,13 @@
         </div>
     </div>
 
+    <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
         const DEFAULT_UPI = "954870514001@ybl";
 
         async function fetchWallet() {
-            const res = await fetch("http://localhost:5000/api/wallet", {
+            const res = await fetch(`${API_URL}/api/wallet`, {
                 headers: { authorization: token }
             });
             const data = await res.json();
@@ -152,7 +153,7 @@
         }
 
         async function fetchHistory() {
-            const res = await fetch("http://localhost:5000/api/wallet/transactions", {
+            const res = await fetch(`${API_URL}/api/wallet/transactions`, {
                 headers: { authorization: token }
             });
             const data = await res.json();
@@ -203,7 +204,7 @@
             const utr = document.getElementById('utr').value;
             if(!amount || !utr) return alert("Please enter amount and Reference ID");
 
-            const res = await fetch("http://localhost:5000/api/wallet/request-deposit", {
+            const res = await fetch(`${API_URL}/api/wallet/request-deposit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ amount, paymentMethod: 'upi', reference: utr })
@@ -221,7 +222,7 @@
             const upiId = document.getElementById('withdrawUpi').value;
             if(!amount || !upiId) return alert("Fill all fields");
 
-            const res = await fetch("http://localhost:5000/api/wallet/request-withdrawal", {
+            const res = await fetch(`${API_URL}/api/wallet/request-withdrawal`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ amount, upiId })

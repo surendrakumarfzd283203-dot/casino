@@ -162,6 +162,7 @@
         <button class="button-primary" id="placeBetBtn" onclick="placeBet()" style="padding: 15px 40px; margin-top: 15px;">PLACE BET</button>
     </div>
 
+    <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
         const userId = JSON.parse(atob(token.split('.')[1])).id;
@@ -171,7 +172,7 @@
         let gameState = null;
 
         async function fetchBalance() {
-            const res = await fetch("http://localhost:5000/api/profile", { headers: { authorization: token } });
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
             if (data.success) {
                 document.getElementById("balanceDisplay").innerText = data.user.coins.toLocaleString() + " Coins";
@@ -188,7 +189,7 @@
 
         async function fetchGameState() {
             try {
-                const res = await fetch("http://localhost:5000/api/teenpatti/tables", { headers: { authorization: token } });
+                const res = await fetch(`${API_URL}/api/teenpatti/tables`, { headers: { authorization: token } });
                 const data = await res.json();
                 if (data.success) {
                     gameState = data.tables.find(t => t.id === currentTableId);
@@ -268,7 +269,7 @@
 
         async function placeBet() {
             const amount = document.getElementById("betAmount").value;
-            const res = await fetch("http://localhost:5000/api/teenpatti/bet", {
+            const res = await fetch(`${API_URL}/api/teenpatti/bet`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ tableId: currentTableId, betAmount: amount })

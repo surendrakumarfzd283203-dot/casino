@@ -112,6 +112,7 @@
         <div class="result-panel" id="resultPanel"></div>
     </div>
 
+    <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
         if (!token) location.href = "login.html";
@@ -121,7 +122,7 @@
 
         async function fetchBalance() {
             try {
-                const res = await fetch("http://localhost:5000/api/profile", {
+                const res = await fetch(`${API_URL}/api/profile`, {
                     headers: { authorization: token }
                 });
                 const data = await res.json();
@@ -167,7 +168,7 @@
             dice.forEach(d => d.classList.add("rolling"));
 
             try {
-                const res = await fetch("http://localhost:5000/api/play/bigsmall", {
+                const res = await fetch(`${API_URL}/api/play/bigsmall`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

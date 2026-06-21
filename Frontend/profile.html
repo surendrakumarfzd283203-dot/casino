@@ -72,13 +72,14 @@
         </div>
     </div>
 
+    <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
         if (!token) { location.href = "login.html"; }
 
         async function fetchProfile() {
             try {
-                const res = await fetch("http://localhost:5000/api/profile", {
+                const res = await fetch(`${API_URL}/api/profile`, {
                     headers: { authorization: token }
                 });
                 const data = await res.json();
@@ -91,7 +92,7 @@
                 document.getElementById("coins").innerText = data.user.coins.toLocaleString() + " Coins";
 
                 if (data.user.avatar) {
-                    document.getElementById("userAvatar").src = "http://localhost:5000/uploads/" + data.user.avatar;
+                    document.getElementById("userAvatar").src = `${API_URL}/uploads/` + data.user.avatar;
                 }
             } catch (err) {
                 console.error(err);
@@ -107,7 +108,7 @@
             if(!name) return alert("Please enter a name");
 
             try {
-                const res = await fetch("http://localhost:5000/api/update-profile", {
+                const res = await fetch(`${API_URL}/api/update-profile`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

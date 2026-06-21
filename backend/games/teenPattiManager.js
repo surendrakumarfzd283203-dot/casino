@@ -1,6 +1,8 @@
 // Advanced Teen Patti Manager for Multiplayer and Auto-Dealing
 const { evaluateHand } = require("./teenpatti");
-const db = require("../db");
+const User = require("../models/User");
+const Transaction = require("../models/Transaction");
+const Admin = require("../models/Admin");
 
 class TeenPattiTable {
     constructor(id) {
@@ -55,7 +57,7 @@ class TeenPattiTable {
         this.resolve();
     }
 
-    resolve() {
+    async resolve() {
         this.state = 'RESOLVING';
         this.timer = 8;
 
@@ -80,20 +82,27 @@ class TeenPattiTable {
             player.result = result;
             player.winAmount = winAmount;
 
-            // Update Database
-            if (winAmount > 0) {
-                db.query("UPDATE users SET coins = coins + ? WHERE id = ?", [winAmount, userId]);
-            }
+            try {
+                // Update Database
+                if (winAmount > 0) {
+                    await User.findByIdAndUpdate(userId, { $inc: { coins: winAmount } });
+                }
 
-            const netProfit = winAmount - player.betAmount;
-            db.query("INSERT INTO transactions(user_id, amount, type, details) VALUES(?,?,?,?)",
-                [userId, netProfit, 'game_teenpatti', `Table ${this.id} Result: ${result}, Hand: ${playerEval.rank}`]);
+                const netProfit = winAmount - player.betAmount;
+                const txn = new Transaction({
+                    user_id: userId,
+                    amount: netProfit,
+                    type: "game_teenpatti",
+                    details: `Table ${this.id} Result: ${result}, Hand: ${playerEval.rank}`
+                });
+                await txn.save();
 
-            // Update Admin Wallet (Losses go to admin)
-            if (netProfit < 0) {
-                db.query("UPDATE admins SET balance = balance + ? WHERE id = 1", [Math.abs(netProfit)]);
-            } else if (netProfit > 0) {
-                db.query("UPDATE admins SET balance = balance - ? WHERE id = 1", [netProfit]);
+                // Update Admin Wallet
+                if (netProfit !== 0) {
+                    await Admin.findOneAndUpdate({}, { $inc: { balance: -netProfit } });
+                }
+            } catch (error) {
+                console.error(`Error resolving TeenPatti for user ${userId}:`, error);
             }
         }
     }
