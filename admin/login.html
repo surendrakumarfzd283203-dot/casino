@@ -34,6 +34,9 @@
     </div>
 
     <script>
+        // Dynamically detect API URL
+        const API_URL = window.location.origin;
+
         async function login(){
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
@@ -49,7 +52,7 @@
             status.style.color = "var(--primary)";
 
             try {
-                const res = await fetch("http://localhost:5000/api/admin/login", {
+                const res = await fetch(`${API_URL}/api/admin/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
