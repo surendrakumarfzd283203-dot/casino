@@ -3,289 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teen Patti | Solo Casino</title>
+    <title>Teen Patti Live | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .table-area {
-            background: radial-gradient(circle, #1a4a1a 0%, #0d2a0d 100%);
-            border: 15px solid #5d4037;
-            border-radius: 150px;
-            padding: 60px;
-            margin: 40px auto;
-            max-width: 1000px;
-            min-height: 500px;
+        :root {
+            --table-green: #1a4a1a;
+            --table-border: #d4af37;
+            --bg-dark: #0f172a;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .game-container {
+            height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .table-area {
+            flex: 1;
+            position: relative;
+            display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            perspective: 1000px;
+        }
+
+        .poker-table {
+            width: 85%;
+            height: 60%;
+            background: radial-gradient(circle, #2e7d32 0%, #1b5e20 100%);
+            border: 12px solid #5d4037;
+            border-radius: 150px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.5);
             position: relative;
+            transform: rotateX(20deg);
         }
 
-        .dealer-pos { position: absolute; top: 40px; text-align: center; }
-
-        /* 6 Player Positions */
-        .player-pos {
+        .dealer-area {
             position: absolute;
-            width: 120px;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
+            z-index: 5;
         }
-        .p1 { bottom: 20px; left: 50%; transform: translateX(-50%); }
-        .p2 { bottom: 100px; right: 80px; }
-        .p3 { top: 150px; right: 40px; }
-        .p4 { top: 150px; left: 40px; }
-        .p5 { bottom: 100px; left: 80px; }
-        .p6 { top: 40px; right: 150px; } /* Adjusting for dealer */
 
-        .hand {
+        .dealer-img {
+            width: 150px;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+        }
+
+        .player-seat {
+            position: absolute;
+            width: 80px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        /* Positioning players around the table */
+        .seat-1 { bottom: -40px; left: 50%; transform: translateX(-50%); }
+        .seat-2 { bottom: 20px; left: 5%; }
+        .seat-3 { top: 20px; left: 5%; }
+        .seat-4 { top: 20px; right: 5%; }
+        .seat-5 { bottom: 20px; right: 5%; }
+
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--table-border);
+            background: #333;
+            margin: 0 auto 5px;
+            overflow: hidden;
+        }
+
+        .player-name { font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.7); border-radius: 5px; padding: 2px; }
+        .player-bet { font-size: 10px; color: var(--table-border); }
+
+        .card-container {
             display: flex;
+            gap: 2px;
             justify-content: center;
-            gap: 5px;
             margin-top: 5px;
         }
-        .card-item {
-            width: 40px;
-            height: 60px;
+
+        .card {
+            width: 25px;
+            height: 35px;
             background: white;
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 4px;
+            border-radius: 3px;
             color: black;
-            font-weight: bold;
             font-size: 10px;
-            box-shadow: 1px 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
         }
-        .card-item.hidden {
-            background: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 5px, #880e4f 5px, #880e4f 10px);
-            color: transparent;
-        }
-        .suit-icon { font-size: 14px; align-self: flex-end; }
-        .red { color: #f44336; }
 
-        .player-info {
-            background: rgba(0,0,0,0.6);
-            padding: 5px 10px;
-            border-radius: 10px;
-            border: 1px solid var(--glass-border);
+        .controls-area {
+            padding: 15px;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .bet-input {
+            background: #1e293b;
+            border: 1px solid #334155;
             color: white;
-            font-size: 12px;
-            min-width: 100px;
+            padding: 10px;
+            border-radius: 10px;
+            width: 80px;
+            text-align: center;
         }
-        .player-info.active { border-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
 
-        .timer-overlay {
+        .action-btn {
+            padding: 12px 25px;
+            border-radius: 15px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-pack { background: #ef4444; color: white; }
+        .btn-chaal { background: #3b82f6; color: white; }
+        .btn-show { background: #10b981; color: white; }
+
+        .timer-circle {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .pot-area {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 40px;
-            font-weight: 800;
-            color: var(--primary);
-            text-shadow: 0 0 20px rgba(0,0,0,0.8);
-            z-index: 10;
-        }
-
-        .table-switcher {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .tab-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--glass-border);
-            color: var(--text-dim);
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .tab-btn.active {
-            background: var(--primary);
-            color: black;
+            text-align: center;
+            color: var(--table-border);
             font-weight: bold;
-        }
-
-        .controls {
-            background: var(--bg-card);
-            padding: 20px;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            justify-content: center;
+            text-shadow: 1px 1px 2px black;
         }
     </style>
 </head>
 <body>
-    <header>
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-            <h1 onclick="location.href='dashboard.html'" style="cursor: pointer; color: var(--primary);">SOLO CASINO</h1>
-            <div id="balanceDisplay" style="background: rgba(255,152,0,0.1); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: bold;">
-                0 Coins
+    <div class="game-container">
+        <div class="header">
+            <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white;"><i class="fas fa-chevron-left"></i> Back</button>
+            <div>POT: <span id="totalPot">0</span></div>
+            <div id="balance">Coins: 0</div>
+        </div>
+
+        <div class="table-area">
+            <div class="dealer-area">
+                <img src="https://i.ibb.co/L5pZ0vX/dealer-girl.png" class="dealer-img" alt="Dealer" onerror="this.src='image/aviator.png'">
+                <div class="card-container" id="dealerCards">
+                    <!-- Cards here -->
+                </div>
             </div>
+
+            <div class="poker-table">
+                <div class="pot-area">
+                    <img src="https://cdn-icons-png.flaticon.com/512/248/248927.png" width="30" alt="coins"><br>
+                    TABLE POT
+                </div>
+            </div>
+
+            <!-- Seat 1 (Me) -->
+            <div class="player-seat seat-1">
+                <div class="player-avatar" id="myAvatar"></div>
+                <div class="player-name">YOU</div>
+                <div class="player-bet" id="myBet">Bet: 0</div>
+                <div class="card-container" id="myCards"></div>
+            </div>
+
+            <!-- Other Seats (Placeholders for other users) -->
+            <div id="otherPlayers"></div>
         </div>
-    </header>
 
-    <div class="table-switcher">
-        <button class="tab-btn active" onclick="switchTable(1)">Table 1</button>
-        <button class="tab-btn" onclick="switchTable(2)">Table 2</button>
-        <button class="tab-btn" onclick="switchTable(3)">Table 3</button>
-    </div>
-
-    <div class="table-area">
-        <div class="timer-overlay" id="mainTimer">--</div>
-
-        <div class="dealer-pos">
-            <div class="player-info">DEALER</div>
-            <div class="hand" id="dealerHand"></div>
+        <div class="controls-area">
+            <div class="timer-circle" id="timer">20</div>
+            <input type="number" id="betAmount" class="bet-input" value="10" step="10">
+            <button class="action-btn btn-chaal" onclick="placeBet()">Place Bet</button>
+            <button class="action-btn btn-show" onclick="location.href='teenpatti.html'">Join Next</button>
         </div>
-
-        <!-- 6 Slots for players -->
-        <div class="player-pos p1" id="slot-0"></div>
-        <div class="player-pos p2" id="slot-1"></div>
-        <div class="player-pos p3" id="slot-2"></div>
-        <div class="player-pos p4" id="slot-3"></div>
-        <div class="player-pos p5" id="slot-4"></div>
-        <div class="player-pos p6" id="slot-5"></div>
-    </div>
-
-    <div class="controls" style="max-width: 600px; margin: 0 auto;">
-        <div class="input-group">
-            <label style="font-size: 12px; color: var(--text-dim);">BET AMOUNT</label>
-            <input type="number" id="betAmount" value="100" min="10" style="margin-bottom: 0;">
-        </div>
-        <button class="button-primary" id="placeBetBtn" onclick="placeBet()" style="padding: 15px 40px; margin-top: 15px;">PLACE BET</button>
     </div>
 
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        const userId = JSON.parse(atob(token.split('.')[1])).id;
         if (!token) location.href = "login.html";
 
-        let currentTableId = 1;
-        let gameState = null;
+        let currentTable = 1;
+
+        async function fetchState() {
+            try {
+                const res = await fetch(`${API_URL}/api/teenpatti/tables`, {
+                    headers: { authorization: token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    updateUI(data.tables.find(t => t.id == currentTable));
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateUI(table) {
+            if (!table) return;
+            document.getElementById("timer").innerText = table.timer;
+
+            // Update Pots and Info
+            let totalPot = 0;
+            const otherPlayersContainer = document.getElementById("otherPlayers");
+            otherPlayersContainer.innerHTML = "";
+
+            let seatIndex = 2;
+            for (let userId in table.players) {
+                const player = table.players[userId];
+                totalPot += player.betAmount;
+
+                // If it's me
+                if (userId === localStorage.getItem("userId")) {
+                    document.getElementById("myBet").innerText = `Bet: ${player.betAmount}`;
+                    renderCards("myCards", player.hand);
+                } else {
+                    // It's someone else
+                    const seat = document.createElement("div");
+                    seat.className = `player-seat seat-${seatIndex++}`;
+                    seat.innerHTML = `
+                        <div class="player-avatar"></div>
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-bet">Bet: ${player.betAmount}</div>
+                        <div class="card-container">${renderCardsHtml(player.hand)}</div>
+                    `;
+                    otherPlayersContainer.appendChild(seat);
+                }
+            }
+            document.getElementById("totalPot").innerText = totalPot;
+
+            if (table.state === 'RESOLVING') {
+                renderCards("dealerCards", table.dealerHand);
+            } else {
+                document.getElementById("dealerCards").innerHTML = "";
+            }
+        }
+
+        function renderCards(id, hand) {
+            const container = document.getElementById(id);
+            if (!hand || hand.length === 0) {
+                container.innerHTML = "";
+                return;
+            }
+            container.innerHTML = hand.map(c => `
+                <div class="card" style="color: ${['♥','♦'].includes(c.suit) ? 'red' : 'black'}">
+                    ${c.rank}${c.suit}
+                </div>
+            `).join('');
+        }
+
+        function renderCardsHtml(hand) {
+            if (!hand || hand.length === 0) return "";
+            return hand.map(c => `
+                <div class="card" style="color: ${['♥','♦'].includes(c.suit) ? 'red' : 'black'}">
+                    ${c.rank}${c.suit}
+                </div>
+            `).join('');
+        }
+
+        async function placeBet() {
+            const amount = document.getElementById("betAmount").value;
+            try {
+                const res = await fetch(`${API_URL}/api/teenpatti/bet`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", authorization: token },
+                    body: JSON.stringify({ tableId: currentTable, betAmount: amount })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Bet Placed!");
+                    fetchBalance();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { console.error(e); }
+        }
 
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
             if (data.success) {
-                document.getElementById("balanceDisplay").innerText = data.user.coins.toLocaleString() + " Coins";
+                document.getElementById("balance").innerText = `Coins: ${data.user.coins.toLocaleString()}`;
+                localStorage.setItem("userId", data.user.id);
             }
         }
 
-        function switchTable(id) {
-            currentTableId = id;
-            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
-                btn.classList.toggle('active', idx + 1 === id);
-            });
-            fetchGameState();
-        }
-
-        async function fetchGameState() {
-            try {
-                const res = await fetch(`${API_URL}/api/teenpatti/tables`, { headers: { authorization: token } });
-                const data = await res.json();
-                if (data.success) {
-                    gameState = data.tables.find(t => t.id === currentTableId);
-                    renderTable();
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function renderCard(card) {
-            if (!card || !card.suit) return '<div class="card-item hidden">?</div>';
-            const isRed = card.suit === '♥' || card.suit === '♦';
-            return `
-                <div class="card-item ${isRed ? 'red' : ''}">
-                    <div>${card.rank}</div>
-                    <div class="suit-icon">${card.suit}</div>
-                </div>
-            `;
-        }
-
-        function renderTable() {
-            if (!gameState) return;
-
-            const timerEl = document.getElementById("mainTimer");
-            if (gameState.state === 'BETTING') {
-                timerEl.innerText = gameState.timer;
-                timerEl.style.color = "var(--primary)";
-            } else if (gameState.state === 'RESOLVING') {
-                timerEl.innerText = "RESULTS";
-                timerEl.style.color = "var(--accent-green)";
-            } else {
-                timerEl.innerText = "DEALING...";
-                timerEl.style.color = "white";
-            }
-
-            // Dealer Hand
-            const dHand = document.getElementById("dealerHand");
-            if (gameState.dealerHand && gameState.dealerHand.length > 0) {
-                dHand.innerHTML = gameState.dealerHand.map(renderCard).join('');
-            } else {
-                dHand.innerHTML = '<div class="card-item hidden">?</div>'.repeat(3);
-            }
-
-            // Players
-            const players = Object.values(gameState.players);
-            for (let i = 0; i < 6; i++) {
-                const slot = document.getElementById(`slot-${i}`);
-                const player = players[i];
-
-                if (player) {
-                    const isMe = gameState.players[userId] === player;
-                    slot.innerHTML = `
-                        <div class="player-info ${isMe ? 'active' : ''}">
-                            <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis;">${player.name}</div>
-                            <div style="color: var(--primary); font-size: 10px;">Bet: ${player.betAmount}</div>
-                            ${player.result ? `<div style="color: ${player.result === 'WIN' ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: bold;">${player.result}</div>` : ''}
-                        </div>
-                        <div class="hand">
-                            ${player.hand && player.hand.length > 0 ? player.hand.map(renderCard).join('') : '<div class="card-item hidden">?</div>'.repeat(3)}
-                        </div>
-                    `;
-                } else {
-                    slot.innerHTML = `<div class="player-info" style="opacity: 0.3; border-style: dashed;">EMPTY</div>`;
-                }
-            }
-
-            // UI Control
-            const betBtn = document.getElementById("placeBetBtn");
-            const hasBet = gameState.players[userId];
-            if (hasBet || gameState.state !== 'BETTING') {
-                betBtn.disabled = true;
-                betBtn.innerText = hasBet ? "BET PLACED" : "WAITING...";
-            } else {
-                betBtn.disabled = false;
-                betBtn.innerText = "PLACE BET";
-            }
-        }
-
-        async function placeBet() {
-            const amount = document.getElementById("betAmount").value;
-            const res = await fetch(`${API_URL}/api/teenpatti/bet`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ tableId: currentTableId, betAmount: amount })
-            });
-            const data = await res.json();
-            if (data.success) {
-                fetchGameState();
-                fetchBalance();
-            } else {
-                alert(data.message);
-            }
-        }
-
-        setInterval(fetchGameState, 1000);
-        setInterval(fetchBalance, 5000);
-        fetchGameState();
+        setInterval(fetchState, 1000);
         fetchBalance();
     </script>
 </body>

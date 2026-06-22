@@ -6,33 +6,48 @@
     <title>Casino Spin | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .spin-game-container {
-            text-align: center;
-            padding: 40px 20px;
-            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
-            border-radius: 40px;
-            border: 2px solid #333;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            position: relative;
+        :root {
+            --bg-dark: #0f172a;
+            --gold: #d4af37;
+            --casino-red: #d10214;
         }
-        .wheel-outer {
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            border-bottom: 1px solid #334155;
+        }
+
+        .wheel-area {
             position: relative;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .wheel-outer {
             width: 320px;
             height: 320px;
-            margin: 40px auto;
             border: 15px solid #222;
             border-radius: 50%;
-            box-shadow: 0 0 20px rgba(255, 152, 0, 0.3), inset 0 0 20px rgba(0,0,0,0.8);
-            background: #111;
-        }
-        .wheel-container {
+            box-shadow: 0 0 50px rgba(0,0,0,0.8), 0 0 20px var(--gold);
             position: relative;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
+            background: #111;
             overflow: hidden;
             transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1);
         }
+
         .wheel-pointer {
             position: absolute;
             top: -20px;
@@ -46,25 +61,9 @@
         .wheel-pointer::after {
             content: '▼';
             font-size: 40px;
-            color: #ff9800;
+            color: var(--gold);
         }
-        .section {
-            position: absolute;
-            width: 50%;
-            height: 50%;
-            transform-origin: 100% 100%;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .section-text {
-            position: absolute;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%) rotate(0deg);
-            font-weight: 800;
-            color: white;
-            font-size: 16px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-        }
+
         .center-hub {
             position: absolute;
             top: 50%;
@@ -73,61 +72,120 @@
             width: 60px;
             height: 60px;
             background: #222;
-            border: 4px solid #ff9800;
+            border: 4px solid var(--gold);
             border-radius: 50%;
             z-index: 15;
-            box-shadow: 0 0 15px rgba(255, 152, 0, 0.5);
+            box-shadow: 0 0 15px var(--gold);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ff9800;
+            color: var(--gold);
             font-weight: bold;
             font-size: 12px;
         }
-        .timer-box { font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 20px; }
-        .bet-buttons { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
-        .bet-btn {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
+
+        .section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .bet-btn.active { background: #ff9800; color: black; }
+
+        .section-text {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 800;
+            color: white;
+            font-size: 14px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .bet-area {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chip-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .chip {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 4px dashed white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .chip:active { transform: scale(0.9); }
+        .chip-10 { background: #3b82f6; }
+        .chip-50 { background: #ef4444; }
+        .chip-100 { background: #10b981; }
+        .chip-500 { background: #f59e0b; }
+
+        .timer-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--gold);
+            margin: 10px 0;
+        }
+
+        .history-list {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 0 20px;
+        }
+        .history-item {
+            background: #1e293b;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            border: 1px solid #334155;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>SOLO SPIN</h1>
-        <div class="balance-badge" style="background: rgba(255, 152, 0, 0.1); color: #ff9800; padding: 5px 15px; border-radius: 20px;">
-            Balance: <span id="balance">0</span>
-        </div>
-    </header>
+    <div class="header">
+        <h1 style="margin:0; font-size: 20px; color: var(--gold);">CASINO SPIN</h1>
+        <div id="balance" style="font-size: 14px; opacity: 0.8; margin-top: 5px;">Balance: 0</div>
+    </div>
 
-    <div class="form-box" style="max-width: 600px;">
-        <div class="spin-game-container">
-            <div class="timer-box" id="timer">00:45</div>
-
-            <div class="wheel-outer">
-                <div class="wheel-pointer"></div>
-                <div class="center-hub">SPIN</div>
-                <div class="wheel-container" id="wheel"></div>
-            </div>
-
-            <div id="gameStatus" style="font-weight: bold; font-size: 18px; margin: 20px 0; height: 24px;"></div>
-
-            <div class="wallet-card">
-                <label>Bet Amount</label>
-                <input type="number" id="betAmount" value="50" min="10" style="text-align: center; font-size: 24px;">
-            </div>
-
-            <button class="button-primary" id="placeBetBtn" onclick="placeBet()" style="margin-top: 20px;">PLACE BET</button>
-
-            <div id="history" style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;"></div>
+    <div class="wheel-area">
+        <div class="wheel-pointer"></div>
+        <div class="center-hub">SPIN</div>
+        <div class="wheel-outer" id="wheel">
+            <!-- Sections generated by JS -->
         </div>
     </div>
+
+    <div class="bet-area">
+        <div class="timer-display" id="timer">00:45</div>
+        <div id="status" style="font-weight: bold; height: 20px; margin-bottom: 10px;"></div>
+
+        <div class="chip-container">
+            <div class="chip chip-10" onclick="placeBet(10)">10</div>
+            <div class="chip chip-50" onclick="placeBet(50)">50</div>
+            <div class="chip chip-100" onclick="placeBet(100)">100</div>
+            <div class="chip chip-500" onclick="placeBet(500)">500</div>
+        </div>
+
+        <div style="font-size: 12px; opacity: 0.6;">Tap a chip to place bet on next spin</div>
+    </div>
+
+    <div class="history-list" id="history"></div>
 
     <script src="js/config.js"></script>
     <script>
@@ -135,52 +193,21 @@
         if (!token) location.href = "login.html";
 
         const wheel = document.getElementById("wheel");
-        const statusDisplay = document.getElementById("gameStatus");
-        const timerDisplay = document.getElementById("timer");
         let currentRotation = 0;
         let lastRoundId = null;
 
-        async function fetchState() {
-            try {
-                const res = await fetch(`${API_URL}/api/game/spin/state`, { headers: { authorization: token } });
-                const data = await res.json();
-                if (data.success) {
-                    if (wheel.children.length === 0) renderWheel(data.sections);
-
-                    timerDisplay.innerText = `00:${data.timer.toString().padStart(2, '0')}`;
-
-                    if (data.timer < 5) {
-                        document.getElementById("placeBetBtn").disabled = true;
-                        document.getElementById("placeBetBtn").innerText = "SPINNING...";
-                    } else {
-                        document.getElementById("placeBetBtn").disabled = false;
-                        document.getElementById("placeBetBtn").innerText = "PLACE BET";
-                    }
-
-                    if (data.history && data.history.length > 0) {
-                        const last = data.history[0];
-                        if (last.roundId !== lastRoundId) {
-                            lastRoundId = last.roundId;
-                            handleSpinResult(last, data.sections.length);
-                        }
-                        renderHistory(data.history);
-                    }
-                }
-            } catch (e) { console.error(e); }
-        }
-
         function renderWheel(sections) {
             const angle = 360 / sections.length;
+            wheel.innerHTML = "";
             sections.forEach((s, i) => {
                 const sec = document.createElement("div");
                 sec.className = "section";
                 sec.style.transform = `rotate(${i * angle}deg) skewY(${90 - angle}deg)`;
 
-                // Better colors
                 let color = "#333";
-                if (s[1] === "RED") color = "#f44336";
-                else if (s[1] === "BLUE") color = "#2196f3";
-                else if (s[1] === "GOLD") color = "#ffc107";
+                if (s[1] === "RED") color = "#d10214";
+                else if (s[1] === "BLUE") color = "#1e3a8a";
+                else if (s[1] === "GOLD") color = "#d4af37";
                 sec.style.backgroundColor = color;
 
                 const text = document.createElement("div");
@@ -193,26 +220,42 @@
             });
         }
 
-        function handleSpinResult(last, totalSections) {
+        async function fetchState() {
+            try {
+                const res = await fetch(`${API_URL}/api/game/spin/state`, { headers: { authorization: token } });
+                const data = await res.json();
+                if (data.success) {
+                    if (wheel.children.length === 0) renderWheel(data.sections);
+
+                    document.getElementById("timer").innerText = `00:${data.timer.toString().padStart(2, '0')}`;
+
+                    if (data.history && data.history.length > 0) {
+                        const last = data.history[0];
+                        if (last.roundId !== lastRoundId) {
+                            lastRoundId = last.roundId;
+                            animateSpin(last.index, data.sections.length, last.multiplier);
+                        }
+                        renderHistory(data.history);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function animateSpin(index, totalSections, multiplier) {
             const anglePerSection = 360 / totalSections;
-            // The pointer is at the top (0 deg).
-            // We want the section 'last.index' to land at the top.
-            // Section 0 is at 0-30 deg, Section 1 is at 30-60 deg, etc.
-            // To have section 'i' at the top, we rotate by -(i * anglePerSection + offset)
-            const targetDeg = 360 - (last.index * anglePerSection + (anglePerSection / 2));
-            currentRotation += 1440 + targetDeg; // At least 4 full spins
+            const targetDeg = 360 - (index * anglePerSection + (anglePerSection / 2));
+            currentRotation += 1440 + targetDeg;
             wheel.style.transform = `rotate(${currentRotation}deg)`;
 
-            statusDisplay.innerText = "SPINNING...";
+            document.getElementById("status").innerText = "SPINNING...";
             setTimeout(() => {
-                statusDisplay.innerText = last.multiplier > 0 ? `WIN! ${last.multiplier}x` : "BETTER LUCK NEXT TIME!";
-                statusDisplay.style.color = last.multiplier > 0 ? "#4caf50" : "#f44336";
+                document.getElementById("status").innerText = multiplier > 0 ? `WON ${multiplier}x!` : "BETTER LUCK NEXT TIME";
+                document.getElementById("status").style.color = multiplier > 0 ? "#10b981" : "#ef4444";
                 fetchBalance();
             }, 4000);
         }
 
-        async function placeBet() {
-            const amount = document.getElementById("betAmount").value;
+        async function placeBet(amount) {
             try {
                 const res = await fetch(`${API_URL}/api/game/spin/bet`, {
                     method: "POST",
@@ -230,19 +273,18 @@
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
-            if (data.success) document.getElementById("balance").innerText = data.user.coins.toLocaleString();
+            if (data.success) {
+                document.getElementById("balance").innerText = `Balance: ₹${data.user.coins.toFixed(2)}`;
+            }
         }
 
         function renderHistory(history) {
-            const container = document.getElementById("history");
-            container.innerHTML = history.slice(0, 5).map(h => `
-                <div style="background: #222; padding: 5px 10px; border-radius: 5px; font-size: 12px; border: 1px solid #444;">
-                    ${h.multiplier}x
-                </div>
+            document.getElementById("history").innerHTML = history.slice(0, 5).map(h => `
+                <div class="history-item">${h.multiplier}x</div>
             `).join('');
         }
 
-        setInterval(fetchState, 2000);
+        setInterval(fetchState, 1000);
         fetchBalance();
     </script>
 </body>

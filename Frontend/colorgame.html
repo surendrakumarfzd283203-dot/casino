@@ -3,115 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Number Game | Solo Casino</title>
+    <title>Win Go | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .timer-box { font-size: 32px; font-weight: bold; color: #ff9800; margin: 20px 0; }
-        .grid-numbers {
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --win-red: #ff4d4f;
+            --win-green: #52c41a;
+            --win-violet: #722ed1;
+            --accent: #fadb14;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding-bottom: 70px;
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e293b, #0f172a);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #334155;
+        }
+
+        .balance-card {
+            background: #1e293b;
+            margin: 15px;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .timer-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .timer-box {
+            background: #141b2d;
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 2px solid var(--accent);
+            text-align: center;
+        }
+
+        .timer-box span {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .game-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 900;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .btn-green { background: var(--win-green); }
+        .btn-violet { background: var(--win-violet); }
+        .btn-red { background: var(--win-red); }
+        .option-btn:active { transform: scale(0.95); }
+
+        .number-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 10px;
-            margin: 20px 0;
+            padding: 0 15px;
+            margin-bottom: 20px;
         }
+
         .num-btn {
-            padding: 15px 5px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #1a1a1a;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .num-btn.selected { border-color: white; box-shadow: 0 0 10px white; }
-
-        .color-btns { display: flex; justify-content: space-around; gap: 10px; margin: 20px 0; }
-        .color-btn {
-            flex: 1;
-            padding: 15px 0;
-            border-radius: 10px;
-            border: 2px solid transparent;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            text-shadow: 1px 1px 2px black;
-        }
-        .color-btn.selected { border-color: white; box-shadow: 0 0 10px white; }
-
-        .size-btns { display: flex; gap: 20px; margin: 20px 0; }
-        .size-btn {
-            flex: 1;
-            padding: 20px;
-            border-radius: 15px;
-            background: #1a1a1a;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 2px solid #334155;
+            background: #1e293b;
             color: white;
             font-weight: bold;
             font-size: 18px;
-            border: 2px solid #333;
             cursor: pointer;
+            transition: 0.3s;
         }
-        .size-btn.selected { border-color: #ff9800; background: rgba(255, 152, 0, 0.1); }
 
-        .history-list {
-            margin-top: 30px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
+        .num-btn.selected {
+            border-color: var(--accent);
+            background: rgba(250, 219, 20, 0.1);
+            transform: scale(1.1);
         }
-        .history-dot {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
+
+        .history-table {
+            margin: 15px;
+            background: #1e293b;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .history-header {
+            background: #334155;
+            padding: 10px 15px;
+            font-size: 14px;
             font-weight: bold;
-            color: white;
+        }
+
+        .history-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            padding: 10px 15px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+
+        .color-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .bet-popup {
+            position: fixed;
+            bottom: -100%;
+            left: 0; width: 100%;
+            background: #1e293b;
+            border-radius: 30px 30px 0 0;
+            padding: 30px 20px;
+            transition: 0.4s;
+            z-index: 1000;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+        }
+        .bet-popup.active { bottom: 0; }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            z-index: 999;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Color Number</h1>
-        <nav>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="wallet.html">Wallet</a>
-        </nav>
-    </header>
+    <div class="header">
+        <h1 style="margin:0; font-size: 24px; color: var(--accent);">WIN GO</h1>
+    </div>
 
-    <div class="form-box" style="max-width: 600px; text-align: center;">
-        <div class="balance-badge" style="display: inline-block; background: rgba(255, 152, 0, 0.1); color: #ff9800; padding: 8px 15px; border-radius: 20px; font-weight: bold;">
-            Balance: <span id="balance">0</span> Coins
+    <div class="balance-card">
+        <div style="font-size: 14px; opacity: 0.7;">Wallet Balance</div>
+        <div style="font-size: 32px; font-weight: 900; margin: 5px 0;" id="balance">₹0.00</div>
+        <button class="button-primary" style="width: 120px; padding: 8px;" onclick="location.href='wallet.html'">Recharge</button>
+    </div>
+
+    <div class="timer-section">
+        <div>
+            <div style="font-size: 12px; opacity: 0.6;">Period</div>
+            <div style="font-size: 18px; font-weight: bold;" id="period">20240502100</div>
         </div>
-
-        <div class="timer-box" id="timer">00:00</div>
-        <div style="font-size: 14px; opacity: 0.7;">Round ID: <span id="roundId">-</span></div>
-
-        <div class="grid-numbers" id="numberGrid"></div>
-
-        <div class="color-btns">
-            <button class="color-btn" style="background: #f44336;" onclick="selectBet('COLOR', 'RED', this)">RED</button>
-            <button class="color-btn" style="background: #2196f3;" onclick="selectBet('COLOR', 'BLUE', this)">BLUE</button>
-            <button class="color-btn" style="background: #4caf50;" onclick="selectBet('COLOR', 'GREEN', this)">GREEN</button>
-            <button class="color-btn" style="background: #ffeb3b; color: black;" onclick="selectBet('COLOR', 'YELLOW', this)">YELLOW</button>
-            <button class="color-btn" style="background: #9c27b0;" onclick="selectBet('COLOR', 'VIOLET', this)">VIOLET</button>
+        <div class="timer-box">
+            <div style="font-size: 10px; color: var(--accent);">Time Remaining</div>
+            <span id="timer">00:00</span>
         </div>
+    </div>
 
-        <div class="size-btns">
-            <button class="size-btn" onclick="selectBet('SIZE', 'SMALL', this)">SMALL (1-11)</button>
-            <button class="size-btn" onclick="selectBet('SIZE', 'BIG', this)">BIG (12-20)</button>
+    <div class="game-options">
+        <button class="option-btn btn-green" onclick="openBet('COLOR', 'GREEN')">Green</button>
+        <button class="option-btn btn-violet" onclick="openBet('COLOR', 'VIOLET')">Violet</button>
+        <button class="option-btn btn-red" onclick="openBet('COLOR', 'RED')">Red</button>
+    </div>
+
+    <div class="number-grid" id="numberGrid">
+        <!-- Numbers 0-9 -->
+    </div>
+
+    <div class="history-table">
+        <div class="history-header">Game Records</div>
+        <div id="historyRows">
+            <!-- Rows here -->
         </div>
+    </div>
 
-        <div class="wallet-card">
-            <label>Bet Amount</label>
-            <input type="number" id="betAmount" value="10" min="10" style="text-align: center; font-size: 20px;">
+    <div class="popup-overlay" id="overlay" onclick="closeBet()"></div>
+    <div class="bet-popup" id="betPopup">
+        <h3 id="betTitle" style="text-align: center; margin-top: 0;">Select Amount</h3>
+        <div style="display: flex; gap: 10px; overflow-x: auto; margin: 20px 0;">
+            <button class="button-secondary" onclick="setAmount(10)">₹10</button>
+            <button class="button-secondary" onclick="setAmount(50)">₹50</button>
+            <button class="button-secondary" onclick="setAmount(100)">₹100</button>
+            <button class="button-secondary" onclick="setAmount(500)">₹500</button>
+            <button class="button-secondary" onclick="setAmount(1000)">₹1000</button>
         </div>
-
-        <button class="button-primary" id="placeBetBtn" onclick="placeBet()" style="margin-top: 20px;">PLACE BET</button>
-
-        <div class="history-list" id="history"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #141b2d; padding: 15px; border-radius: 15px;">
+            <span>Multiplier</span>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="changeMult(-1)" style="background:none; border:1px solid #334155; color:white; width:30px; height:30px; border-radius:50%;">-</button>
+                <span id="multVal">1</span>
+                <button onclick="changeMult(1)" style="background:none; border:1px solid #334155; color:white; width:30px; height:30px; border-radius:50%;">+</button>
+            </div>
+        </div>
+        <div style="margin: 20px 0; font-size: 14px; opacity: 0.8;">
+            Total Bet: <span id="totalBet">₹10</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="button-secondary" style="flex: 1;" onclick="closeBet()">Cancel</button>
+            <button class="button-primary" style="flex: 2;" onclick="confirmBet()">Confirm</button>
+        </div>
     </div>
 
     <script src="js/config.js"></script>
@@ -119,15 +236,19 @@
         const token = localStorage.getItem("token");
         if (!token) location.href = "login.html";
 
-        let selectedType = null;
-        let selectedValue = null;
-        let currentBalance = 0;
-        let colorsMap = {};
+        let selectedType = "";
+        let selectedValue = "";
+        let betAmount = 10;
+        let multiplier = 1;
 
         const numGrid = document.getElementById("numberGrid");
-        const timerDisplay = document.getElementById("timer");
-        const roundIdDisplay = document.getElementById("roundId");
-        const historyContainer = document.getElementById("history");
+        for (let i = 0; i <= 9; i++) {
+            const btn = document.createElement("button");
+            btn.className = "num-btn";
+            btn.innerText = i;
+            btn.onclick = () => openBet('NUMBER', i);
+            numGrid.appendChild(btn);
+        }
 
         async function fetchState() {
             try {
@@ -136,79 +257,60 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    colorsMap = data.colors;
-                    renderNumbers();
                     updateUI(data);
                 }
-            } catch (e) { console.error(e); }
-        }
-
-        function renderNumbers() {
-            if (numGrid.children.length > 0) return;
-            for (let i = 1; i <= 20; i++) {
-                const btn = document.createElement("button");
-                btn.className = "num-btn";
-                btn.innerText = i;
-                btn.style.backgroundColor = getHexColor(colorsMap[i]);
-                btn.onclick = () => selectBet('NUMBER', i, btn);
-                numGrid.appendChild(btn);
-            }
-        }
-
-        function getHexColor(color) {
-            switch(color) {
-                case 'RED': return '#f44336';
-                case 'BLUE': return '#2196f3';
-                case 'GREEN': return '#4caf50';
-                case 'YELLOW': return '#ffeb3b';
-                case 'VIOLET': return '#9c27b0';
-                default: return '#1a1a1a';
-            }
+            } catch (e) {}
         }
 
         function updateUI(data) {
-            roundIdDisplay.innerText = data.roundId;
+            document.getElementById("period").innerText = data.roundId;
             const mins = Math.floor(data.timer / 60);
             const secs = data.timer % 60;
-            timerDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
-            if (data.timer < 5) {
-                document.getElementById("placeBetBtn").disabled = true;
-                document.getElementById("placeBetBtn").innerText = "WAITING...";
-            } else {
-                document.getElementById("placeBetBtn").disabled = false;
-                document.getElementById("placeBetBtn").innerText = "PLACE BET";
-            }
+            document.getElementById("timer").innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
             renderHistory(data.history);
         }
 
         function renderHistory(history) {
-            historyContainer.innerHTML = "";
-            history.forEach(h => {
-                const dot = document.createElement("div");
-                dot.className = "history-dot";
-                dot.innerText = h.number;
-                dot.style.backgroundColor = getHexColor(h.color);
-                dot.title = `Round: ${h.roundId}`;
-                historyContainer.appendChild(dot);
-            });
+            const container = document.getElementById("historyRows");
+            container.innerHTML = history.slice(0, 10).map(h => `
+                <div class="history-row">
+                    <span>${h.roundId}</span>
+                    <span style="font-weight: bold;">${h.number}</span>
+                    <div style="display: flex; align-items: center; justify-content: flex-end;">
+                        <span class="color-dot" style="background: ${getHex(h.color)}"></span>
+                        <span style="color: ${getHex(h.color)}">${h.color}</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function selectBet(type, value, element) {
+        function getHex(color) {
+            if (color === 'RED') return '#ff4d4f';
+            if (color === 'GREEN') return '#52c41a';
+            return '#722ed1';
+        }
+
+        function openBet(type, value) {
             selectedType = type;
             selectedValue = value;
-
-            // Clear all selected classes
-            document.querySelectorAll(".num-btn, .color-btn, .size-btn").forEach(el => el.classList.remove("selected"));
-            element.classList.add("selected");
+            document.getElementById("betTitle").innerText = `${type}: ${value}`;
+            document.getElementById("betPopup").classList.add("active");
+            document.getElementById("overlay").style.display = "block";
+            updateTotal();
         }
 
-        async function placeBet() {
-            const amount = parseInt(document.getElementById("betAmount").value);
-            if (!selectedType || !selectedValue) return alert("Select a Number, Color or Size");
-            if (isNaN(amount) || amount < 10) return alert("Min bet is 10");
+        function closeBet() {
+            document.getElementById("betPopup").classList.remove("active");
+            document.getElementById("overlay").style.display = "none";
+        }
 
+        function setAmount(a) { betAmount = a; updateTotal(); }
+        function changeMult(d) { multiplier = Math.max(1, multiplier + d); updateTotal(); }
+        function updateTotal() { document.getElementById("multVal").innerText = multiplier; document.getElementById("totalBet").innerText = `₹${betAmount * multiplier}`; }
+
+        async function confirmBet() {
+            const amount = betAmount * multiplier;
             try {
                 const res = await fetch(`${API_URL}/api/game/color/bet`, {
                     method: "POST",
@@ -217,7 +319,8 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert("Bet Placed!");
+                    alert("Bet Placed Successfully!");
+                    closeBet();
                     fetchBalance();
                 } else {
                     alert(data.message);
@@ -229,12 +332,11 @@
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
             if (data.success) {
-                currentBalance = data.user.coins;
-                document.getElementById("balance").innerText = currentBalance.toLocaleString();
+                document.getElementById("balance").innerText = `₹${data.user.coins.toFixed(2)}`;
             }
         }
 
-        setInterval(fetchState, 2000);
+        setInterval(fetchState, 1000);
         fetchBalance();
     </script>
 </body>
