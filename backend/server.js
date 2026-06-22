@@ -525,11 +525,13 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
         const stats = {
             forcedBigSmallResult,
             liveBets: {
-                color: colorGameManager.getLiveBets(),
-                luckydraw: luckyDrawManager.bets,
-                spin: spinGameManager.bets,
-                rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players }))
-            }
+            color: colorGameManager.getLiveBets(),
+            luckydraw: luckyDrawManager.bets,
+            spin: spinGameManager.bets,
+            rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
+            bigsmall: activeBets.bigsmall,
+            teenpatti: teenPattiManager.getTables().map(t => ({ id: t.id, players: t.players }))
+        }   }
         };
 
         const totalUsers = await User.countDocuments({});
