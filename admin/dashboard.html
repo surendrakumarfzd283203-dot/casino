@@ -77,6 +77,39 @@
         <div id="section-dashboard">
             <h2>Live Game Control</h2>
             <div class="control-panel">
+                <!-- Aviator Control -->
+                <div class="control-card">
+                    <h4><i class="fas fa-plane"></i> Aviator Control</h4>
+                    <label style="font-size: 11px;">Set Next Crash</label>
+                    <div style="display: flex; gap: 5px; margin-top: 5px;">
+                        <input type="number" id="forceAviatorMult" value="1.5" step="0.1" style="flex: 1; padding: 5px;">
+                        <button class="action-btn btn-edit" onclick="forceAviator()">SET</button>
+                    </div>
+                </div>
+
+                <!-- Big Small Control -->
+                <div class="control-card">
+                    <h4><i class="fas fa-dice"></i> Big Small</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="action-btn btn-block" onclick="forceGame('bigsmall', 'SMALL')">SMALL</button>
+                        <button class="action-btn btn-unblock" onclick="forceGame('bigsmall', 'BIG')">BIG</button>
+                    </div>
+                </div>
+
+                <!-- Teen Patti Control -->
+                <div class="control-card">
+                    <h4><i class="fas fa-spade"></i> Teen Patti</h4>
+                    <select id="tpTableSelect" style="width: 100%; padding: 5px; background: #111; color: white;">
+                        <option value="1">Table 1</option>
+                        <option value="2">Table 2</option>
+                        <option value="3">Table 3</option>
+                    </select>
+                    <div style="display: flex; gap: 5px; margin-top: 5px;">
+                        <button class="action-btn btn-block" onclick="forceGame('teenpatti', 'DEALER_WINS', document.getElementById('tpTableSelect').value)">Dealer Win</button>
+                        <button class="action-btn btn-unblock" onclick="forceGame('teenpatti', 'PLAYERS_WIN', document.getElementById('tpTableSelect').value)">Player Win</button>
+                    </div>
+                </div>
+
                 <!-- Color Game Control -->
                 <div class="control-card">
                     <h4><i class="fas fa-palette"></i> Color Game</h4>
@@ -185,6 +218,17 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ game: 'color', autoOpen })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        async function forceAviator() {
+            const multiplier = document.getElementById('forceAviatorMult').value;
+            const res = await fetch(`${API_URL}/api/admin/force-result`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ game: 'aviator', multiplier })
             });
             const data = await res.json();
             alert(data.message);
