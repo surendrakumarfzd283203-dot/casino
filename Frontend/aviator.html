@@ -143,17 +143,41 @@
 
             <div class="plane-container">
                 <div class="runway"></div>
-<<<<<<< HEAD
-                <img src="https://cdn-icons-png.flaticon.com/512/5776/5776443.png" class="plane-animation" id="plane" alt="plane"
-                     style="width: 150px; filter: drop-shadow(0 0 10px rgba(255,152,0,0.5));"
-                     onerror="this.src='https://cdn-icons-png.flaticon.com/512/3122/3122324.png';">
-=======
-               <img src="./aviator.jpg"
-     class="plane-animation"
-     id="plane"
-     style="width:150px; filter: drop-shadow(0 0 10px rgba(255,152,0,0.5));"
-     onerror="this.src='https://cdn-icons-png.flaticon.com/512/3122/3122324.png';">
->>>>>>> 81ea4e7ca8d02de97a349dedc17379fdd50c9736
+                <!-- SVG Red Propeller Plane (High Fidelity) -->
+                <svg id="plane" class="plane-animation" width="150" height="80" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(233,30,99,0.5));">
+                    <!-- Tail Section -->
+                    <path d="M5,20 L15,15 L20,15 L20,25 L5,20 Z" fill="#E91E63" />
+                    <path d="M5,30 L15,35 L20,35 L20,25 L5,30 Z" fill="#E91E63" />
+                    <path d="M12,25 L5,15 L10,15 L15,25 Z" fill="#E91E63" />
+
+                    <!-- Fuselage Main Body -->
+                    <path d="M18,22 L75,18 L85,25 L75,32 L18,28 Z" fill="#E91E63" />
+
+                    <!-- Top Wing (Swept Back) -->
+                    <path d="M35,18 L55,5 L75,5 L65,18 Z" fill="#E91E63" />
+
+                    <!-- Bottom Wing (Swept Back) -->
+                    <path d="M35,32 L55,45 L75,45 L65,32 Z" fill="#E91E63" />
+
+                    <!-- Cockpit Area -->
+                    <path d="M50,18 L60,12 L75,18 Z" fill="#000" fill-opacity="0.3" />
+
+                    <!-- Propeller Nose -->
+                    <path d="M85,25 L88,22 L88,28 Z" fill="#333" />
+
+                    <!-- Propeller Blades (Animated) -->
+                    <g style="transform-origin: 88.5px 25px;">
+                        <rect x="87" y="5" width="3" height="40" rx="1.5" fill="#E91E63">
+                            <animateTransform attributeName="transform" type="scale" values="1 1; 1 0.1; 1 1" dur="0.1s" repeatCount="indefinite" />
+                        </rect>
+                    </g>
+
+                    <!-- The "X" Marking on side -->
+                    <path d="M68,22 L76,28 M76,22 L68,28" stroke="black" stroke-width="2" stroke-linecap="round" />
+
+                    <!-- Fuselage Bottom Detail Line -->
+                    <path d="M20,29 L75,33" stroke="#000" stroke-width="0.5" stroke-opacity="0.2" />
+                </svg>
             </div>
 
             <div id="gameStatus"></div>

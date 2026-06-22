@@ -20,6 +20,10 @@ const auth = require("./middleware/auth");
 const { playAviator, setForcedMultiplier } = require("./games/aviator");
 const { playBigSmall } = require("./games/bigsmall");
 const teenPattiManager = require("./games/teenPattiManager");
+const colorGameManager = require("./games/colorGameManager");
+const luckyDrawManager = require("./games/luckyDrawManager");
+const spinGameManager = require("./games/spinGameManager");
+const rummyManager = require("./games/rummyManager");
 
 const app = express();
 app.use(cors());
@@ -295,6 +299,74 @@ app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
 
 // --- GAME ROUTES ---
 
+app.get("/api/game/color/state", auth, (req, res) => {
+    res.json({ success: true, ...colorGameManager.getGameState() });
+});
+
+app.post("/api/game/color/bet", auth, async (req, res) => {
+    const { type, value, amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const betRes = colorGameManager.placeBet(req.user.id, user.name, type, value, amount);
+    if (betRes.success) {
+        user.coins -= amount;
+        await user.save();
+    }
+    res.json(betRes);
+});
+
+app.get("/api/game/luckydraw/state", auth, (req, res) => {
+    res.json({ success: true, ...luckyDrawManager.getGameState() });
+});
+
+app.post("/api/game/luckydraw/bet", auth, async (req, res) => {
+    const { amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const betRes = luckyDrawManager.placeBet(req.user.id, user.name, amount);
+    if (betRes.success) {
+        user.coins -= amount;
+        await user.save();
+    }
+    res.json(betRes);
+});
+
+app.get("/api/game/spin/state", auth, (req, res) => {
+    res.json({ success: true, ...spinGameManager.getGameState() });
+});
+
+app.post("/api/game/spin/bet", auth, async (req, res) => {
+    const { amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const betRes = spinGameManager.placeBet(req.user.id, user.name, amount);
+    if (betRes.success) {
+        user.coins -= amount;
+        await user.save();
+    }
+    res.json(betRes);
+});
+
+app.get("/api/game/rummy/tables", auth, (req, res) => {
+    res.json({ success: true, tables: rummyManager.getTables() });
+});
+
+app.post("/api/game/rummy/join", auth, async (req, res) => {
+    const { tableId, amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const betRes = rummyManager.placeBet(tableId, req.user.id, user.name, amount);
+    if (betRes.success) {
+        user.coins -= amount;
+        await user.save();
+    }
+    res.json(betRes);
+});
+
 let forcedBigSmallResult = null;
 let activeBets = {
     bigsmall: { BIG: 0, SMALL: 0 }
@@ -444,7 +516,16 @@ app.post("/api/teenpatti/bet", auth, async (req, res) => {
 
 app.get("/api/admin/stats", adminAuth, async (req, res) => {
     try {
-        const stats = { forcedBigSmallResult };
+        const stats = {
+            forcedBigSmallResult,
+            liveBets: {
+            color: colorGameManager.getLiveBets(),
+            luckydraw: luckyDrawManager.bets,
+            spin: spinGameManager.bets,
+            rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players }))
+        }
+            }
+        };
 
         const totalUsers = await User.countDocuments({});
         const totalCoinsAgg = await User.aggregate([{ $group: { _id: null, total: { $sum: "$coins" } } }]);
@@ -473,7 +554,7 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
 });
 
 app.post("/api/admin/force-result", adminAuth, (req, res) => {
-    const { game, result, tableId, multiplier } = req.body;
+    const { game, result, tableId, multiplier, number, autoOpen } = req.body;
     if (game === 'bigsmall') {
         forcedBigSmallResult = result;
         return res.json({ success: true, message: `Next BIG/SMALL result set to: ${result || 'Random'}` });
@@ -483,6 +564,22 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
     } else if (game === 'teenpatti') {
         teenPattiManager.forceResult(tableId, result);
         return res.json({ success: true, message: `Table ${tableId} forced result set to: ${result}` });
+    } else if (game === 'color') {
+        if (autoOpen !== undefined) {
+            colorGameManager.toggleAutoOpen(autoOpen);
+            return res.json({ success: true, message: `Auto Open set to: ${autoOpen}` });
+        }
+        colorGameManager.forceNextResult(number);
+        return res.json({ success: true, message: `Next Color Game number set to: ${number}` });
+    } else if (game === 'luckydraw') {
+        luckyDrawManager.forceJackpot();
+        return res.json({ success: true, message: "Next Lucky Draw set to 777" });
+    } else if (game === 'spin') {
+        spinGameManager.forceResult(result);
+        return res.json({ success: true, message: `Next Spin result index set to: ${result}` });
+    } else if (game === 'rummy') {
+        rummyManager.forceWinner(tableId, result); // result is winner userId
+        return res.json({ success: true, message: `Next Rummy winner set for Table ${tableId}` });
     }
     res.json({ success: false, message: "Invalid game" });
 });

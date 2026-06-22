@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema({
     status: { type: String, default: "active" },
     avatar: { type: String, default: null },
     last_bonus: { type: Date, default: null },
+    lucky_draw_streak: { type: Number, default: 0 },
     created_at: { type: Date, default: Date.now }
 });
 

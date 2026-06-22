@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin & Win | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 40px auto;
+            border: 10px solid #333;
+            border-radius: 50%;
+            overflow: hidden;
+            transition: transform 3s cubic-bezier(0.1, 0, 0.2, 1);
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #ff9800;
+            z-index: 10;
+        }
+        .section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .section-text {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-15deg);
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header><h1>Spin & Win</h1></header>
+
+    <div class="form-box" style="max-width: 600px; text-align: center;">
+        <div class="balance-badge">Balance: <span id="balance">0</span> Coins</div>
+        <div id="timer" style="font-size: 24px; margin-top: 20px;">00:00</div>
+
+        <div style="position: relative;">
+            <div class="wheel-pointer"></div>
+            <div class="wheel-container" id="wheel"></div>
+        </div>
+
+        <div class="wallet-card">
+            <label>Bet Amount</label>
+            <input type="number" id="betAmount" value="20" min="10" style="text-align: center;">
+        </div>
+
+        <button class="button-primary" id="betBtn" onclick="placeBet()">PLACE BET</button>
+
+        <div style="margin-top: 30px;" id="history"></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const token = localStorage.getItem("token");
+        const wheel = document.getElementById("wheel");
+        let currentRotation = 0;
+
+        async function fetchState() {
+            const res = await fetch(`${API_URL}/api/game/spin/state`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                if (wheel.children.length === 0) renderWheel(data.sections);
+
+                document.getElementById("timer").innerText = `Next Spin: ${data.timer}s`;
+
+                if (data.timer === 0) {
+                    // Start Spinning animation (simulated)
+                    const lastResult = data.history[0];
+                    if (lastResult) {
+                        const targetDeg = (360 / data.sections.length) * lastResult.index;
+                        currentRotation += 3600 - targetDeg; // Multi-turn + target
+                        wheel.style.transform = `rotate(${currentRotation}deg)`;
+                    }
+                }
+
+                if (data.timer < 5) {
+                    document.getElementById("betBtn").disabled = true;
+                } else {
+                    document.getElementById("betBtn").disabled = false;
+                }
+            }
+        }
+
+        function renderWheel(sections) {
+            const angle = 360 / sections.length;
+            sections.forEach((s, i) => {
+                const sec = document.createElement("div");
+                sec.className = "section";
+                sec.style.transform = `rotate(${i * angle}deg) skewY(${90 - angle}deg)`;
+                sec.style.backgroundColor = s[1].toLowerCase();
+
+                const text = document.createElement("div");
+                text.className = "section-text";
+                text.innerText = s[0] + "x";
+                text.style.transform = `skewY(-${90 - angle}deg) rotate(${angle / 2}deg) translateY(40px)`;
+
+                sec.appendChild(text);
+                wheel.appendChild(sec);
+            });
+        }
+
+        async function placeBet() {
+            const amount = document.getElementById("betAmount").value;
+            const res = await fetch(`${API_URL}/api/game/spin/bet`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ amount })
+            });
+            const data = await res.json();
+            if (data.success) { alert("Bet placed!"); fetchBalance(); }
+            else alert(data.message);
+        }
+
+        async function fetchBalance() {
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) document.getElementById("balance").innerText = data.user.coins.toLocaleString();
+        }
+
+        setInterval(fetchState, 1000);
+        fetchBalance();
+    </script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Number Game | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .timer-box { font-size: 32px; font-weight: bold; color: #ff9800; margin: 20px 0; }
+        .grid-numbers {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .num-btn {
+            padding: 15px 5px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .num-btn.selected { border-color: white; box-shadow: 0 0 10px white; }
+
+        .color-btns { display: flex; justify-content: space-around; gap: 10px; margin: 20px 0; }
+        .color-btn {
+            flex: 1;
+            padding: 15px 0;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            text-shadow: 1px 1px 2px black;
+        }
+        .color-btn.selected { border-color: white; box-shadow: 0 0 10px white; }
+
+        .size-btns { display: flex; gap: 20px; margin: 20px 0; }
+        .size-btn {
+            flex: 1;
+            padding: 20px;
+            border-radius: 15px;
+            background: #1a1a1a;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            border: 2px solid #333;
+            cursor: pointer;
+        }
+        .size-btn.selected { border-color: #ff9800; background: rgba(255, 152, 0, 0.1); }
+
+        .history-list {
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .history-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Color Number</h1>
+        <nav>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="wallet.html">Wallet</a>
+        </nav>
+    </header>
+
+    <div class="form-box" style="max-width: 600px; text-align: center;">
+        <div class="balance-badge" style="display: inline-block; background: rgba(255, 152, 0, 0.1); color: #ff9800; padding: 8px 15px; border-radius: 20px; font-weight: bold;">
+            Balance: <span id="balance">0</span> Coins
+        </div>
+
+        <div class="timer-box" id="timer">00:00</div>
+        <div style="font-size: 14px; opacity: 0.7;">Round ID: <span id="roundId">-</span></div>
+
+        <div class="grid-numbers" id="numberGrid"></div>
+
+        <div class="color-btns">
+            <button class="color-btn" style="background: #f44336;" onclick="selectBet('COLOR', 'RED', this)">RED</button>
+            <button class="color-btn" style="background: #2196f3;" onclick="selectBet('COLOR', 'BLUE', this)">BLUE</button>
+            <button class="color-btn" style="background: #4caf50;" onclick="selectBet('COLOR', 'GREEN', this)">GREEN</button>
+            <button class="color-btn" style="background: #ffeb3b; color: black;" onclick="selectBet('COLOR', 'YELLOW', this)">YELLOW</button>
+            <button class="color-btn" style="background: #9c27b0;" onclick="selectBet('COLOR', 'VIOLET', this)">VIOLET</button>
+        </div>
+
+        <div class="size-btns">
+            <button class="size-btn" onclick="selectBet('SIZE', 'SMALL', this)">SMALL (1-11)</button>
+            <button class="size-btn" onclick="selectBet('SIZE', 'BIG', this)">BIG (12-20)</button>
+        </div>
+
+        <div class="wallet-card">
+            <label>Bet Amount</label>
+            <input type="number" id="betAmount" value="10" min="10" style="text-align: center; font-size: 20px;">
+        </div>
+
+        <button class="button-primary" id="placeBetBtn" onclick="placeBet()" style="margin-top: 20px;">PLACE BET</button>
+
+        <div class="history-list" id="history"></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) location.href = "login.html";
+
+        let selectedType = null;
+        let selectedValue = null;
+        let currentBalance = 0;
+        let colorsMap = {};
+
+        const numGrid = document.getElementById("numberGrid");
+        const timerDisplay = document.getElementById("timer");
+        const roundIdDisplay = document.getElementById("roundId");
+        const historyContainer = document.getElementById("history");
+
+        async function fetchState() {
+            try {
+                const res = await fetch(`${API_URL}/api/game/color/state`, {
+                    headers: { authorization: token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    colorsMap = data.colors;
+                    renderNumbers();
+                    updateUI(data);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderNumbers() {
+            if (numGrid.children.length > 0) return;
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement("button");
+                btn.className = "num-btn";
+                btn.innerText = i;
+                btn.style.backgroundColor = getHexColor(colorsMap[i]);
+                btn.onclick = () => selectBet('NUMBER', i, btn);
+                numGrid.appendChild(btn);
+            }
+        }
+
+        function getHexColor(color) {
+            switch(color) {
+                case 'RED': return '#f44336';
+                case 'BLUE': return '#2196f3';
+                case 'GREEN': return '#4caf50';
+                case 'YELLOW': return '#ffeb3b';
+                case 'VIOLET': return '#9c27b0';
+                default: return '#1a1a1a';
+            }
+        }
+
+        function updateUI(data) {
+            roundIdDisplay.innerText = data.roundId;
+            const mins = Math.floor(data.timer / 60);
+            const secs = data.timer % 60;
+            timerDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            if (data.timer < 5) {
+                document.getElementById("placeBetBtn").disabled = true;
+                document.getElementById("placeBetBtn").innerText = "WAITING...";
+            } else {
+                document.getElementById("placeBetBtn").disabled = false;
+                document.getElementById("placeBetBtn").innerText = "PLACE BET";
+            }
+
+            renderHistory(data.history);
+        }
+
+        function renderHistory(history) {
+            historyContainer.innerHTML = "";
+            history.forEach(h => {
+                const dot = document.createElement("div");
+                dot.className = "history-dot";
+                dot.innerText = h.number;
+                dot.style.backgroundColor = getHexColor(h.color);
+                dot.title = `Round: ${h.roundId}`;
+                historyContainer.appendChild(dot);
+            });
+        }
+
+        function selectBet(type, value, element) {
+            selectedType = type;
+            selectedValue = value;
+
+            // Clear all selected classes
+            document.querySelectorAll(".num-btn, .color-btn, .size-btn").forEach(el => el.classList.remove("selected"));
+            element.classList.add("selected");
+        }
+
+        async function placeBet() {
+            const amount = parseInt(document.getElementById("betAmount").value);
+            if (!selectedType || !selectedValue) return alert("Select a Number, Color or Size");
+            if (isNaN(amount) || amount < 10) return alert("Min bet is 10");
+
+            try {
+                const res = await fetch(`${API_URL}/api/game/color/bet`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", authorization: token },
+                    body: JSON.stringify({ type: selectedType, value: selectedValue, amount })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Bet Placed!");
+                    fetchBalance();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { alert("Server Error"); }
+        }
+
+        async function fetchBalance() {
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                currentBalance = data.user.coins;
+                document.getElementById("balance").innerText = currentBalance.toLocaleString();
+            }
+        }
+
+        setInterval(fetchState, 2000);
+        fetchBalance();
+    </script>
+</body>
+</html>

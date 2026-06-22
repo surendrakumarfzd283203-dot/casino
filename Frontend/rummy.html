@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rummy | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .table-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .rummy-table {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        .rummy-table.betting { border-color: #4caf50; }
+        .rummy-table.playing { border-color: #2196f3; }
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+        .player-list {
+            margin: 15px 0;
+            text-align: left;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header><h1>Rummy Tables</h1><nav><a href="dashboard.html">Dashboard</a></nav></header>
+
+    <div class="form-box" style="max-width: 900px;">
+        <div class="balance-badge">Balance: <span id="balance">0</span> Coins</div>
+
+        <div class="table-list" id="tableList"></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const token = localStorage.getItem("token");
+
+        async function fetchTables() {
+            const res = await fetch(`${API_URL}/api/game/rummy/tables`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) renderTables(data.tables);
+        }
+
+        function renderTables(tables) {
+            const container = document.getElementById("tableList");
+            container.innerHTML = "";
+            tables.forEach(t => {
+                const card = document.createElement("div");
+                card.className = `rummy-table ${t.state.toLowerCase()}`;
+
+                let playersHtml = "";
+                Object.values(t.players).forEach(p => {
+                    playersHtml += `<div>👤 ${p.name} - ${p.betAmount} (${p.status})</div>`;
+                });
+
+                card.innerHTML = `
+                    <div class="status-badge" style="background:${getStatusColor(t.state)}">${t.state}</div>
+                    <h3>Table #${t.id}</h3>
+                    <div style="font-size:24px; font-weight:bold; margin:10px 0;">${t.timer}s</div>
+                    <div class="player-list">${playersHtml || 'No players yet'}</div>
+                    <div class="wallet-card">
+                        <input type="number" id="bet-${t.id}" value="100" min="50" style="width:80px">
+                        <button class="button-primary" onclick="joinTable(${t.id})" ${t.state !== 'BETTING' ? 'disabled' : ''}>JOIN</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function getStatusColor(s) {
+            if (s === 'BETTING') return '#4caf50';
+            if (s === 'PLAYING') return '#2196f3';
+            return '#666';
+        }
+
+        async function joinTable(id) {
+            const amount = document.getElementById(`bet-${id}`).value;
+            const res = await fetch(`${API_URL}/api/game/rummy/join`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: id, amount })
+            });
+            const data = await res.json();
+            if (data.success) { alert("Joined table!"); fetchBalance(); }
+            else alert(data.message);
+        }
+
+        async function fetchBalance() {
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) document.getElementById("balance").innerText = data.user.coins.toLocaleString();
+        }
+
+        setInterval(fetchTables, 1000);
+        fetchBalance();
+    </script>
+</body>
+</html>

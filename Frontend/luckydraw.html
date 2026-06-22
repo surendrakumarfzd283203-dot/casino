@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Draw 777 | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .slot-machine {
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 30px;
+            border: 5px solid #ff9800;
+            margin: 40px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 0 30px rgba(255, 152, 0, 0.3);
+        }
+        .digit-box {
+            width: 80px;
+            height: 120px;
+            background: white;
+            color: black;
+            font-size: 80px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .jackpot-text {
+            font-size: 24px;
+            color: #ff9800;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .timer-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .history-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lucky Draw 777</h1>
+        <nav><a href="dashboard.html">Dashboard</a></nav>
+    </header>
+
+    <div class="form-box" style="max-width: 600px; text-align: center;">
+        <div class="balance-badge" style="margin-bottom: 20px;">
+            Balance: <span id="balance">0</span> Coins
+        </div>
+
+        <div class="timer-badge">Next Draw: <span id="timer">00:00</span></div>
+        <div class="jackpot-text">Jackpot: 10x Payout on 777</div>
+
+        <div class="slot-machine">
+            <div class="digit-box" id="d1">?</div>
+            <div class="digit-box" id="d2">?</div>
+            <div class="digit-box" id="d3">?</div>
+        </div>
+
+        <div class="wallet-card">
+            <label>Bet Amount</label>
+            <input type="number" id="betAmount" value="50" min="10" style="text-align: center; font-size: 20px;">
+        </div>
+
+        <button class="button-primary" id="betBtn" onclick="placeBet()" style="margin-top: 20px;">PLACE BET</button>
+
+        <div style="margin-top: 40px; text-align: left;">
+            <h3>Recent Draws</h3>
+            <div id="history"></div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) location.href = "login.html";
+
+        async function fetchState() {
+            try {
+                const res = await fetch(`${API_URL}/api/game/luckydraw/state`, {
+                    headers: { authorization: token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const mins = Math.floor(data.timer / 60);
+                    const secs = data.timer % 60;
+                    document.getElementById("timer").innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                    if (data.timer > 55) {
+                        // New round started, show last result for a few seconds
+                        if (data.history.length > 0) {
+                            const last = data.history[0].result;
+                            document.getElementById("d1").innerText = last[0];
+                            document.getElementById("d2").innerText = last[1];
+                            document.getElementById("d3").innerText = last[2];
+                        }
+                    } else if (data.timer < 5) {
+                        document.getElementById("betBtn").disabled = true;
+                        document.getElementById("betBtn").innerText = "DRAWING...";
+                        rollingEffect();
+                    } else {
+                        document.getElementById("betBtn").disabled = false;
+                        document.getElementById("betBtn").innerText = "PLACE BET";
+                        document.getElementById("d1").innerText = "?";
+                        document.getElementById("d2").innerText = "?";
+                        document.getElementById("d3").innerText = "?";
+                    }
+
+                    renderHistory(data.history);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function rollingEffect() {
+            document.getElementById("d1").innerText = Math.floor(Math.random()*10);
+            document.getElementById("d2").innerText = Math.floor(Math.random()*10);
+            document.getElementById("d3").innerText = Math.floor(Math.random()*10);
+        }
+
+        async function placeBet() {
+            const amount = parseInt(document.getElementById("betAmount").value);
+            if (isNaN(amount) || amount < 10) return alert("Enter valid bet");
+
+            const res = await fetch(`${API_URL}/api/game/luckydraw/bet`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Bet Placed! Wait for the draw.");
+                fetchBalance();
+            } else {
+                alert(data.message);
+            }
+        }
+
+        function renderHistory(history) {
+            const container = document.getElementById("history");
+            container.innerHTML = "";
+            history.forEach(h => {
+                const row = document.createElement("div");
+                row.className = "history-row";
+                row.innerHTML = `<span>Round #${h.roundId.toString().slice(-5)}</span> <span style="font-weight:bold; color:#ff9800">${h.result}</span>`;
+                container.appendChild(row);
+            });
+        }
+
+        async function fetchBalance() {
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById("balance").innerText = data.user.coins.toLocaleString();
+            }
+        }
+
+        setInterval(fetchState, 1000);
+        fetchBalance();
+    </script>
+</body>
+</html>
