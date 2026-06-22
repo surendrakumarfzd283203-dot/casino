@@ -63,15 +63,16 @@
     </style>
 </head>
 <body style="background: #050507;">
-    <div class="admin-sidebar">
-        <h1 style="font-size: 20px; color: var(--primary); margin-bottom: 40px;">ADMIN PANEL</h1>
-        <a class="sidebar-link active" onclick="showSection('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</a>
-        <a class="sidebar-link" onclick="showSection('users')"><i class="fas fa-users"></i> Users</a>
-        <a class="sidebar-link" onclick="showSection('deposits')"><i class="fas fa-wallet"></i> Deposits</a>
-        <a class="sidebar-link" onclick="showSection('withdrawals')"><i class="fas fa-university"></i> Withdrawals</a>
-        <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
-        <a class="sidebar-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
+        <div class="admin-sidebar">
+            <h1 style="font-size: 20px; color: var(--primary); margin-bottom: 40px;">ADMIN PANEL</h1>
+            <a class="sidebar-link active" onclick="showSection('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a class="sidebar-link" onclick="showSection('requests')"><i class="fas fa-bell"></i> Pending Requests</a>
+            <a class="sidebar-link" onclick="showSection('users')"><i class="fas fa-users"></i> Users</a>
+            <a class="sidebar-link" onclick="showSection('deposits')"><i class="fas fa-wallet"></i> Deposits History</a>
+            <a class="sidebar-link" onclick="showSection('withdrawals')"><i class="fas fa-university"></i> Withdrawals History</a>
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+            <a class="sidebar-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
 
     <div class="admin-main">
         <div id="section-dashboard">
@@ -166,6 +167,23 @@
             <table id="game-logs"><thead><tr><th>User</th><th>Game</th><th>Amount</th><th>Details</th><th>Time</th></tr></thead><tbody id="game-logs-body"></tbody></table>
         </div>
 
+        <!-- Pending Requests Section -->
+        <div id="section-requests" style="display:none;">
+            <h2>Pending Deposit/Withdrawal Requests</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Details</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requests-body"></tbody>
+            </table>
+        </div>
+
         <!-- Section Users, Deposits, Withdrawals (Placeholder for structure) -->
         <div id="section-users" style="display:none;"><h2>User Management</h2><table id="users-table"></table></div>
         <div id="section-deposits" style="display:none;"><h2>Deposits</h2><table id="deposits-table"></table></div>
@@ -248,6 +266,40 @@
             document.getElementById('section-' + id).style.display = 'block';
             document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
             event.currentTarget.classList.add('active');
+
+            if(id === 'requests') fetchPendingRequests();
+        }
+
+        async function fetchPendingRequests() {
+            const res = await fetch(`${API_URL}/api/admin/pending-requests`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                const body = document.getElementById('requests-body');
+                body.innerHTML = data.requests.map(r => `
+                    <tr>
+                        <td>${r.user_id.name}<br><small>${r.user_id.email}</small></td>
+                        <td><span class="badge ${r.type === 'deposit' ? 'badge-success' : 'badge-danger'}">${r.type}</span></td>
+                        <td>${r.amount}</td>
+                        <td>${r.details}</td>
+                        <td>
+                            <button class="action-btn btn-unblock" onclick="handleRequest('${r._id}', 'approve')">Approve</button>
+                            <button class="action-btn btn-block" onclick="handleRequest('${r._id}', 'reject')">Reject</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function handleRequest(requestId, action) {
+            const res = await fetch(`${API_URL}/api/admin/${action}-request`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ requestId })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchPendingRequests();
+            fetchStats();
         }
 
         function logout() { localStorage.removeItem("adminToken"); location.href = "login.html"; }

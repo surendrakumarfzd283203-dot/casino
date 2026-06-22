@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History | Solo Casino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .history-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .type-deposit { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
+        .type-withdraw { background: rgba(244, 67, 54, 0.2); color: #f44336; }
+        .type-game { background: rgba(33, 150, 243, 0.2); color: #2196f3; }
+        .status-pending { color: #ff9800; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header><h1>History</h1><nav><a href="dashboard.html">Dashboard</a></nav></header>
+
+    <div class="container" style="max-width: 800px; padding: 20px;">
+        <div id="historyList"></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const token = localStorage.getItem("token");
+        if(!token) location.href = "login.html";
+
+        async function fetchHistory() {
+            const res = await fetch(`${API_URL}/api/transactions`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                const container = document.getElementById("historyList");
+                container.innerHTML = data.transactions.map(t => `
+                    <div class="history-card">
+                        <div>
+                            <span class="type-badge type-${t.type.includes('game') ? 'game' : t.type}">${t.type}</span>
+                            <div style="font-size: 14px; margin-top: 5px;">${t.details}</div>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px;">${new Date(t.created_at).toLocaleString()}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 18px; font-weight: bold; color: ${t.amount > 0 ? '#4caf50' : '#f44336'}">
+                                ${t.amount > 0 ? '+' : ''}${t.amount}
+                            </div>
+                            ${t.status === 'pending' ? '<div class="status-pending">Pending</div>' : ''}
+                            ${t.status === 'rejected' ? '<div style="color:#f44336; font-size:12px;">Rejected</div>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        fetchHistory();
+    </script>
+</body>
+</html>

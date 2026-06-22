@@ -244,30 +244,12 @@ app.get("/api/wallet/transactions", auth, async (req, res) => {
     }
 });
 
-app.post("/api/wallet/request-deposit", auth, async (req, res) => {
+app.get("/api/transactions", auth, async (req, res) => {
     try {
-        const { amount, paymentMethod, upiId, reference } = req.body;
-        const parsedAmount = Number(amount);
-        if (!parsedAmount || parsedAmount <= 0) {
-            return res.json({ success: false, message: "Enter a valid amount" });
-        }
-
-        const method = paymentMethod === "qr" ? "qr" : "upi";
-        const details = method === "qr"
-            ? `Scan QR and pay ${parsedAmount} INR to ${DEFAULT_UPI}`
-            : `Send ${parsedAmount} INR to ${upiId || DEFAULT_UPI}${reference ? ` | Ref: ${reference}` : ""}`;
-
-        const request = new DepositRequest({
-            user_id: req.user.id,
-            amount: parsedAmount,
-            payment_method: method,
-            details: details
-        });
-        await request.save();
-
-        res.json({ success: true, message: "Deposit request submitted" });
+        const transactions = await Transaction.find({ user_id: req.user.id }).sort({ created_at: -1 });
+        res.json({ success: true, transactions });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Unable to submit request" });
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 });
 
@@ -275,25 +257,59 @@ app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
     try {
         const { amount, upiId, note } = req.body;
         const parsedAmount = Number(amount);
-        if (!parsedAmount || parsedAmount <= 0) {
-            return res.json({ success: false, message: "Enter a valid amount" });
-        }
-        if (!upiId) {
-            return res.json({ success: false, message: "Provide a withdrawal UPI ID" });
+        if (!parsedAmount || parsedAmount < 100) {
+            return res.json({ success: false, message: "Minimum withdrawal is 100" });
         }
 
-        const details = `Withdraw ${parsedAmount} INR to ${upiId}${note ? ` | Note: ${note}` : ""}`;
-        const request = new DepositRequest({
+        const user = await User.findById(req.user.id);
+        if (user.coins < parsedAmount) {
+            return res.json({ success: false, message: "Insufficient coins" });
+        }
+
+        const commissionRate = 0.05; // 5% Admin Commission
+        const commission = parsedAmount * commissionRate;
+        const finalAmount = parsedAmount - commission;
+
+        // Deduct coins immediately and create pending transaction
+        user.coins -= parsedAmount;
+        await user.save();
+
+        const txn = new Transaction({
+            user_id: req.user.id,
+            amount: -parsedAmount,
+            type: "withdraw",
+            status: "pending",
+            commission: commission,
+            details: `Withdrawal request to ${upiId}. Final amount: ${finalAmount} (Comm: ${commission})`
+        });
+        await txn.save();
+
+        res.json({ success: true, message: "Withdrawal request submitted for approval" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+});
+
+app.post("/api/wallet/request-deposit", auth, async (req, res) => {
+    try {
+        const { amount, reference } = req.body;
+        const parsedAmount = Number(amount);
+        if (!parsedAmount || parsedAmount < 10) {
+            return res.json({ success: false, message: "Minimum deposit is 10" });
+        }
+
+        const txn = new Transaction({
             user_id: req.user.id,
             amount: parsedAmount,
-            payment_method: "withdraw",
-            details: details
+            type: "deposit",
+            status: "pending",
+            details: `Deposit via UPI. Ref: ${reference || 'N/A'}`
         });
-        await request.save();
+        await txn.save();
 
-        res.json({ success: true, message: "Withdrawal request submitted" });
+        res.json({ success: true, message: "Deposit request submitted. Waiting for admin approval." });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Unable to submit withdrawal request" });
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 });
 
@@ -688,35 +704,57 @@ app.get("/api/admin/deposits", adminAuth, async (req, res) => {
     }
 });
 
-app.post("/api/admin/deposits/:id/approve", adminAuth, async (req, res) => {
+app.get("/api/admin/pending-requests", adminAuth, async (req, res) => {
     try {
-        const depositId = req.params.id;
-        const deposit = await DepositRequest.findById(depositId);
-        if (!deposit || deposit.status !== 'pending') {
-            return res.status(500).json({ success: false, message: "Request not found" });
-        }
-
-        if (deposit.payment_method === "withdraw") {
-            deposit.status = 'approved';
-            await deposit.save();
-            res.json({ success: true, message: "Withdrawal request approved" });
-        } else {
-            await User.findByIdAndUpdate(deposit.user_id, { $inc: { coins: deposit.amount } });
-            deposit.status = 'approved';
-            await deposit.save();
-            res.json({ success: true, message: "Deposit approved" });
-        }
+        const requests = await Transaction.find({ status: "pending" })
+            .populate("user_id", "name email coins")
+            .sort({ created_at: -1 });
+        res.json({ success: true, requests });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error processing request" });
+        res.status(500).json({ success: false });
     }
 });
 
-app.post("/api/admin/deposits/:id/reject", adminAuth, async (req, res) => {
+app.post("/api/admin/approve-request", adminAuth, async (req, res) => {
     try {
-        await DepositRequest.findByIdAndUpdate(req.params.id, { status: "rejected" });
+        const { requestId } = req.body;
+        const txn = await Transaction.findById(requestId);
+        if (!txn || txn.status !== 'pending') return res.json({ success: false, message: "Invalid request" });
+
+        if (txn.type === 'deposit') {
+            await User.findByIdAndUpdate(txn.user_id, { $inc: { coins: txn.amount } });
+            await Admin.findOneAndUpdate({}, { $inc: { balance: -txn.amount } }); // Reversing profit since it's a deposit inflow
+        } else if (txn.type === 'withdraw') {
+            // Commission already handled at request time by deducting full amount
+            // and tracking commission in the txn object.
+            // Admin balance increase (profit)
+            await Admin.findOneAndUpdate({}, { $inc: { balance: txn.commission } });
+        }
+
+        txn.status = 'completed';
+        await txn.save();
+        res.json({ success: true, message: "Request approved" });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.post("/api/admin/reject-request", adminAuth, async (req, res) => {
+    try {
+        const { requestId } = req.body;
+        const txn = await Transaction.findById(requestId);
+        if (!txn || txn.status !== 'pending') return res.json({ success: false, message: "Invalid request" });
+
+        if (txn.type === 'withdraw') {
+            // Return coins to user
+            await User.findByIdAndUpdate(txn.user_id, { $inc: { coins: Math.abs(txn.amount) } });
+        }
+
+        txn.status = 'rejected';
+        await txn.save();
         res.json({ success: true, message: "Request rejected" });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Unable to reject request" });
+        res.status(500).json({ success: false });
     }
 });
 
