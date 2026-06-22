@@ -531,7 +531,7 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
             rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
             bigsmall: activeBets.bigsmall,
             teenpatti: teenPattiManager.getTables().map(t => ({ id: t.id, players: t.players }))
-        }   }
+        }
         };
 
         const totalUsers = await User.countDocuments({});
