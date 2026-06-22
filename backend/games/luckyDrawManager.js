@@ -5,7 +5,7 @@ const Admin = require("../models/Admin");
 class LuckyDrawManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 60; // 1 minute rounds
+        this.timer = 45; // 45 seconds rounds for faster action
         this.bets = []; // { userId, name, amount }
         this.history = [];
         this.forcedJackpot = false;
@@ -33,12 +33,20 @@ class LuckyDrawManager {
         if (this.forcedJackpot) {
             result = "777";
         } else {
-            // Generate random result that is NOT 777
-            let res = Math.floor(Math.random() * 900) + 100;
-            while (res === 777) {
-                res = Math.floor(Math.random() * 900) + 100;
+            // Generate random result
+            // 2% chance for 777
+            // 15% chance for a "Pair" like 112, 553
+            // Otherwise random
+            const rand = Math.random();
+            if (rand < 0.02) result = "777";
+            else if (rand < 0.17) {
+                const digit = Math.floor(Math.random() * 10);
+                const other = Math.floor(Math.random() * 10);
+                result = `${digit}${digit}${other}`;
+            } else {
+                result = Math.floor(Math.random() * 900 + 100).toString();
+                if (result === "777") result = "778"; // Avoid accidental jackpot
             }
-            result = res.toString();
         }
 
         let totalBetAmount = 0;
@@ -54,38 +62,36 @@ class LuckyDrawManager {
 
             if (result === "777") {
                 isWin = true;
-                winAmount = bet.amount * 10; // Jackpot 10x
+                winAmount = bet.amount * 10;
+            } else if (result[0] === result[1] || result[1] === result[2] || result[0] === result[2]) {
+                // Any pair wins 2x
+                isWin = true;
+                winAmount = Math.floor(bet.amount * 2);
             } else {
-                // Check user streak: 3 loses, 1 win
-                if (user.lucky_draw_streak >= 3) {
+                // Real Luck: If sum of digits is even, 1.2x return (Low volatility win)
+                const sum = parseInt(result[0]) + parseInt(result[1]) + parseInt(result[2]);
+                if (sum % 2 === 0) {
                     isWin = true;
-                    winAmount = Math.floor(bet.amount * 2);
-                    user.lucky_draw_streak = 0;
-                } else {
-                    isWin = false;
-                    user.lucky_draw_streak += 1;
+                    winAmount = Math.floor(bet.amount * 1.2);
                 }
             }
-            await user.save();
 
             if (isWin) {
                 totalPayout += winAmount;
                 await User.findByIdAndUpdate(bet.userId, { $inc: { coins: winAmount } });
-                const txn = new Transaction({
+                await new Transaction({
                     user_id: bet.userId,
                     amount: winAmount - bet.amount,
                     type: "game_luckydraw",
-                    details: `Round ${this.roundId} WIN. Result: ${result}`
-                });
-                await txn.save();
+                    details: `Lucky Draw WIN. Result: ${result}`
+                }).save();
             } else {
-                const txn = new Transaction({
+                await new Transaction({
                     user_id: bet.userId,
                     amount: -bet.amount,
                     type: "game_luckydraw",
-                    details: `Round ${this.roundId} LOSE. Result: ${result}`
-                });
-                await txn.save();
+                    details: `Lucky Draw LOSE. Result: ${result}`
+                }).save();
             }
         }
 
@@ -96,7 +102,7 @@ class LuckyDrawManager {
         if (this.history.length > 20) this.history.pop();
 
         this.roundId = Date.now();
-        this.timer = 60;
+        this.timer = 45;
         this.bets = [];
         this.forcedJackpot = false;
         this.isResolving = false;
@@ -109,7 +115,7 @@ class LuckyDrawManager {
     }
 
     getGameState() {
-        return { roundId: this.roundId, timer: this.timer, history: this.history };
+        return { roundId: this.roundId, timer: this.timer, history: this.history, activeBets: this.bets.length };
     }
 
     forceJackpot() {

@@ -144,36 +144,35 @@ nav a:hover, nav a.active {
     background: var(--gold-gradient);
     color: #000;
     border: none;
-    padding: 12px 28px;
-    border-radius: 12px;
-    font-weight: 700;
+    padding: 16px 32px;
+    border-radius: 16px;
+    font-weight: 800;
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
     display: inline-block;
-    font-size: 15px;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .button-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(255, 152, 0, 0.4);
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(255, 152, 0, 0.5);
 }
 
 .button-secondary {
     background: rgba(255, 255, 255, 0.05);
     color: #fff;
     border: 1px solid var(--glass-border);
-    padding: 12px 28px;
-    border-radius: 12px;
-    font-weight: 600;
+    padding: 16px 32px;
+    border-radius: 16px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
     display: inline-block;
-}
-
-.button-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    font-size: 16px;
 }
 
 /* Inputs */
@@ -184,15 +183,15 @@ input[type="number"],
 select,
 textarea {
     width: 100%;
-    padding: 14px 18px;
-    border-radius: 14px;
-    border: 1px solid var(--glass-border);
-    background: rgba(0, 0, 0, 0.2);
+    padding: 18px 22px;
+    border-radius: 16px;
+    border: 2px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.3);
     color: #fff;
-    font-size: 15px;
-    margin-bottom: 15px;
+    font-size: 18px;
+    margin-bottom: 20px;
     outline: none;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
 }
 
 input:focus {
