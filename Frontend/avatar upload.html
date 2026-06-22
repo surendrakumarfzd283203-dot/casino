@@ -91,6 +91,7 @@
         </form>
     </div>
 
+    <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
         if (!token) { location.href = "login.html"; }
@@ -131,7 +132,7 @@
             formData.append("avatar", file);
 
             try {
-                const res = await fetch("http://localhost:5000/api/upload-avatar", {
+                const res = await fetch(`${API_URL}/api/upload-avatar`, {
                     method: "POST",
                     headers: {
                         authorization: token

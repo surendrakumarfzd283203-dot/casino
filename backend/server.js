@@ -315,6 +315,23 @@ app.post("/api/wallet/request-deposit", auth, async (req, res) => {
 
 // --- GAME ROUTES ---
 
+app.get("/api/game/bigsmall/state", auth, (req, res) => {
+    res.json({ success: true, ...bigSmallManager.getGameState() });
+});
+
+app.post("/api/game/bigsmall/bet", auth, async (req, res) => {
+    const { prediction, amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const betRes = bigSmallManager.placeBet(req.user.id, user.name, prediction, amount);
+    if (betRes.success) {
+        user.coins -= amount;
+        await user.save();
+    }
+    res.json(betRes);
+});
+
 app.get("/api/game/color/state", auth, (req, res) => {
     res.json({ success: true, ...colorGameManager.getGameState() });
 });
@@ -391,7 +408,6 @@ app.post("/api/game/rummy/join", auth, async (req, res) => {
 
 let forcedBigSmallResult = null;
 let activeBets = {
-    bigsmall: { BIG: 0, SMALL: 0 },
     aviator: [] // [{ userId, name, betAmount, cashOutMultiplier }]
 };
 
@@ -496,66 +512,7 @@ app.post("/api/play/aviator", auth, async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-app.post("/api/play/bigsmall", auth, async (req, res) => {
-    try {
-        const { betAmount, prediction } = req.body;
-        const userId = req.user.id;
 
-        if (!betAmount || betAmount <= 0) {
-            return res.json({ success: false, message: "Invalid bet amount" });
-        }
-        if (!['BIG', 'SMALL'].includes(prediction.toUpperCase())) {
-            return res.json({ success: false, message: "Invalid prediction" });
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(500).json({ success: false, message: "User not found" });
-        }
-
-        if (user.coins < betAmount) {
-            return res.json({ success: false, message: "Insufficient coins" });
-        }
-
-        // Track active bet for admin live view
-        activeBets.bigsmall[prediction.toUpperCase()] += Number(betAmount);
-
-        const gameResult = playBigSmall(Number(betAmount), prediction, forcedBigSmallResult);
-        const winAmount = gameResult.winAmount;
-        const netChange = winAmount - betAmount;
-
-        user.coins += netChange;
-        await user.save();
-
-        // Update Admin Wallet with Profit
-        const adminProfit = -netChange;
-        await Admin.findOneAndUpdate({}, { $inc: { balance: adminProfit } });
-
-        // Log Transaction
-        const txn = new Transaction({
-            user_id: userId,
-            amount: netChange,
-            type: "game_bigsmall",
-            details: `Predicted ${prediction}, Result: ${gameResult.total}`
-        });
-        await txn.save();
-
-        // Reset tracking after game (this is simplified, ideally tracked per round)
-        setTimeout(() => {
-            activeBets.bigsmall[prediction.toUpperCase()] -= Number(betAmount);
-            if (activeBets.bigsmall[prediction.toUpperCase()] < 0) activeBets.bigsmall[prediction.toUpperCase()] = 0;
-        }, 2000);
-
-        res.json({
-            success: true,
-            ...gameResult,
-            newBalance: user.coins
-        });
-    } catch (error) {
-        console.error("BigSmall Play Error:", error);
-        res.status(500).json({ success: false, message: "Server Error" });
-    }
-});
 
 app.get("/api/teenpatti/tables", auth, (req, res) => {
     res.json({ success: true, tables: teenPattiManager.getTables() });
@@ -588,28 +545,19 @@ app.post("/api/teenpatti/bet", auth, async (req, res) => {
 
 app.get("/api/admin/stats", adminAuth, async (req, res) => {
     try {
-        const stats = {
-            forcedBigSmallResult,
-            liveBets: {
+        // Use live active bets instead of history for real-time monitoring
+        const bigSmallState = bigSmallManager.getGameState();
+        stats.liveBets = {
             color: colorGameManager.getLiveBets(),
             luckydraw: luckyDrawManager.bets,
             spin: spinGameManager.bets,
             rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
-            bigsmall: activeBets.bigsmall,
+            bigsmall: {
+                BIG: bigSmallState.activeBets.filter(b => b.prediction === 'BIG').reduce((a, b) => a + b.amount, 0),
+                SMALL: bigSmallState.activeBets.filter(b => b.prediction === 'SMALL').reduce((a, b) => a + b.amount, 0)
+            },
             teenpatti: teenPattiManager.getTables().map(t => ({ id: t.id, players: t.players })),
             aviator: activeBets.aviator
-        }
-        };
-
-        const totalUsers = await User.countDocuments({});
-        const totalCoinsAgg = await User.aggregate([{ $group: { _id: null, total: { $sum: "$coins" } } }]);
-        stats.totalUsers = totalUsers;
-        stats.totalCoins = totalCoinsAgg.length > 0 ? totalCoinsAgg[0].total : 0;
-
-        // Use live active bets instead of history for real-time monitoring
-        stats.betVolumes = {
-            BIG: activeBets.bigsmall.BIG,
-            SMALL: activeBets.bigsmall.SMALL
         };
 
         const admin = await Admin.findOne({});
@@ -630,7 +578,11 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
 app.post("/api/admin/force-result", adminAuth, (req, res) => {
     const { game, result, tableId, multiplier, number, autoOpen } = req.body;
     if (game === 'bigsmall') {
-        forcedBigSmallResult = result;
+        if (autoOpen !== undefined) {
+            bigSmallManager.autoOpen = autoOpen;
+            return res.json({ success: true, message: `Auto Open set to: ${autoOpen}` });
+        }
+        bigSmallManager.forcedResult = result;
         return res.json({ success: true, message: `Next BIG/SMALL result set to: ${result || 'Random'}` });
     } else if (game === 'aviator') {
         aviatorState.crashMultiplier = Number(multiplier);

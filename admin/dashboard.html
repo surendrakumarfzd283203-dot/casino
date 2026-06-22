@@ -276,8 +276,47 @@
             const res = await fetch(`${API_URL}/api/admin/users`, { headers: { authorization: token } });
             const users = await res.json();
             const body = document.getElementById('users-table');
-            body.innerHTML = `<thead><tr><th>Name</th><th>Email</th><th>Coins</th><th>Status</th></tr></thead>
-                <tbody>${users.map(u => `<tr><td>${u.name}</td><td>${u.email}</td><td>${u.coins}</td><td>${u.status}</td></tr>`).join('')}</tbody>`;
+            body.innerHTML = `<thead><tr><th>Name</th><th>Email</th><th>Coins</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>${users.map(u => `
+                    <tr>
+                        <td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td>
+                            <input type="number" value="${u.coins}" id="coins-${u.id}" style="width: 80px; padding: 4px;">
+                            <button class="action-btn btn-edit" onclick="updateCoins('${u.id}')">Update</button>
+                        </td>
+                        <td><span style="color: ${u.status === 'blocked' ? 'red' : 'green'}">${u.status}</span></td>
+                        <td>
+                            ${u.status === 'blocked' ?
+                                `<button class="action-btn btn-unblock" onclick="toggleBlock('${u.id}', 'unblock')">Unblock</button>` :
+                                `<button class="action-btn btn-block" onclick="toggleBlock('${u.id}', 'block')">Block</button>`
+                            }
+                        </td>
+                    </tr>`).join('')}</tbody>`;
+        }
+
+        async function updateCoins(userId) {
+            const coins = document.getElementById(`coins-${userId}`).value;
+            const res = await fetch(`${API_URL}/api/admin/update-coins`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId, coins })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchUsers();
+            fetchStats();
+        }
+
+        async function toggleBlock(userId, action) {
+            const res = await fetch(`${API_URL}/api/admin/${action}-user`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchUsers();
         }
 
         async function fetchPendingRequests() {

@@ -1,8 +1,9 @@
 <div id="users"></div>
 
+<script src="js/config.js"></script>
 <script>
 
-fetch("http://localhost:5000/api/admin/users")
+fetch(`${API_URL}/api/admin/users`)
 .then(res=>res.json())
 .then(data=>{
 
