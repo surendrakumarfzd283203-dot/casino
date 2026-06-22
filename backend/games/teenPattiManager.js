@@ -1,170 +1,145 @@
-// Advanced Teen Patti Manager for Multiplayer and Auto-Dealing
-const { evaluateHand } = require("./teenpatti");
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
 const Admin = require("../models/Admin");
+const { evaluateHand } = require("./teenpatti");
 
 class TeenPattiTable {
     constructor(id) {
         this.id = id;
-        this.players = {}; // { userId: { name, betAmount, hand: [], status: 'active'|'folded' } }
-        this.dealerHand = [];
-        this.state = 'WAITING'; // WAITING, BETTING, DEALING, RESOLVING
-        this.timer = 0;
-        this.maxPlayers = 6;
-        this.forcedResult = null; // Admin control
+        this.players = {}; // { userId: { name, betAmount, hand, status, blind } }
+        this.state = 'WAITING'; // WAITING, DEALING, PLAYING, SHOW
+        this.timer = 15;
+        this.currentTurn = null; // userId
+        this.pot = 0;
+        this.lastBet = 10;
+        this.history = [];
     }
 
     reset() {
         this.players = {};
-        this.dealerHand = [];
+        this.pot = 0;
+        this.lastBet = 10;
         this.state = 'WAITING';
-        this.timer = 0;
-        this.forcedResult = null;
+        this.timer = 15;
     }
 
-    startBetting() {
-        this.state = 'BETTING';
-        this.timer = 20;
-    }
-
-    generateDeck() {
-        const suits = ['♠', '♥', '♦', '♣'];
-        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        const deck = [];
-        for (let suit of suits) {
-            for (let rank of ranks) {
-                deck.push({ suit, rank });
-            }
+    start() {
+        if (Object.keys(this.players).length < 2) {
+            this.timer = 10;
+            return;
         }
-        return deck.sort(() => Math.random() - 0.5);
+        this.state = 'DEALING';
+        this.timer = 5;
+        this.deal();
     }
 
     deal() {
-        this.state = 'DEALING';
-        const deck = this.generateDeck();
-        let cursor = 0;
+        const suits = ['♠', '♥', '♦', '♣'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let deck = [];
+        for (let s of suits) for (let r of ranks) deck.push({ suit: s, rank: r });
+        deck.sort(() => Math.random() - 0.5);
 
-        // Deal to active players
-        for (let userId in this.players) {
-            this.players[userId].hand = deck.slice(cursor, cursor + 3);
-            cursor += 3;
+        for (let uid in this.players) {
+            this.players[uid].hand = deck.splice(0, 3);
+            this.players[uid].status = 'ACTIVE';
+            this.players[uid].blind = true;
+        }
+        this.state = 'PLAYING';
+        this.currentTurn = Object.keys(this.players)[0];
+        this.timer = 20;
+    }
+
+    async handleMove(userId, move, amount, tableId) {
+        if (this.currentTurn !== userId) return { success: false, message: "Not your turn" };
+        const player = this.players[userId];
+
+        if (move === 'PACK') {
+            player.status = 'PACKED';
+        } else if (move === 'CHAAL') {
+            const bet = player.blind ? amount : amount * 2;
+            const user = await User.findById(userId);
+            if (user.coins < bet) return { success: false, message: "Insufficient coins" };
+
+            user.coins -= bet;
+            await user.save();
+            this.pot += bet;
+            this.lastBet = amount;
+        } else if (move === 'SEE') {
+            player.blind = false;
+            return { success: true };
         }
 
-        // Deal to dealer
-        this.dealerHand = deck.slice(cursor, cursor + 3);
-
-        this.resolve();
+        // Next Turn
+        const uids = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
+        if (uids.length < 2) {
+            this.resolve();
+        } else {
+            const idx = uids.indexOf(userId);
+            this.currentTurn = uids[(idx + 1) % uids.length];
+            this.timer = 20;
+        }
+        return { success: true };
     }
 
     async resolve() {
-        this.state = 'RESOLVING';
-        this.timer = 8;
+        this.state = 'SHOW';
+        this.timer = 10;
+        const activePlayers = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
 
-        const dealerEval = evaluateHand(this.dealerHand);
+        let winnerId = activePlayers[0];
+        let bestScore = -1;
 
-        for (let userId in this.players) {
-            const player = this.players[userId];
-            const playerEval = evaluateHand(player.hand);
-
-            let result, winAmount;
-            if (playerEval.score > dealerEval.score) {
-                result = 'WIN';
-                winAmount = Math.floor(player.betAmount * 1.9);
-            } else if (playerEval.score < dealerEval.score) {
-                result = 'LOSE';
-                winAmount = 0;
-            } else {
-                result = 'TIE';
-                winAmount = player.betAmount;
-            }
-
-            player.result = result;
-            player.winAmount = winAmount;
-
-            try {
-                // Update Database
-                if (winAmount > 0) {
-                    await User.findByIdAndUpdate(userId, { $inc: { coins: winAmount } });
-                }
-
-                const netProfit = winAmount - player.betAmount;
-                const txn = new Transaction({
-                    user_id: userId,
-                    amount: netProfit,
-                    type: "game_teenpatti",
-                    details: `Table ${this.id} Result: ${result}, Hand: ${playerEval.rank}`
-                });
-                await txn.save();
-
-                // Update Admin Wallet
-                if (netProfit !== 0) {
-                    await Admin.findOneAndUpdate({}, { $inc: { balance: -netProfit } });
-                }
-            } catch (error) {
-                console.error(`Error resolving TeenPatti for user ${userId}:`, error);
+        for (let uid of activePlayers) {
+            const score = evaluateHand(this.players[uid].hand).score;
+            if (score > bestScore) {
+                bestScore = score;
+                winnerId = uid;
             }
         }
+
+        const winAmt = Math.floor(this.pot * 0.95);
+        await User.findByIdAndUpdate(winnerId, { $inc: { coins: winAmt } });
+
+        for (let uid in this.players) {
+            this.players[uid].result = (uid === winnerId) ? 'WIN' : 'LOSE';
+            this.players[uid].winAmount = (uid === winnerId) ? winAmt : 0;
+        }
+
+        this.history.unshift({ winner: this.players[winnerId].name, pot: this.pot });
+        if (this.history.length > 10) this.history.pop();
     }
 }
 
-const tables = {
-    1: new TeenPattiTable(1),
-    2: new TeenPattiTable(2),
-    3: new TeenPattiTable(3)
-};
+const tables = { 1: new TeenPattiTable(1) };
 
-setInterval(() => {
+setInterval(async () => {
     for (let id in tables) {
-        const table = tables[id];
-        if (table.timer > 0) {
-            table.timer--;
-        } else {
-            if (table.state === 'WAITING' || table.state === 'RESOLVING') {
-                table.reset();
-                table.startBetting();
-            } else if (table.state === 'BETTING') {
-                if (Object.keys(table.players).length > 0) {
-                    table.deal();
-                } else {
-                    table.timer = 5; // Wait for players
-                }
+        const t = tables[id];
+        if (t.timer > 0) t.timer--;
+        else {
+            if (t.state === 'WAITING') t.start();
+            else if (t.state === 'SHOW') t.reset();
+            else if (t.state === 'PLAYING') {
+                await t.handleMove(t.currentTurn, 'PACK', 0, t.id);
             }
         }
     }
 }, 1000);
 
 module.exports = {
-    getTables: () => {
-        return Object.values(tables).map(t => ({
-            id: t.id,
-            state: t.state,
-            timer: t.timer,
-            playerCount: Object.keys(t.players).length,
-            players: t.players,
-            dealerHand: (t.state === 'RESOLVING' || t.state === 'DEALING') ? t.dealerHand : []
-        }));
-    },
-    placeBet: (tableId, userId, name, betAmount) => {
-        const table = tables[tableId];
-        if (!table) return { success: false, message: "Table not found" };
-        if (table.state !== 'BETTING') return { success: false, message: "Betting phase over" };
-        if (table.players[userId]) return { success: false, message: "Already placed bet" };
-        if (Object.keys(table.players).length >= table.maxPlayers) return { success: false, message: "Table full" };
-
-        table.players[userId] = {
-            name,
-            betAmount: Number(betAmount),
-            hand: [],
-            status: 'active'
-        };
+    getTables: () => Object.values(tables).map(t => ({
+        id: t.id, state: t.state, timer: t.timer, pot: t.pot,
+        currentTurn: t.currentTurn, lastBet: t.lastBet,
+        players: t.players, history: t.history
+    })),
+    joinTable: (tableId, userId, name) => {
+        const t = tables[tableId];
+        if (t.state !== 'WAITING') return { success: false, message: "Game in progress" };
+        if (t.players[userId]) return { success: true };
+        if (Object.keys(t.players).length >= 5) return { success: false, message: "Table full" };
+        t.players[userId] = { name, betAmount: 0, hand: [], status: 'WAITING', blind: true };
         return { success: true };
     },
-    forceResult: (tableId, result) => {
-        if (tables[tableId]) {
-            tables[tableId].forcedResult = result;
-            return true;
-        }
-        return false;
-    }
+    makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount, tableId)
 };

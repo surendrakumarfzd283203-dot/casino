@@ -3,307 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teen Patti | Solo Casino</title>
+    <title>Teen Patti Live | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-dark: #0f172a;
             --table-green: #1a4a1a;
             --gold: #d4af37;
-            --win-green: #28a745;
-            --win-red: #ef4444;
+            --bg-dark: #0f172a;
         }
 
         body {
-            background-color: var(--bg-dark);
+            background: var(--bg-dark);
             color: white;
             font-family: Arial, sans-serif;
             margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background: rgba(0,0,0,0.5);
-            z-index: 100;
-        }
-
-        .balance-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 5px 15px;
-            border-radius: 20px;
-            color: var(--gold);
-            font-weight: bold;
+            padding: 8px 15px;
+            background: rgba(0,0,0,0.6);
+            border-bottom: 1px solid #334155;
         }
 
         .table-area {
-            height: calc(100vh - 150px);
+            flex: 1;
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            perspective: 1000px;
+            perspective: 1200px;
         }
 
-        .oval-table {
-            width: 85%;
+        .poker-table {
+            width: 90%;
             height: 65%;
             background: radial-gradient(circle, #2e7d32 0%, #1b5e20 100%);
-            border: 10px solid #5d4037;
-            border-radius: 150px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.5);
+            border: 12px solid #5d4037;
+            border-radius: 180px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 60px rgba(0,0,0,0.5);
             position: relative;
-            transform: rotateX(20deg);
+            transform: rotateX(25deg);
         }
 
-        .dealer-area {
+        .dealer-box {
             position: absolute;
-            top: -40px;
+            top: -50px;
             left: 50%;
             transform: translateX(-50%);
-            text-align: center;
             z-index: 50;
+            text-align: center;
         }
-        .dealer-img { width: 120px; }
+        .dealer-img { width: 140px; filter: drop-shadow(0 5px 15px black); }
 
         .player-seat {
             position: absolute;
             width: 80px;
             text-align: center;
-            z-index: 60;
+            z-index: 100;
         }
-        .seat-me { bottom: -30px; left: 50%; transform: translateX(-50%); }
-        .seat-2 { bottom: 20px; left: 5%; }
-        .seat-3 { top: 20px; left: 5%; }
-        .seat-4 { top: 20px; right: 5%; }
-        .seat-5 { bottom: 20px; right: 5%; }
+        .seat-me { bottom: -20px; left: 50%; transform: translateX(-50%); }
+        .seat-2 { bottom: 60px; left: 5%; }
+        .seat-3 { top: 60px; left: 8%; }
+        .seat-4 { top: 60px; right: 8%; }
+        .seat-5 { bottom: 60px; right: 5%; }
 
-        .player-avatar {
-            width: 50px; height: 50px;
+        .avatar {
+            width: 55px; height: 55px;
             border-radius: 50%;
-            border: 2px solid var(--gold);
+            border: 3px solid var(--gold);
             background: #333;
             margin: 0 auto;
-            overflow: hidden;
+            position: relative;
         }
-        .player-name { font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.7); border-radius: 5px; margin-top: 2px; }
+        .avatar.active-turn { border-color: #34b4ff; box-shadow: 0 0 15px #34b4ff; }
 
-        .cards-row {
+        .name-tag {
+            font-size: 10px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.8);
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin-top: 4px;
+        }
+
+        .cards-hand {
             display: flex;
             gap: 2px;
             justify-content: center;
             margin-top: 5px;
         }
         .card {
-            width: 25px; height: 35px;
-            background: white; border-radius: 3px;
-            color: black; font-size: 10px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-        }
-
-        .controls {
-            height: 80px;
-            background: #1e293b;
-            padding: 10px;
+            width: 24px; height: 34px;
+            background: white;
+            border-radius: 3px;
+            color: black;
+            font-size: 10px;
+            font-weight: bold;
             display: flex;
-            justify-content: space-around;
             align-items: center;
+            justify-content: center;
+            box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
         }
+        .card.back { background: var(--primary-red); border: 1px solid white; color: transparent; }
 
-        .timer-circle {
-            width: 50px; height: 50px;
-            border: 3px solid var(--win-red);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 18px;
-        }
-
-        .btn-bet { background: var(--win-green); color: white; padding: 12px 25px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-cancel { background: #444; color: white; padding: 12px 25px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: none; }
-
-        .result-box {
+        .pot-box {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            padding: 20px;
-            border-radius: 15px;
-            font-size: 24px;
+            text-align: center;
+            color: var(--gold);
+            font-weight: 900;
+            text-shadow: 1px 1px 3px black;
+        }
+
+        .controls {
+            background: #1e293b;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
             font-weight: bold;
-            z-index: 200;
+            cursor: pointer;
+        }
+        .btn-chaal { background: #3b82f6; }
+        .btn-pack { background: #ef4444; }
+        .btn-see { background: #10b981; }
+
+        .timer-box {
+            width: 45px; height: 45px;
+            border: 3px solid #ef4444;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; margin: 0 auto;
+        }
+
+        .result-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            background: rgba(0,0,0,0.9);
+            border: 2px solid var(--gold);
+            border-radius: 20px;
+            z-index: 500;
             display: none;
             text-align: center;
         }
+
+        #sndDeal, #sndFlip, #sndWin { display: none; }
     </style>
 </head>
 <body>
     <div class="header">
-        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white;"><i class="fas fa-arrow-left"></i></button>
-        <div id="pot">POT: ₹ 0</div>
-        <div class="balance-box">₹ <span id="balance">0.00</span></div>
+        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white;"><i class="fas fa-chevron-left"></i></button>
+        <div class="pot-info">POT: ₹ <span id="potVal">0</span></div>
+        <div style="color: var(--gold); font-weight: bold;">₹ <span id="balance">0</span></div>
     </div>
 
     <div class="table-area">
-        <div class="dealer-area">
+        <div class="dealer-box">
             <img src="https://i.ibb.co/L5pZ0vX/dealer-girl.png" class="dealer-img" alt="dealer">
-            <div class="cards-row" id="dealerCards"></div>
         </div>
 
-        <div class="oval-table"></div>
+        <div class="poker-table"></div>
 
-        <div class="result-box" id="resultMsg"></div>
+        <div class="pot-box">
+            <i class="fas fa-coins"></i><br>
+            ₹ <span id="centerPot">0</span>
+        </div>
 
-        <!-- Me -->
+        <!-- Result -->
+        <div class="result-overlay" id="resultOverlay">
+            <h1 id="resultTitle" style="color: var(--gold); margin: 0;">YOU WIN!</h1>
+            <p id="resultBody" style="font-size: 18px;"></p>
+            <button class="action-btn" onclick="closeResult()">OK</button>
+        </div>
+
+        <!-- Seats -->
         <div class="player-seat seat-me">
-            <div class="player-avatar"></div>
-            <div class="player-name">YOU</div>
-            <div class="cards-row" id="myCards"></div>
+            <div class="avatar" id="avatar-me"></div>
+            <div class="name-tag">YOU</div>
+            <div class="cards-hand" id="cards-me"></div>
         </div>
-
-        <div id="otherPlayers"></div>
+        <div id="otherSeats"></div>
     </div>
 
-    <div class="controls">
-        <div class="timer-circle" id="timer">20</div>
-        <input type="number" id="betAmount" value="100" style="background:#000; border:1px solid #334155; color:white; padding:10px; width:80px; text-align:center; border-radius:8px;">
-        <button id="cancelBtn" class="btn-cancel" onclick="cancelBet()">CANCEL</button>
-        <button id="confirmBtn" class="btn-bet" onclick="placeBet()">PLACE BET</button>
+    <div class="controls" id="gameControls">
+        <div class="timer-box" id="timer">0</div>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div style="font-size: 10px; text-align: center;">Chaal: ₹ <span id="chaalAmt">10</span></div>
+            <button class="action-btn btn-see" id="seeBtn" onclick="handleMove('SEE')">SEE</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+            <button class="action-btn btn-pack" onclick="handleMove('PACK')">PACK</button>
+            <button class="action-btn btn-chaal" onclick="handleMove('CHAAL')">CHAAL</button>
+        </div>
     </div>
+
+    <audio id="sndDeal" src="https://assets.mixkit.co/active_storage/sfx/1070/1070-preview.mp3"></audio>
+    <audio id="sndFlip" src="https://assets.mixkit.co/active_storage/sfx/1018/1018-preview.mp3"></audio>
+    <audio id="sndWin" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
 
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        let isBetPlaced = false;
+        let myId = "";
         let currentTable = 1;
-        let lastState = null;
+        let lastState = "";
 
         async function fetchState() {
-            try {
-                const res = await fetch(`${API_URL}/api/teenpatti/tables`, { headers: { authorization: token } });
-                const data = await res.json();
-                if (data.success) {
-                    const table = data.tables.find(t => t.id == currentTable);
-                    updateUI(table);
-                }
-            } catch (e) {}
+            const res = await fetch(`${API_URL}/api/teenpatti/tables`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                const table = data.tables.find(t => t.id == currentTable);
+                updateUI(table);
+            }
         }
 
         function updateUI(table) {
-            if (!table) return;
             document.getElementById("timer").innerText = table.timer;
+            document.getElementById("potVal").innerText = table.pot;
+            document.getElementById("centerPot").innerText = table.pot;
+            document.getElementById("chaalAmt").innerText = table.lastBet;
 
-            const confirmBtn = document.getElementById("confirmBtn");
-            const cancelBtn = document.getElementById("cancelBtn");
-
-            if (table.state === 'BETTING') {
-                if (!isBetPlaced) {
-                    confirmBtn.disabled = table.timer < 5;
-                    confirmBtn.innerText = "PLACE BET";
-                    cancelBtn.style.display = "none";
-                }
-                document.getElementById("dealerCards").innerHTML = "";
-            } else {
-                confirmBtn.disabled = true;
-                confirmBtn.innerText = "WAITING...";
-                cancelBtn.style.display = "none";
+            const me = table.players[myId];
+            if (me) {
+                renderHand("cards-me", me.hand, me.blind);
+                document.getElementById("seeBtn").style.display = me.blind ? "block" : "none";
+                if (table.currentTurn === myId) document.getElementById("avatar-me").classList.add("active-turn");
+                else document.getElementById("avatar-me").classList.remove("active-turn");
             }
 
-            // Update Players
-            let totalPot = 0;
-            const otherContainer = document.getElementById("otherPlayers");
-            otherContainer.innerHTML = "";
+            // Other Players
+            const otherDiv = document.getElementById("otherSeats");
+            otherDiv.innerHTML = "";
             let seatIdx = 2;
-
-            for (let uid in table.players) {
+            for(let uid in table.players) {
+                if (uid === myId) continue;
                 const p = table.players[uid];
-                totalPot += p.betAmount;
-
-                if (uid === localStorage.getItem("userId")) {
-                    renderCards("myCards", p.hand);
-                } else {
-                    const seat = document.createElement("div");
-                    seat.className = `player-seat seat-${seatIdx++}`;
-                    seat.innerHTML = `
-                        <div class="player-avatar"></div>
-                        <div class="player-name">${p.name}</div>
-                        <div class="cards-row">${renderCardsHtml(p.hand)}</div>
-                    `;
-                    otherContainer.appendChild(seat);
-                }
+                const seat = document.createElement("div");
+                seat.className = `player-seat seat-${seatIdx++}`;
+                seat.innerHTML = `
+                    <div class="avatar ${table.currentTurn === uid ? 'active-turn' : ''}"></div>
+                    <div class="name-tag">${p.name}</div>
+                    <div class="cards-hand">${renderHandHtml(p.hand, p.blind && table.state !== 'SHOW')}</div>
+                `;
+                otherDiv.appendChild(seat);
             }
-            document.getElementById("pot").innerText = `POT: ₹ ${totalPot}`;
 
-            if (table.state === 'RESOLVING') {
-                renderCards("dealerCards", table.dealerHand);
-                if (isBetPlaced && lastState !== 'RESOLVING') {
-                    showResult(table);
-                }
+            if (table.state === 'SHOW' && lastState !== 'SHOW') {
+                showResult(table);
+            }
+            if (table.state === 'DEALING' && lastState !== 'DEALING') {
+                document.getElementById("sndDeal").play().catch(e=>{});
             }
             lastState = table.state;
         }
 
-        async function placeBet() {
-            const amount = document.getElementById("betAmount").value;
-            try {
-                const res = await fetch(`${API_URL}/api/teenpatti/bet`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ tableId: currentTable, betAmount: amount })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    isBetPlaced = true;
-                    document.getElementById("confirmBtn").innerText = "BET PLACED";
-                    document.getElementById("confirmBtn").disabled = true;
-                    document.getElementById("cancelBtn").style.display = "block";
-                    fetchBalance();
-                } else alert(data.message);
-            } catch (e) {}
+        async function handleMove(move) {
+            const amt = parseInt(document.getElementById("chaalAmt").innerText);
+            const res = await fetch(`${API_URL}/api/teenpatti/move`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: currentTable, move, amount: amt })
+            });
+            const data = await res.json();
+            if (!data.success) alert(data.message);
+            else if (move === 'SEE') document.getElementById("sndFlip").play().catch(e=>{});
+            fetchBalance();
         }
 
-        function cancelBet() {
-            isBetPlaced = false;
-            document.getElementById("confirmBtn").disabled = false;
-            document.getElementById("confirmBtn").innerText = "PLACE BET";
-            document.getElementById("cancelBtn").style.display = "none";
-            alert("Bet Cancelled!");
-            fetchBalance();
+        function renderHand(id, hand, blind) {
+            document.getElementById(id).innerHTML = renderHandHtml(hand, blind);
+        }
+
+        function renderHandHtml(hand, blind) {
+            if (!hand || hand.length === 0) return "";
+            return hand.map(c => `
+                <div class="card ${blind ? 'back' : ''}" style="color: ${['♥','♦'].includes(c.suit) ? 'red' : 'black'}">
+                    ${blind ? '' : c.rank + c.suit}
+                </div>
+            `).join('');
         }
 
         function showResult(table) {
-            const myUid = localStorage.getItem("userId");
-            const me = table.players[myUid];
-            if (!me) return;
+            const me = table.players[myId];
+            const overlay = document.getElementById("resultOverlay");
+            const title = document.getElementById("resultTitle");
+            const body = document.getElementById("resultBody");
 
-            const resBox = document.getElementById("resultMsg");
-            resBox.style.display = "block";
-            if (me.result === 'WIN') {
-                resBox.innerText = `YOU WON! ₹ ${me.winAmount}`;
-                resBox.style.background = "var(--win-green)";
+            overlay.style.display = "block";
+            if (me && me.result === 'WIN') {
+                title.innerText = "YOU WIN!";
+                title.style.color = "var(--win-green)";
+                body.innerText = `Won ₹ ${me.winAmount}`;
+                document.getElementById("sndWin").play().catch(e=>{});
             } else {
-                resBox.innerText = "YOU LOST!";
-                resBox.style.background = "var(--win-red)";
+                title.innerText = "YOU LOSE";
+                title.style.color = "#ef4444";
+                body.innerText = "Better luck next time!";
             }
-            isBetPlaced = false;
-            setTimeout(() => resBox.style.display = "none", 5000);
             fetchBalance();
         }
 
-        function renderCards(id, hand) {
-            const container = document.getElementById(id);
-            container.innerHTML = renderCardsHtml(hand);
-        }
+        function closeResult() { document.getElementById("resultOverlay").style.display = "none"; }
 
-        function renderCardsHtml(hand) {
-            if (!hand || hand.length === 0) return "";
-            return hand.map(c => `
-                <div class="card" style="color: ${['♥','♦'].includes(c.suit) ? 'red' : 'black'}">
-                    ${c.rank}${c.suit}
-                </div>
-            `).join('');
+        async function joinGame() {
+            await fetch(`${API_URL}/api/teenpatti/join`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: currentTable })
+            });
+            fetchState();
         }
 
         async function fetchBalance() {
@@ -311,11 +338,12 @@
             const data = await res.json();
             if (data.success) {
                 document.getElementById("balance").innerText = data.user.coins.toFixed(2);
-                localStorage.setItem("userId", data.user.id);
+                myId = data.user.id;
             }
         }
 
-        setInterval(fetchState, 1000);
+        joinGame();
+        setInterval(fetchState, 1500);
         fetchBalance();
     </script>
 </body>

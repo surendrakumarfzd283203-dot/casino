@@ -506,11 +506,46 @@ app.post("/api/play/aviator", auth, async (req, res) => {
             userId,
             name: user.name,
             betAmount: Number(betAmount),
-            cashOutMultiplier: Number(cashOutMultiplier)
+            cashOutMultiplier: Number(cashOutMultiplier),
+            timestamp: Date.now()
         });
 
         res.json({ success: true, message: "Bet placed" });
     } catch (error) { res.status(500).json({ success: false }); }
+});
+
+app.post("/api/game/aviator/cancel", auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const index = activeBets.aviator.findIndex(b => b.userId.toString() === userId.toString());
+        if (index === -1) return res.json({ success: false, message: "Bet not found" });
+
+        const bet = activeBets.aviator[index];
+        await User.findByIdAndUpdate(userId, { $inc: { coins: bet.betAmount } });
+        activeBets.aviator.splice(index, 1);
+
+        res.json({ success: true, message: "Bet cancelled and refunded" });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+app.post("/api/game/aviator/cashout", auth, async (req, res) => {
+    try {
+        const { amount } = req.body;
+        await User.findByIdAndUpdate(req.user.id, { $inc: { coins: Number(amount) } });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+app.post("/api/teenpatti/join", auth, async (req, res) => {
+    const user = await User.findById(req.user.id);
+    const result = teenPattiManager.joinTable(req.body.tableId, req.user.id, user.name);
+    res.json(result);
+});
+
+app.post("/api/teenpatti/move", auth, async (req, res) => {
+    const { tableId, move, amount } = req.body;
+    const result = await teenPattiManager.makeMove(req.user.id, move, amount, tableId);
+    res.json(result);
 });
 
 
