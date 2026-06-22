@@ -75,7 +75,7 @@
                     <div style="font-size:24px; font-weight:bold; margin:10px 0;">${t.timer}s</div>
                     <div class="player-list">${playersHtml || 'No players yet'}</div>
                     <div class="wallet-card">
-                        <input type="number" id="bet-${t.id}" value="100" min="50" style="width:80px">
+                        <input type="number" id="bet-${t.id}" value="100" min="10" max="500" style="width:80px">
                         <button class="button-primary" onclick="joinTable(${t.id})" ${t.state !== 'BETTING' ? 'disabled' : ''}>JOIN</button>
                     </div>
                 `;

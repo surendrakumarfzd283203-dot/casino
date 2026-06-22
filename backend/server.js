@@ -356,12 +356,18 @@ app.get("/api/game/rummy/tables", auth, (req, res) => {
 
 app.post("/api/game/rummy/join", auth, async (req, res) => {
     const { tableId, amount } = req.body;
-    const user = await User.findById(req.user.id);
-    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+    const betAmount = Number(amount);
 
-    const betRes = rummyManager.placeBet(tableId, req.user.id, user.name, amount);
+    if (isNaN(betAmount) || betAmount < 10 || betAmount > 500) {
+        return res.json({ success: false, message: "Bet must be between 10 and 500" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (user.coins < betAmount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const betRes = rummyManager.placeBet(tableId, req.user.id, user.name, betAmount);
     if (betRes.success) {
-        user.coins -= amount;
+        user.coins -= betAmount;
         await user.save();
     }
     res.json(betRes);
