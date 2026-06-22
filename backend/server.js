@@ -408,16 +408,17 @@ app.post("/api/game/rummy/join", auth, async (req, res) => {
 });
 
 let forcedBigSmallResult = null;
+let forcedAviatorMultiplier = null;
 let activeBets = {
     aviator: [] // [{ userId, name, betAmount, cashOutMultiplier }]
 };
 
-// --- AVIATOR AUTOMATION (1 MINUTE ROUNDS) ---
+// --- AVIATOR AUTOMATION (20 SECOND BETTING GAP) ---
 let aviatorState = {
     roundId: Date.now(),
-    timer: 60, // 1 minute
+    timer: 20, // 20 seconds betting time
     isFlying: false,
-    crashMultiplier: 1.5,
+    crashMultiplier: 2.0,
     history: []
 };
 
@@ -434,51 +435,38 @@ setInterval(() => {
 async function startAviatorFlight() {
     aviatorState.isFlying = true;
 
-    // Calculate total pool for admin to see
-    const totalBet = activeBets.aviator.reduce((acc, b) => acc + b.betAmount, 0);
-    console.log(`Aviator Round ${aviatorState.roundId} Flying. Pool: ${totalBet}`);
+    // Choose crash multiplier (rigged or random)
+    if (forcedAviatorMultiplier) {
+        aviatorState.crashMultiplier = Number(forcedAviatorMultiplier);
+        forcedAviatorMultiplier = null;
+    } else {
+        const rand = Math.random();
+        if (rand < 0.7) aviatorState.crashMultiplier = 1.0 + Math.random() * 1.5;
+        else aviatorState.crashMultiplier = 1.5 + Math.random() * 5.0;
+    }
 
-    // Wait for crash (simulated duration based on multiplier)
-    const flightDuration = Math.min(aviatorState.crashMultiplier * 2000, 15000);
+    // Flight duration based on multiplier
+    const flightDuration = Math.floor(Math.log(aviatorState.crashMultiplier) / Math.log(1.1) * 1000);
 
     setTimeout(async () => {
-        // Resolve Bets
+        // Round Crashed
+        aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
+        if (aviatorState.history.length > 20) aviatorState.history.pop();
+
+        // Process losers (those who didn't cash out)
         for (let bet of activeBets.aviator) {
-            const user = await User.findById(bet.userId);
-            if (!user) continue;
-
-            // Simple logic: if user cashOutMultiplier <= crashMultiplier, they win
-            if (bet.cashOutMultiplier <= aviatorState.crashMultiplier) {
-                const winAmount = Math.floor(bet.betAmount * bet.cashOutMultiplier);
-                user.coins += winAmount;
-                await user.save();
-
-                await new Transaction({
-                    user_id: bet.userId,
-                    amount: winAmount - bet.betAmount,
-                    type: "game_aviator",
-                    details: `Won at ${bet.cashOutMultiplier}x (Crash: ${aviatorState.crashMultiplier}x)`
-                }).save();
-
-                await Admin.findOneAndUpdate({}, { $inc: { balance: -(winAmount - bet.betAmount) } });
-            } else {
-                await new Transaction({
-                    user_id: bet.userId,
-                    amount: -bet.betAmount,
-                    type: "game_aviator",
-                    details: `Crashed at ${aviatorState.crashMultiplier}x (Target: ${bet.cashOutMultiplier}x)`
-                }).save();
-
-                await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
-            }
+            await new Transaction({
+                user_id: bet.userId,
+                amount: -bet.betAmount,
+                type: "game_aviator",
+                details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
+            }).save();
+            await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
         }
 
-        aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
-        if (aviatorState.history.length > 10) aviatorState.history.pop();
-
-        // Reset
+        // Reset for next round
         aviatorState.roundId = Date.now();
-        aviatorState.timer = 60;
+        aviatorState.timer = 20; // 20 seconds gap
         aviatorState.isFlying = false;
         activeBets.aviator = [];
     }, flightDuration);
@@ -530,9 +518,32 @@ app.post("/api/game/aviator/cancel", auth, async (req, res) => {
 
 app.post("/api/game/aviator/cashout", auth, async (req, res) => {
     try {
-        const { amount } = req.body;
-        await User.findByIdAndUpdate(req.user.id, { $inc: { coins: Number(amount) } });
-        res.json({ success: true });
+        const { multiplier } = req.body;
+        const userId = req.user.id;
+
+        const betIndex = activeBets.aviator.findIndex(b => b.userId.toString() === userId.toString());
+        if (betIndex === -1) return res.json({ success: false, message: "No active bet" });
+
+        const bet = activeBets.aviator[betIndex];
+        const winAmount = Math.floor(bet.betAmount * multiplier);
+
+        const user = await User.findById(userId);
+        user.coins += winAmount;
+        await user.save();
+
+        await new Transaction({
+            user_id: userId,
+            amount: winAmount - bet.betAmount,
+            type: "game_aviator",
+            details: `Cashed out at ${multiplier}x`
+        }).save();
+
+        await Admin.findOneAndUpdate({}, { $inc: { balance: -(winAmount - bet.betAmount) } });
+
+        // Remove from active bets so they don't lose on crash
+        activeBets.aviator.splice(betIndex, 1);
+
+        res.json({ success: true, winAmount, newBalance: user.coins });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
@@ -585,6 +596,7 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
 
         // Use live active bets instead of history for real-time monitoring
         const bigSmallState = bigSmallManager.getGameState();
+        stats.aviatorState = aviatorState;
         stats.liveBets = {
             color: colorGameManager.getLiveBets(),
             luckydraw: luckyDrawManager.bets,
@@ -629,7 +641,7 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
         bigSmallManager.forcedResult = result;
         return res.json({ success: true, message: `Next BIG/SMALL result set to: ${result || 'Random'}` });
     } else if (game === 'aviator') {
-        aviatorState.crashMultiplier = Number(multiplier);
+        forcedAviatorMultiplier = Number(multiplier);
         return res.json({ success: true, message: `Next Aviator crash set to: ${multiplier}x` });
     } else if (game === 'teenpatti') {
         teenPattiManager.forceResult(tableId, result);

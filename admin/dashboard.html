@@ -81,11 +81,13 @@
                 <!-- Aviator Control -->
                 <div class="control-card">
                     <h4><i class="fas fa-plane"></i> Aviator Control</h4>
+                    <div id="aviator-timer" style="font-size: 18px; font-weight: bold; color: var(--primary); margin-bottom: 10px;">Timer: 0s</div>
                     <label style="font-size: 11px;">Set Next Crash</label>
-                    <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <div style="display: flex; gap: 5px; margin-top: 5px; margin-bottom: 10px;">
                         <input type="number" id="forceAviatorMult" value="1.5" step="0.1" style="flex: 1; padding: 5px;">
                         <button class="action-btn btn-edit" onclick="forceAviator()">SET</button>
                     </div>
+                    <div id="live-bets-aviator" class="live-bet-table"></div>
                 </div>
 
                 <!-- Teen Patti Control -->
@@ -204,6 +206,13 @@
                 document.getElementById('stat-totalCoins').innerText = s.totalCoins.toLocaleString();
                 document.getElementById('stat-adminWallet').innerText = s.adminWalletBalance.toLocaleString();
 
+                if (s.aviatorState) {
+                    const avi = s.aviatorState;
+                    const timerText = avi.isFlying ? "FLYING" : `Next Round in: ${avi.timer}s`;
+                    document.getElementById('aviator-timer').innerText = timerText;
+                    document.getElementById('aviator-timer').style.color = avi.isFlying ? "var(--accent-red)" : "var(--accent-green)";
+                }
+
                 renderLiveBets('color', s.liveBets.color);
                 renderLiveBets('lucky', s.liveBets.luckydraw);
                 renderLiveBets('spin', s.liveBets.spin);
@@ -228,9 +237,9 @@
                 }
                 return;
             }
-            container.innerHTML = `<div>Active Bets: ${bets.length} | Total Vol: ${bets.reduce((a,b)=>a+bets.length>0 ? (game==='aviator'? b.betAmount : b.amount) : 0, 0)}</div>`;
+            container.innerHTML = `<div>Active Bets: ${bets.length} | Total Vol: ${bets.reduce((a,b)=>a + (game==='aviator' ? b.betAmount : b.amount), 0)}</div>`;
             if (bets.length > 0) {
-                container.innerHTML += bets.map(b => `<div>${b.name}: ${game==='aviator' ? b.betAmount : b.amount} (${b.type || ''} ${b.value || b.cashOutMultiplier || ''})</div>`).slice(0,5).join('');
+                container.innerHTML += bets.map(b => `<div>${b.name}: ${game==='aviator' ? b.betAmount : b.amount} ${game==='aviator' ? '' : '('+(b.type || '')+' '+(b.value || b.cashOutMultiplier || '')+')'}</div>`).join('');
             }
         }
 
@@ -356,7 +365,7 @@
 
         function logout() { localStorage.removeItem("adminToken"); location.href = "login.html"; }
 
-        setInterval(fetchStats, 3000);
+        setInterval(fetchStats, 1000);
         fetchStats();
     </script>
 </body>
