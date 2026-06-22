@@ -391,59 +391,109 @@ app.post("/api/game/rummy/join", auth, async (req, res) => {
 
 let forcedBigSmallResult = null;
 let activeBets = {
-    bigsmall: { BIG: 0, SMALL: 0 }
+    bigsmall: { BIG: 0, SMALL: 0 },
+    aviator: [] // [{ userId, name, betAmount, cashOutMultiplier }]
 };
+
+// --- AVIATOR AUTOMATION (2 MINUTE ROUNDS) ---
+let aviatorState = {
+    roundId: Date.now(),
+    timer: 120, // 2 minutes
+    isFlying: false,
+    crashMultiplier: 1.5,
+    history: []
+};
+
+setInterval(() => {
+    if (aviatorState.timer > 0) {
+        aviatorState.timer--;
+    } else {
+        if (!aviatorState.isFlying) {
+            startAviatorFlight();
+        }
+    }
+}, 1000);
+
+async function startAviatorFlight() {
+    aviatorState.isFlying = true;
+
+    // Calculate total pool for admin to see
+    const totalBet = activeBets.aviator.reduce((acc, b) => acc + b.betAmount, 0);
+    console.log(`Aviator Round ${aviatorState.roundId} Flying. Pool: ${totalBet}`);
+
+    // Wait for crash (simulated duration based on multiplier)
+    const flightDuration = Math.min(aviatorState.crashMultiplier * 2000, 10000);
+
+    setTimeout(async () => {
+        // Resolve Bets
+        for (let bet of activeBets.aviator) {
+            const user = await User.findById(bet.userId);
+            if (!user) continue;
+
+            // Simple logic: if user cashOutMultiplier <= crashMultiplier, they win
+            if (bet.cashOutMultiplier <= aviatorState.crashMultiplier) {
+                const winAmount = Math.floor(bet.betAmount * bet.cashOutMultiplier);
+                user.coins += winAmount;
+                await user.save();
+
+                await new Transaction({
+                    user_id: bet.userId,
+                    amount: winAmount - bet.betAmount,
+                    type: "game_aviator",
+                    details: `Won at ${bet.cashOutMultiplier}x (Crash: ${aviatorState.crashMultiplier}x)`
+                }).save();
+
+                await Admin.findOneAndUpdate({}, { $inc: { balance: -(winAmount - bet.betAmount) } });
+            } else {
+                await new Transaction({
+                    user_id: bet.userId,
+                    amount: -bet.betAmount,
+                    type: "game_aviator",
+                    details: `Crashed at ${aviatorState.crashMultiplier}x (Target: ${bet.cashOutMultiplier}x)`
+                }).save();
+
+                await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
+            }
+        }
+
+        aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
+        if (aviatorState.history.length > 10) aviatorState.history.pop();
+
+        // Reset
+        aviatorState.roundId = Date.now();
+        aviatorState.timer = 120;
+        aviatorState.isFlying = false;
+        activeBets.aviator = [];
+    }, flightDuration);
+}
+
+app.get("/api/game/aviator/state", auth, (req, res) => {
+    res.json({ success: true, ...aviatorState, activeBets: activeBets.aviator });
+});
 
 app.post("/api/play/aviator", auth, async (req, res) => {
     try {
         const { betAmount, cashOutMultiplier } = req.body;
         const userId = req.user.id;
 
-        if (!betAmount || betAmount <= 0) {
-            return res.json({ success: false, message: "Invalid bet amount" });
-        }
+        if (!betAmount || betAmount <= 0) return res.json({ success: false, message: "Invalid bet" });
+        if (aviatorState.timer < 5 || aviatorState.isFlying) return res.json({ success: false, message: "Round already started" });
 
         const user = await User.findById(userId);
-        if (!user) {
-            return res.status(500).json({ success: false, message: "User not found" });
-        }
+        if (user.coins < betAmount) return res.json({ success: false, message: "Insufficient coins" });
 
-        if (user.coins < betAmount) {
-            return res.json({ success: false, message: "Insufficient coins" });
-        }
-
-        // Logic for admin player (simplified for MongoDB)
-        const isAdminPlayer = false; // You can adjust this based on admin criteria
-
-        const gameResult = playAviator(Number(betAmount), Number(cashOutMultiplier), isAdminPlayer);
-        const winAmount = gameResult.winAmount;
-        const netChange = winAmount - betAmount;
-
-        user.coins += netChange;
+        user.coins -= betAmount;
         await user.save();
 
-        // Update Admin Wallet with Profit
-        const adminProfit = -netChange;
-        await Admin.findOneAndUpdate({}, { $inc: { balance: adminProfit } });
-
-        // Log Transaction
-        const txn = new Transaction({
-            user_id: userId,
-            amount: netChange,
-            type: "game_aviator",
-            details: `Cashed out at ${gameResult.cashOutAt}x`
+        activeBets.aviator.push({
+            userId,
+            name: user.name,
+            betAmount: Number(betAmount),
+            cashOutMultiplier: Number(cashOutMultiplier)
         });
-        await txn.save();
 
-        res.json({
-            success: true,
-            ...gameResult,
-            newBalance: user.coins
-        });
-    } catch (error) {
-        console.error("Aviator Play Error:", error);
-        res.status(500).json({ success: false, message: "Server Error" });
-    }
+        res.json({ success: true, message: "Bet placed" });
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post("/api/play/bigsmall", auth, async (req, res) => {
@@ -546,7 +596,8 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
             spin: spinGameManager.bets,
             rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
             bigsmall: activeBets.bigsmall,
-            teenpatti: teenPattiManager.getTables().map(t => ({ id: t.id, players: t.players }))
+            teenpatti: teenPattiManager.getTables().map(t => ({ id: t.id, players: t.players })),
+            aviator: activeBets.aviator
         }
         };
 
@@ -582,7 +633,7 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
         forcedBigSmallResult = result;
         return res.json({ success: true, message: `Next BIG/SMALL result set to: ${result || 'Random'}` });
     } else if (game === 'aviator') {
-        setForcedMultiplier(multiplier);
+        aviatorState.crashMultiplier = Number(multiplier);
         return res.json({ success: true, message: `Next Aviator crash set to: ${multiplier}x` });
     } else if (game === 'teenpatti') {
         teenPattiManager.forceResult(tableId, result);

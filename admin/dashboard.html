@@ -210,6 +210,7 @@
                 renderLiveBets('rummy', s.liveBets.rummy);
                 renderLiveBets('bigsmall', s.liveBets.bigsmall);
                 renderLiveBets('teenpatti', s.liveBets.teenpatti);
+                renderLiveBets('aviator', s.liveBets.aviator);
             }
         }
 
@@ -224,9 +225,9 @@
                 container.innerHTML = `<div>BIG: ${bets.BIG} | SMALL: ${bets.SMALL}</div>`;
                 return;
             }
-            container.innerHTML = `<div>Active Bets: ${bets.length} | Total Vol: ${bets.reduce((a,b)=>a+b.amount,0)}</div>`;
+            container.innerHTML = `<div>Active Bets: ${bets.length} | Total Vol: ${bets.reduce((a,b)=>a+bets.length>0 ? (game==='aviator'? b.betAmount : b.amount) : 0, 0)}</div>`;
             if (bets.length > 0) {
-                container.innerHTML += bets.map(b => `<div>${b.name}: ${b.amount} (${b.type || ''} ${b.value || ''})</div>`).slice(0,5).join('');
+                container.innerHTML += bets.map(b => `<div>${b.name}: ${game==='aviator' ? b.betAmount : b.amount} (${b.type || ''} ${b.value || b.cashOutMultiplier || ''})</div>`).slice(0,5).join('');
             }
         }
 
@@ -265,9 +266,18 @@
             document.querySelectorAll('.admin-main > div').forEach(d => d.style.display = 'none');
             document.getElementById('section-' + id).style.display = 'block';
             document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if(event) event.currentTarget.classList.add('active');
 
             if(id === 'requests') fetchPendingRequests();
+            if(id === 'users') fetchUsers();
+        }
+
+        async function fetchUsers() {
+            const res = await fetch(`${API_URL}/api/admin/users`, { headers: { authorization: token } });
+            const users = await res.json();
+            const body = document.getElementById('users-table');
+            body.innerHTML = `<thead><tr><th>Name</th><th>Email</th><th>Coins</th><th>Status</th></tr></thead>
+                <tbody>${users.map(u => `<tr><td>${u.name}</td><td>${u.email}</td><td>${u.coins}</td><td>${u.status}</td></tr>`).join('')}</tbody>`;
         }
 
         async function fetchPendingRequests() {

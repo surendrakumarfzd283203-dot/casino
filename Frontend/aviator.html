@@ -192,8 +192,8 @@
                     <input type="number" id="autoCashOut" value="2.00" step="0.1" min="1.1">
                 </div>
 
-                <button id="betBtn" class="button-primary">PLACE BET</button>
-                <button id="cashOutBtn">CASH OUT</button>
+                <button id="betBtn" class="button-primary" onclick="placeBet()">PLACE BET</button>
+                <button id="cashOutBtn" disabled>CASH OUT (AUTO)</button>
             </div>
 
             <div class="history" id="history"></div>
@@ -210,6 +210,176 @@
         let currentMultiplier = 1.0;
         let gameTimer = null;
         let betAmount = 0;
+
+        async function fetchState() {
+            try {
+                const res = await fetch(`${API_URL}/api/game/aviator/state`, {
+                    headers: { authorization: token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const statusDisplay = document.getElementById("gameStatus");
+                    const betBtn = document.getElementById("betBtn");
+                    const multiplierDisplay = document.getElementById("multiplier");
+
+                    if (data.isFlying) {
+                        statusDisplay.innerText = "FLYING...";
+                        statusDisplay.style.color = "#ff3d00";
+                        betBtn.disabled = true;
+                        if (!isGameRunning) {
+                             startAnimation(data.crashMultiplier);
+                        }
+                    } else {
+                        const mins = Math.floor(data.timer / 60);
+                        const secs = data.timer % 60;
+                        statusDisplay.innerText = `NEXT ROUND IN ${mins}:${secs.toString().padStart(2, '0')}`;
+                        statusDisplay.style.color = "#ff9800";
+                        betBtn.disabled = data.timer < 5;
+                        isGameRunning = false;
+                        multiplierDisplay.innerText = "1.00x";
+                    }
+                    renderHistory(data.history);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function startAnimation(crash) {
+            isGameRunning = true;
+            currentMultiplier = 1.0;
+            const multiplierDisplay = document.getElementById("multiplier");
+            const plane = document.getElementById("plane");
+
+            const interval = setInterval(() => {
+                if (currentMultiplier >= crash || !isGameRunning) {
+                    clearInterval(interval);
+                    if (isGameRunning) {
+                        multiplierDisplay.innerText = crash.toFixed(2) + "x";
+                        multiplierDisplay.style.color = "#f44336";
+                        plane.style.transition = "0.5s";
+                        plane.style.transform += " rotate(90deg) translate(0, 100px)";
+                        plane.style.opacity = "0.5";
+                        setTimeout(() => {
+                             plane.style.transform = "translate(0,0) rotate(0)";
+                             plane.style.opacity = "1";
+                        }, 2000);
+                    }
+                    isGameRunning = false;
+                    return;
+                }
+                currentMultiplier += 0.01 + (currentMultiplier * 0.001);
+                multiplierDisplay.innerText = currentMultiplier.toFixed(2) + "x";
+
+                const x = (currentMultiplier - 1) * 60;
+                const y = Math.pow((currentMultiplier - 1) * 10, 1.2);
+                plane.style.transform = `translate(${x}px, -${y}px) rotate(-${y/5}deg)`;
+            }, 50);
+        }
+
+        async function placeBet() {
+            const amount = parseInt(document.getElementById("betAmount").value);
+            const cashOutAt = parseFloat(document.getElementById("autoCashOut").value);
+
+            if (isNaN(amount) || amount <= 0) return alert("Enter valid bet");
+            if (amount > currentBalance) return alert("Insufficient Balance");
+
+            try {
+                const res = await fetch(`${API_URL}/api/play/aviator`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", authorization: token },
+                    body: JSON.stringify({ betAmount: amount, cashOutMultiplier: cashOutAt })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Bet Placed!");
+                    fetchBalance();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderHistory(history) {
+            const container = document.getElementById("history");
+            container.innerHTML = history.map(h => `
+                <div class="history-item loss">${h.crash.toFixed(2)}x</div>
+            `).join('');
+        }
+
+        async function fetchBalance() {
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                currentBalance = data.user.coins;
+                document.getElementById("balance").innerText = currentBalance.toLocaleString();
+            }
+        }
+
+        setInterval(fetchState, 1000);
+        fetchBalance();
+    </script>
+            try {
+                const res = await fetch(`${API_URL}/api/game/aviator/state`, {
+                    headers: { authorization: token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const statusDisplay = document.getElementById("gameStatus");
+                    const betBtn = document.getElementById("betBtn");
+                    const multiplierDisplay = document.getElementById("multiplier");
+
+                    if (data.isFlying) {
+                        statusDisplay.innerText = "FLYING...";
+                        statusDisplay.style.color = "#ff3d00";
+                        betBtn.disabled = true;
+                        if (!isGameRunning) {
+                             // Start local animation if not already running
+                             startAnimation(data.crashMultiplier);
+                        }
+                    } else {
+                        const mins = Math.floor(data.timer / 60);
+                        const secs = data.timer % 60;
+                        statusDisplay.innerText = `NEXT ROUND IN ${mins}:${secs.toString().padStart(2, '0')}`;
+                        statusDisplay.style.color = "#ff9800";
+                        betBtn.disabled = data.timer < 5;
+                        isGameRunning = false;
+                        multiplierDisplay.innerText = "1.00x";
+                    }
+                    renderHistory(data.history);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function startAnimation(crash) {
+            isGameRunning = true;
+            currentMultiplier = 1.0;
+            const multiplierDisplay = document.getElementById("multiplier");
+            const plane = document.getElementById("plane");
+
+            const interval = setInterval(() => {
+                if (currentMultiplier >= crash || !isGameRunning) {
+                    clearInterval(interval);
+                    if (isGameRunning) {
+                        multiplierDisplay.innerText = crash.toFixed(2) + "x";
+                        multiplierDisplay.style.color = "#f44336";
+                        plane.style.transition = "0.5s";
+                        plane.style.transform += " rotate(90deg) translate(0, 100px)";
+                        plane.style.opacity = "0.5";
+                        setTimeout(() => {
+                             plane.style.transform = "translate(0,0) rotate(0)";
+                             plane.style.opacity = "1";
+                        }, 2000);
+                    }
+                    isGameRunning = false;
+                    return;
+                }
+                currentMultiplier += 0.01 + (currentMultiplier * 0.001);
+                multiplierDisplay.innerText = currentMultiplier.toFixed(2) + "x";
+
+                const x = (currentMultiplier - 1) * 60;
+                const y = Math.pow((currentMultiplier - 1) * 10, 1.2);
+                plane.style.transform = `translate(${x}px, -${y}px) rotate(-${y/5}deg)`;
+            }, 50);
+        }
 
         async function fetchBalance() {
             try {
