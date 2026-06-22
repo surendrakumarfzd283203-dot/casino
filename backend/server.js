@@ -596,7 +596,16 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
 
         // Use live active bets instead of history for real-time monitoring
         const bigSmallState = bigSmallManager.getGameState();
+        const colorState = colorGameManager.getGameState();
+        const luckyState = luckyDrawManager.getGameState();
+        const spinState = spinGameManager.getGameState();
+
         stats.aviatorState = aviatorState;
+        stats.colorState = colorState;
+        stats.luckyState = luckyState;
+        stats.spinState = spinState;
+        stats.bigSmallState = bigSmallState;
+
         stats.liveBets = {
             color: colorGameManager.getLiveBets(),
             luckydraw: luckyDrawManager.bets,

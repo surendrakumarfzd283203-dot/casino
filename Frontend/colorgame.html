@@ -50,11 +50,33 @@
         }
         #timer { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 0 15px rgba(241,196,15,0.3); }
 
+        .section-label { font-size: 12px; font-weight: 800; color: #aaa; margin: 15px 0 8px 5px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .size-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .size-btn {
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 900;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            background: #334155;
+            transition: 0.2s;
+        }
+        .btn-big { background: #3b82f6; }
+        .btn-small { background: #ef4444; }
+
         .color-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         .color-btn {
             height: 50px;
@@ -69,46 +91,48 @@
             transition: 0.1s;
         }
         .color-btn:active { transform: translateY(2px); box-shadow: none; }
-        .color-btn.selected { outline: 3px solid white; outline-offset: -3px; }
+        .selected { outline: 3px solid white; outline-offset: -3px; transform: scale(1.05); }
 
         .number-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 20px;
         }
         .num-btn {
-            height: 55px;
+            height: 45px;
             background: #1e293b;
             border: 1px solid #334155;
             color: white;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: 900;
-            font-size: 20px;
+            font-size: 16px;
             display: flex; align-items: center; justify-content: center;
             transition: 0.2s;
-        }
-        .num-btn.selected {
-            background: var(--gold);
-            color: black;
-            transform: scale(1.1);
-            border-color: white;
-            z-index: 10;
         }
 
         .bet-input-card {
             background: #1e293b;
-            padding: 20px;
+            padding: 15px;
             border-radius: 20px;
             margin-bottom: 20px;
             border: 1px solid #334155;
         }
-        .bet-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .bet-row input { background: #000; border: 2px solid #334155; color: var(--gold); padding: 10px; width: 100px; text-align: center; border-radius: 10px; font-size: 20px; font-weight: 900; }
+        .bet-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .bet-row input { background: #000; border: 2px solid #334155; color: var(--gold); padding: 8px; width: 120px; text-align: center; border-radius: 10px; font-size: 20px; font-weight: 900; }
 
         .btn-confirm { background: #22c55e; color: white; width: 100%; height: 55px; border: none; border-radius: 15px; font-weight: 900; font-size: 18px; cursor: pointer; box-shadow: 0 4px 0 #15803d; }
         .btn-confirm:disabled { opacity: 0.5; background: #444; box-shadow: none; }
+
+        .active-bets {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        .active-bet-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
         .history-card {
             background: #1e293b;
@@ -154,14 +178,22 @@
         <div id="timer">00:20</div>
     </div>
 
-    <div class="color-grid">
-        <button class="color-btn" style="background: var(--red);" onclick="selectBet('COLOR', 'RED')">RED</button>
-        <button class="color-btn" style="background: var(--blue);" onclick="selectBet('COLOR', 'BLUE')">BLUE</button>
-        <button class="color-btn" style="background: var(--green);" onclick="selectBet('COLOR', 'GREEN')">GREEN</button>
-        <button class="color-btn" style="background: var(--yellow);" onclick="selectBet('COLOR', 'YELLOW')">YELLOW</button>
-        <button class="color-btn" style="background: var(--violet);" onclick="selectBet('COLOR', 'VIOLET')">VIOLET</button>
+    <div class="section-label">Size (1.95x)</div>
+    <div class="size-grid">
+        <button class="size-btn btn-big" onclick="selectBet('SIZE', 'BIG')" id="size-BIG">BIG</button>
+        <button class="size-btn btn-small" onclick="selectBet('SIZE', 'SMALL')" id="size-SMALL">SMALL</button>
     </div>
 
+    <div class="section-label">Colors (4.5x)</div>
+    <div class="color-grid">
+        <button class="color-btn" style="background: var(--red);" onclick="selectBet('COLOR', 'RED')" id="color-RED">RED</button>
+        <button class="color-btn" style="background: var(--blue);" onclick="selectBet('COLOR', 'BLUE')" id="color-BLUE">BLUE</button>
+        <button class="color-btn" style="background: var(--green);" onclick="selectBet('COLOR', 'GREEN')" id="color-GREEN">GREEN</button>
+        <button class="color-btn" style="background: var(--yellow);" onclick="selectBet('COLOR', 'YELLOW')" id="color-YELLOW">YELLOW</button>
+        <button class="color-btn" style="background: var(--violet);" onclick="selectBet('COLOR', 'VIOLET')" id="color-VIOLET">VIOLET</button>
+    </div>
+
+    <div class="section-label">Numbers (18x)</div>
     <div class="number-grid" id="numGrid"></div>
 
     <div class="bet-input-card">
@@ -170,6 +202,11 @@
             <input type="number" id="betAmount" value="100">
         </div>
         <button id="confirmBtn" class="btn-confirm" onclick="placeBet()">PLACE BET</button>
+    </div>
+
+    <div id="activeBetsList" class="active-bets" style="display: none;">
+        <div style="font-weight: 800; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px;">ACTIVE BETS</div>
+        <div id="betItems"></div>
     </div>
 
     <div class="history-card">
@@ -189,7 +226,7 @@
         const token = localStorage.getItem("token");
         let selectedType = "";
         let selectedValue = "";
-        let isBetPlaced = false;
+        let currentBets = [];
         let lastRoundId = null;
 
         const grid = document.getElementById("numGrid");
@@ -208,47 +245,45 @@
         function updateUI(data) {
             const secs = data.timer;
             document.getElementById("timer").innerText = `00:${secs.toString().padStart(2, '0')}`;
-            if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
-            else document.getElementById("timer").style.color = "var(--gold)";
-
-            const confirmBtn = document.getElementById("confirmBtn");
-            if (data.timer < 5) {
-                confirmBtn.disabled = true;
-                confirmBtn.innerText = "WAITING...";
-            } else if (!isBetPlaced) {
-                confirmBtn.disabled = false;
-                confirmBtn.innerText = "PLACE BET";
+            if(secs < 5) {
+                document.getElementById("timer").style.color = "#ef4444";
+                document.getElementById("confirmBtn").disabled = true;
+                document.getElementById("confirmBtn").innerText = "WAITING...";
+            } else {
+                document.getElementById("timer").style.color = "var(--gold)";
+                document.getElementById("confirmBtn").disabled = false;
+                document.getElementById("confirmBtn").innerText = "PLACE BET";
             }
 
             if (data.history && data.history.length > 0) {
                 const last = data.history[0];
                 if (last.roundId !== lastRoundId) {
+                    if (lastRoundId !== null && currentBets.length > 0) {
+                        checkWin(last);
+                        currentBets = [];
+                        renderActiveBets();
+                    }
                     lastRoundId = last.roundId;
                     fetchBalance();
-                    if (isBetPlaced) {
-                        checkWin(last);
-                        isBetPlaced = false;
-                    }
                 }
                 renderHistory(data.history);
             }
         }
 
         function selectBet(type, val) {
-            if (isBetPlaced) return;
             selectedType = type;
             selectedValue = val;
-            document.querySelectorAll(".num-btn, .color-btn").forEach(b => b.classList.remove("selected"));
+            document.querySelectorAll(".num-btn, .color-btn, .size-btn").forEach(b => b.classList.remove("selected"));
             if(type === 'NUMBER') document.getElementById(`num-${val}`).classList.add("selected");
-            else {
-                const btns = document.querySelectorAll(".color-btn");
-                btns.forEach(b => { if(b.innerText === val) b.classList.add("selected"); });
-            }
+            else if(type === 'COLOR') document.getElementById(`color-${val}`).classList.add("selected");
+            else if(type === 'SIZE') document.getElementById(`size-${val}`).classList.add("selected");
         }
 
         async function placeBet() {
-            if (!selectedType) return alert("Select a color or number");
-            const amount = document.getElementById("betAmount").value;
+            if (!selectedType) return alert("Select something to bet on");
+            const amount = parseInt(document.getElementById("betAmount").value);
+            if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+
             const res = await fetch(`${API_URL}/api/game/color/bet`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
@@ -256,22 +291,53 @@
             });
             const data = await res.json();
             if (data.success) {
-                isBetPlaced = true;
-                document.getElementById("confirmBtn").innerText = "BET PLACED";
-                document.getElementById("confirmBtn").disabled = true;
+                currentBets.push({ type: selectedType, value: selectedValue, amount });
+                renderActiveBets();
                 fetchBalance();
+                // Clear selection
+                selectedType = "";
+                selectedValue = "";
+                document.querySelectorAll(".num-btn, .color-btn, .size-btn").forEach(b => b.classList.remove("selected"));
             } else alert(data.message);
         }
 
+        function renderActiveBets() {
+            const container = document.getElementById("activeBetsList");
+            const items = document.getElementById("betItems");
+            if (currentBets.length === 0) {
+                container.style.display = "none";
+                return;
+            }
+            container.style.display = "block";
+            items.innerHTML = currentBets.map(b => `
+                <div class="active-bet-item">
+                    <span>${b.type}: ${b.value}</span>
+                    <span style="color: var(--gold); font-weight: 800;">₹${b.amount}</span>
+                </div>
+            `).join('');
+        }
+
         function checkWin(last) {
+            let totalWon = 0;
+            let count = 0;
+
+            for(let bet of currentBets) {
+                let won = false;
+                if (bet.type === 'COLOR' && last.color === bet.value) won = true;
+                if (bet.type === 'NUMBER' && last.number == bet.value) won = true;
+                if (bet.type === 'SIZE' && last.size === bet.value) won = true;
+                if (won) count++;
+            }
+
             const msg = document.getElementById("resPopup");
             msg.style.display = "block";
-            let won = false;
-            if (selectedType === 'COLOR' && last.color === selectedValue) won = true;
-            if (selectedType === 'NUMBER' && last.number == selectedValue) won = true;
-
-            msg.innerText = won ? "WINNER!" : "LOST";
-            msg.style.background = won ? "rgba(34, 197, 94, 0.95)" : "rgba(239, 68, 68, 0.95)";
+            if (count > 0) {
+                msg.innerText = `WINNER! (${count} Bets)`;
+                msg.style.background = "rgba(34, 197, 94, 0.95)";
+            } else {
+                msg.innerText = "LOST";
+                msg.style.background = "rgba(239, 68, 68, 0.95)";
+            }
             setTimeout(() => msg.style.display = "none", 4000);
         }
 
@@ -281,7 +347,7 @@
                     <span>${h.roundId.toString().slice(-4)}</span>
                     <span style="font-weight:900;">${h.number}</span>
                     <span style="color:var(--${h.color.toLowerCase()}); font-weight:900;">${h.color}</span>
-                    <span>${h.size}</span>
+                    <span style="color: ${h.size === 'BIG' ? '#3b82f6' : '#ef4444'}; font-weight: 900;">${h.size}</span>
                 </div>
             `).join('');
         }
