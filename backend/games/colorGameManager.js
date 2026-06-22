@@ -5,7 +5,7 @@ const Admin = require("../models/Admin");
 class ColorGameManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 180; // 3 minutes
+        this.timer = 60; // 1 minute
         this.bets = []; // { userId, type, value, amount, name }
         this.history = [];
         this.forcedResult = null; // { number: x }
@@ -138,7 +138,7 @@ class ColorGameManager {
 
         // Reset for next round
         this.roundId = Date.now();
-        this.timer = 180;
+        this.timer = 60;
         this.bets = [];
         this.forcedResult = null;
         this.isResolving = false;

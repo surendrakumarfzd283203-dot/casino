@@ -395,10 +395,10 @@ let activeBets = {
     aviator: [] // [{ userId, name, betAmount, cashOutMultiplier }]
 };
 
-// --- AVIATOR AUTOMATION (2 MINUTE ROUNDS) ---
+// --- AVIATOR AUTOMATION (1 MINUTE ROUNDS) ---
 let aviatorState = {
     roundId: Date.now(),
-    timer: 120, // 2 minutes
+    timer: 60, // 1 minute
     isFlying: false,
     crashMultiplier: 1.5,
     history: []
@@ -422,7 +422,7 @@ async function startAviatorFlight() {
     console.log(`Aviator Round ${aviatorState.roundId} Flying. Pool: ${totalBet}`);
 
     // Wait for crash (simulated duration based on multiplier)
-    const flightDuration = Math.min(aviatorState.crashMultiplier * 2000, 10000);
+    const flightDuration = Math.min(aviatorState.crashMultiplier * 2000, 15000);
 
     setTimeout(async () => {
         // Resolve Bets
@@ -461,7 +461,7 @@ async function startAviatorFlight() {
 
         // Reset
         aviatorState.roundId = Date.now();
-        aviatorState.timer = 120;
+        aviatorState.timer = 60;
         aviatorState.isFlying = false;
         activeBets.aviator = [];
     }, flightDuration);
