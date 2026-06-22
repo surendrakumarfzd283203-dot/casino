@@ -8,253 +8,162 @@
     <style>
         :root {
             --bg-dark: #0f172a;
-            --panel-bg: #1e293b;
-            --win-red: #ff4d4f;
-            --win-green: #52c41a;
+            --win-green: #28a745;
+            --win-red: #ef4444;
             --win-violet: #722ed1;
-            --accent: #fadb14;
+            --gold: #d4af37;
         }
 
         body {
             background-color: var(--bg-dark);
             color: white;
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding-bottom: 70px;
+            padding: 10px;
         }
 
         .header {
-            background: linear-gradient(to right, #1e293b, #0f172a);
-            padding: 20px;
-            text-align: center;
-            border-bottom: 2px solid #334155;
-        }
-
-        .balance-card {
-            background: #1e293b;
-            margin: 15px;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            text-align: center;
-            border: 1px solid #334155;
-        }
-
-        .timer-section {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            margin-bottom: 20px;
+            padding: 10px;
         }
 
-        .timer-box {
-            background: #141b2d;
-            padding: 10px 20px;
-            border-radius: 15px;
-            border: 2px solid var(--accent);
+        .balance-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .timer-section {
             text-align: center;
+            margin: 20px 0;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 15px;
         }
+        #timer { font-size: 32px; font-weight: bold; color: var(--gold); }
 
-        .timer-box span {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--accent);
-            letter-spacing: 2px;
-        }
-
-        .game-options {
+        .color-btns {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
-            padding: 0 15px;
             margin-bottom: 20px;
         }
-
-        .option-btn {
-            border: none;
+        .color-btn {
             padding: 15px;
-            border-radius: 12px;
-            font-weight: 900;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
             color: white;
             cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-
-        .btn-green { background: var(--win-green); }
-        .btn-violet { background: var(--win-violet); }
-        .btn-red { background: var(--win-red); }
-        .option-btn:active { transform: scale(0.95); }
 
         .number-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            padding: 0 15px;
+            gap: 8px;
             margin-bottom: 20px;
         }
-
         .num-btn {
             aspect-ratio: 1;
-            border-radius: 50%;
-            border: 2px solid #334155;
             background: #1e293b;
+            border: 1px solid #334155;
             color: white;
-            font-weight: bold;
-            font-size: 18px;
+            border-radius: 50%;
             cursor: pointer;
-            transition: 0.3s;
+            font-weight: bold;
         }
+        .num-btn.selected { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); }
 
-        .num-btn.selected {
-            border-color: var(--accent);
-            background: rgba(250, 219, 20, 0.1);
-            transform: scale(1.1);
+        .bet-input-box {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .bet-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-confirm { flex: 2; background: var(--win-green); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { flex: 1; background: #444; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; }
+
+        .result-msg {
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
         }
 
         .history-table {
-            margin: 15px;
             background: #1e293b;
-            border-radius: 20px;
+            border-radius: 10px;
             overflow: hidden;
-        }
-
-        .history-header {
-            background: #334155;
-            padding: 10px 15px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .history-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            padding: 10px 15px;
-            border-bottom: 1px solid #334155;
             font-size: 13px;
         }
-
-        .color-dot {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-
-        .bet-popup {
-            position: fixed;
-            bottom: -100%;
-            left: 0; width: 100%;
-            background: #1e293b;
-            border-radius: 30px 30px 0 0;
-            padding: 30px 20px;
-            transition: 0.4s;
-            z-index: 1000;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-        }
-        .bet-popup.active { bottom: 0; }
-
-        .popup-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            z-index: 999;
+        .hist-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            padding: 8px 15px;
+            border-bottom: 1px solid #334155;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1 style="margin:0; font-size: 24px; color: var(--accent);">WIN GO</h1>
-    </div>
-
-    <div class="balance-card">
-        <div style="font-size: 14px; opacity: 0.7;">Wallet Balance</div>
-        <div style="font-size: 32px; font-weight: 900; margin: 5px 0;" id="balance">₹0.00</div>
-        <button class="button-primary" style="width: 120px; padding: 8px;" onclick="location.href='wallet.html'">Recharge</button>
+        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white;"><i class="fas fa-arrow-left"></i></button>
+        <div class="balance-box">₹ <span id="balance">0.00</span></div>
     </div>
 
     <div class="timer-section">
-        <div>
-            <div style="font-size: 12px; opacity: 0.6;">Period</div>
-            <div style="font-size: 18px; font-weight: bold;" id="period">20240502100</div>
-        </div>
-        <div class="timer-box">
-            <div style="font-size: 10px; color: var(--accent);">Time Remaining</div>
-            <span id="timer">00:00</span>
-        </div>
+        <div style="font-size: 12px; opacity: 0.6;">PERIOD: <span id="period">0</span></div>
+        <div id="timer">00:00</div>
     </div>
 
-    <div class="game-options">
-        <button class="option-btn btn-green" onclick="openBet('COLOR', 'GREEN')">Green</button>
-        <button class="option-btn btn-violet" onclick="openBet('COLOR', 'VIOLET')">Violet</button>
-        <button class="option-btn btn-red" onclick="openBet('COLOR', 'RED')">Red</button>
+    <div class="result-msg" id="resultMsg"></div>
+
+    <div class="color-btns">
+        <button class="color-btn" style="background: var(--win-green);" onclick="selectBet('COLOR', 'GREEN')">GREEN</button>
+        <button class="color-btn" style="background: var(--win-violet);" onclick="selectBet('COLOR', 'VIOLET')">VIOLET</button>
+        <button class="color-btn" style="background: var(--win-red);" onclick="selectBet('COLOR', 'RED')">RED</button>
     </div>
 
-    <div class="number-grid" id="numberGrid">
-        <!-- Numbers 0-9 -->
+    <div class="number-grid" id="numGrid"></div>
+
+    <div class="bet-input-box">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Bet Amount</span>
+            <input type="number" id="betAmount" value="100" style="background:#000; border:1px solid #334155; color:white; padding:8px; width:80px; text-align:center; border-radius:5px;">
+        </div>
+        <div class="bet-actions">
+            <button id="cancelBtn" class="btn-cancel" onclick="cancelBet()">CANCEL</button>
+            <button id="confirmBtn" class="btn-confirm" onclick="placeBet()">PLACE BET</button>
+        </div>
     </div>
 
     <div class="history-table">
-        <div class="history-header">Game Records</div>
-        <div id="historyRows">
-            <!-- Rows here -->
-        </div>
-    </div>
-
-    <div class="popup-overlay" id="overlay" onclick="closeBet()"></div>
-    <div class="bet-popup" id="betPopup">
-        <h3 id="betTitle" style="text-align: center; margin-top: 0;">Select Amount</h3>
-        <div style="display: flex; gap: 10px; overflow-x: auto; margin: 20px 0;">
-            <button class="button-secondary" onclick="setAmount(10)">₹10</button>
-            <button class="button-secondary" onclick="setAmount(50)">₹50</button>
-            <button class="button-secondary" onclick="setAmount(100)">₹100</button>
-            <button class="button-secondary" onclick="setAmount(500)">₹500</button>
-            <button class="button-secondary" onclick="setAmount(1000)">₹1000</button>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #141b2d; padding: 15px; border-radius: 15px;">
-            <span>Multiplier</span>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button onclick="changeMult(-1)" style="background:none; border:1px solid #334155; color:white; width:30px; height:30px; border-radius:50%;">-</button>
-                <span id="multVal">1</span>
-                <button onclick="changeMult(1)" style="background:none; border:1px solid #334155; color:white; width:30px; height:30px; border-radius:50%;">+</button>
-            </div>
-        </div>
-        <div style="margin: 20px 0; font-size: 14px; opacity: 0.8;">
-            Total Bet: <span id="totalBet">₹10</span>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="button-secondary" style="flex: 1;" onclick="closeBet()">Cancel</button>
-            <button class="button-primary" style="flex: 2;" onclick="confirmBet()">Confirm</button>
-        </div>
+        <div style="background: #334155; padding: 8px 15px; font-weight: bold;">RECENT RESULTS</div>
+        <div id="historyRows"></div>
     </div>
 
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        if (!token) location.href = "login.html";
-
         let selectedType = "";
         let selectedValue = "";
-        let betAmount = 10;
-        let multiplier = 1;
+        let isBetPlaced = false;
+        let lastRoundId = null;
 
-        const numGrid = document.getElementById("numberGrid");
-        for (let i = 0; i <= 9; i++) {
-            const btn = document.createElement("button");
-            btn.className = "num-btn";
-            btn.innerText = i;
-            btn.onclick = () => openBet('NUMBER', i);
-            numGrid.appendChild(btn);
+        const grid = document.getElementById("numGrid");
+        for(let i=0; i<=9; i++) {
+            grid.innerHTML += `<button class="num-btn" id="num-${i}" onclick="selectBet('NUMBER', ${i})">${i}</button>`;
         }
 
         async function fetchState() {
             try {
-                const res = await fetch(`${API_URL}/api/game/color/state`, {
-                    headers: { authorization: token }
-                });
+                const res = await fetch(`${API_URL}/api/game/color/state`, { headers: { authorization: token } });
                 const data = await res.json();
                 if (data.success) {
                     updateUI(data);
@@ -268,49 +177,44 @@
             const secs = data.timer % 60;
             document.getElementById("timer").innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-            renderHistory(data.history);
+            const confirmBtn = document.getElementById("confirmBtn");
+            const cancelBtn = document.getElementById("cancelBtn");
+
+            if (data.timer < 5) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerText = "WAITING...";
+            } else if (!isBetPlaced) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "PLACE BET";
+                cancelBtn.style.display = "none";
+            }
+
+            if (data.history && data.history.length > 0) {
+                const last = data.history[0];
+                if (last.roundId !== lastRoundId) {
+                    lastRoundId = last.roundId;
+                    fetchBalance();
+                    if (isBetPlaced) {
+                        checkWin(last);
+                        isBetPlaced = false;
+                    }
+                }
+                renderHistory(data.history);
+            }
         }
 
-        function renderHistory(history) {
-            const container = document.getElementById("historyRows");
-            container.innerHTML = history.slice(0, 10).map(h => `
-                <div class="history-row">
-                    <span>${h.roundId}</span>
-                    <span style="font-weight: bold;">${h.number}</span>
-                    <div style="display: flex; align-items: center; justify-content: flex-end;">
-                        <span class="color-dot" style="background: ${getHex(h.color)}"></span>
-                        <span style="color: ${getHex(h.color)}">${h.color}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function getHex(color) {
-            if (color === 'RED') return '#ff4d4f';
-            if (color === 'GREEN') return '#52c41a';
-            return '#722ed1';
-        }
-
-        function openBet(type, value) {
+        function selectBet(type, val) {
+            if (isBetPlaced) return;
             selectedType = type;
-            selectedValue = value;
-            document.getElementById("betTitle").innerText = `${type}: ${value}`;
-            document.getElementById("betPopup").classList.add("active");
-            document.getElementById("overlay").style.display = "block";
-            updateTotal();
+            selectedValue = val;
+            document.querySelectorAll(".num-btn").forEach(b => b.classList.remove("selected"));
+            if(type === 'NUMBER') document.getElementById(`num-${val}`).classList.add("selected");
+            alert(`Selected: ${val}`);
         }
 
-        function closeBet() {
-            document.getElementById("betPopup").classList.remove("active");
-            document.getElementById("overlay").style.display = "none";
-        }
-
-        function setAmount(a) { betAmount = a; updateTotal(); }
-        function changeMult(d) { multiplier = Math.max(1, multiplier + d); updateTotal(); }
-        function updateTotal() { document.getElementById("multVal").innerText = multiplier; document.getElementById("totalBet").innerText = `₹${betAmount * multiplier}`; }
-
-        async function confirmBet() {
-            const amount = betAmount * multiplier;
+        async function placeBet() {
+            if (!selectedType) return alert("Select a color or number");
+            const amount = document.getElementById("betAmount").value;
             try {
                 const res = await fetch(`${API_URL}/api/game/color/bet`, {
                     method: "POST",
@@ -319,20 +223,62 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert("Bet Placed Successfully!");
-                    closeBet();
+                    isBetPlaced = true;
+                    document.getElementById("confirmBtn").innerText = "BET PLACED";
+                    document.getElementById("confirmBtn").disabled = true;
+                    document.getElementById("cancelBtn").style.display = "block";
                     fetchBalance();
-                } else {
-                    alert(data.message);
-                }
-            } catch (e) { alert("Server Error"); }
+                } else alert(data.message);
+            } catch (e) {}
+        }
+
+        function cancelBet() {
+            isBetPlaced = false;
+            document.getElementById("confirmBtn").disabled = false;
+            document.getElementById("confirmBtn").innerText = "PLACE BET";
+            document.getElementById("cancelBtn").style.display = "none";
+            alert("Bet Cancelled!");
+            fetchBalance();
+        }
+
+        function checkWin(last) {
+            const msg = document.getElementById("resultMsg");
+            msg.style.display = "block";
+            let won = false;
+            if (selectedType === 'COLOR' && last.color === selectedValue) won = true;
+            if (selectedType === 'NUMBER' && last.number == selectedValue) won = true;
+
+            if (won) {
+                msg.innerText = "YOU WON!";
+                msg.style.background = "var(--win-green)";
+            } else {
+                msg.innerText = "YOU LOST!";
+                msg.style.background = "var(--win-red)";
+            }
+            setTimeout(() => msg.style.display = "none", 5000);
+        }
+
+        function renderHistory(history) {
+            document.getElementById("historyRows").innerHTML = history.slice(0, 10).map(h => `
+                <div class="hist-row">
+                    <span>${h.roundId}</span>
+                    <span style="font-weight:bold;">${h.number}</span>
+                    <span style="color:${getHex(h.color)}; font-weight:bold;">${h.color}</span>
+                </div>
+            `).join('');
+        }
+
+        function getHex(c) {
+            if(c==='RED') return '#ef4444';
+            if(c==='GREEN') return '#28a745';
+            return '#722ed1';
         }
 
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
             if (data.success) {
-                document.getElementById("balance").innerText = `₹${data.user.coins.toFixed(2)}`;
+                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
             }
         }
 
