@@ -222,7 +222,10 @@
                 return;
             }
             if (game === 'bigsmall') {
-                container.innerHTML = `<div>BIG: ${bets.BIG} | SMALL: ${bets.SMALL}</div>`;
+                container.innerHTML = `<div><b>BIG: ${bets.BIG} | SMALL: ${bets.SMALL}</b></div>`;
+                if (bets.bets && bets.bets.length > 0) {
+                    container.innerHTML += bets.bets.map(b => `<div style="color: #888;">${b.name}: ${b.amount} (${b.prediction})</div>`).slice(0, 5).join('');
+                }
                 return;
             }
             container.innerHTML = `<div>Active Bets: ${bets.length} | Total Vol: ${bets.reduce((a,b)=>a+bets.length>0 ? (game==='aviator'? b.betAmount : b.amount) : 0, 0)}</div>`;

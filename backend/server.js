@@ -19,6 +19,7 @@ const DepositRequest = require("./models/DepositRequest");
 const auth = require("./middleware/auth");
 const { playAviator, setForcedMultiplier } = require("./games/aviator");
 const { playBigSmall } = require("./games/bigsmall");
+const bigSmallManager = require("./games/bigSmallManager");
 const teenPattiManager = require("./games/teenPattiManager");
 const colorGameManager = require("./games/colorGameManager");
 const luckyDrawManager = require("./games/luckyDrawManager");
@@ -545,6 +546,8 @@ app.post("/api/teenpatti/bet", auth, async (req, res) => {
 
 app.get("/api/admin/stats", adminAuth, async (req, res) => {
     try {
+        const stats = {};
+
         // Use live active bets instead of history for real-time monitoring
         const bigSmallState = bigSmallManager.getGameState();
         stats.liveBets = {
@@ -554,11 +557,17 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
             rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
             bigsmall: {
                 BIG: bigSmallState.activeBets.filter(b => b.prediction === 'BIG').reduce((a, b) => a + b.amount, 0),
-                SMALL: bigSmallState.activeBets.filter(b => b.prediction === 'SMALL').reduce((a, b) => a + b.amount, 0)
+                SMALL: bigSmallState.activeBets.filter(b => b.prediction === 'SMALL').reduce((a, b) => a + b.amount, 0),
+                bets: bigSmallState.activeBets // Sending full list for admin detail view
             },
             teenpatti: teenPattiManager.getTables().map(t => ({ id: t.id, players: t.players })),
             aviator: activeBets.aviator
         };
+
+        const totalUsers = await User.countDocuments({});
+        const totalCoinsAgg = await User.aggregate([{ $group: { _id: null, total: { $sum: "$coins" } } }]);
+        stats.totalUsers = totalUsers;
+        stats.totalCoins = totalCoinsAgg.length > 0 ? totalCoinsAgg[0].total : 0;
 
         const admin = await Admin.findOne({});
         stats.adminWalletBalance = admin ? admin.balance : 0;
