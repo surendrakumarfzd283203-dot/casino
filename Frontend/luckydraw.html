@@ -2,146 +2,150 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lucky Draw Royale | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --bg-dark: #0f172a;
+            --gold: #f1c40f;
+            --red: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .balance-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: var(--gold);
+            font-weight: 900;
+            border: 1px solid rgba(241, 196, 15, 0.2);
+        }
+
         .slot-container {
             background: linear-gradient(180deg, #2c3e50 0%, #000000 100%);
-            padding: 40px;
+            padding: 30px;
             border-radius: 40px;
-            border: 8px solid #f1c40f;
-            box-shadow: 0 0 50px rgba(241, 196, 15, 0.4), inset 0 0 30px rgba(0,0,0,0.8);
-            margin: 30px 0;
+            border: 6px solid #f1c40f;
+            box-shadow: 0 0 40px rgba(241, 196, 15, 0.4), inset 0 0 20px rgba(0,0,0,0.8);
+            margin: 20px 0;
             position: relative;
         }
 
         .slot-window {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             background: #111;
-            padding: 20px;
-            border-radius: 20px;
-            border: 3px solid #444;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #444;
             overflow: hidden;
         }
 
         .digit-reel {
-            width: 100px;
-            height: 140px;
+            width: 80px;
+            height: 110px;
             background: white;
             color: #000;
-            font-size: 100px;
+            font-size: 80px;
             font-weight: 900;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-            text-shadow: 2px 2px 0px #ccc;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
 
         .timer-display {
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 15px;
-            background: rgba(255,255,255,0.1);
-            display: inline-block;
-            padding: 8px 25px;
-            border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--gold);
+            margin-bottom: 10px;
+            text-align: center;
         }
 
-        .payout-info {
+        .payout-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin: 20px 0;
+            gap: 8px;
+            margin: 15px 0;
         }
-        .payout-item {
+        .payout-card {
             background: rgba(0,0,0,0.3);
             padding: 10px;
-            border-radius: 10px;
-            font-size: 12px;
+            border-radius: 12px;
+            font-size: 11px;
             border: 1px solid #333;
+            text-align: center;
         }
-        .payout-item b { color: #f1c40f; display: block; font-size: 16px; }
+        .payout-card b { color: #f1c40f; display: block; font-size: 14px; }
 
-        .bet-controls {
-            background: #1a1a1a;
-            padding: 25px;
-            border-radius: 25px;
-            margin-top: 30px;
-        }
-
-        .quick-bet-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+        .bet-input-box {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 20px;
             margin-top: 15px;
+            border: 1px solid #334155;
         }
-        .quick-bet-btn {
-            background: #333;
-            border: 1px solid #444;
-            color: white;
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .quick-bet-btn:hover { background: #444; }
+        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .input-row input { background: #000; border: 2px solid #334155; color: var(--gold); padding: 12px; width: 120px; text-align: center; border-radius: 12px; font-size: 24px; font-weight: 900; }
+
+        .btn-bet { background: #22c55e; color: white; width: 100%; height: 55px; border: none; border-radius: 15px; font-weight: 900; font-size: 18px; cursor: pointer; box-shadow: 0 4px 0 #15803d; text-transform: uppercase; }
+        .btn-bet:disabled { opacity: 0.5; background: #444; box-shadow: none; }
 
         .history-card {
             background: #151518;
             border-radius: 20px;
-            padding: 20px;
-            margin-top: 30px;
+            padding: 15px;
+            margin-top: 20px;
             text-align: left;
+            border: 1px solid #222;
         }
         .hist-item {
             display: flex;
             justify-content: space-between;
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #222;
+            font-weight: 800;
         }
-        .win-badge { color: #2ecc71; font-weight: 800; }
+        .win-badge { color: #2ecc71; }
 
         @keyframes shake {
             0% { transform: translateY(0); }
-            25% { transform: translateY(-10px); }
-            50% { transform: translateY(10px); }
-            75% { transform: translateY(-5px); }
+            25% { transform: translateY(-5px); }
+            50% { transform: translateY(5px); }
+            75% { transform: translateY(-2px); }
             100% { transform: translateY(0); }
         }
         .rolling { animation: shake 0.1s infinite; }
-
-        #bgMusicBtn {
-            position: fixed;
-            bottom: 20px; right: 20px;
-            width: 50px; height: 50px;
-            border-radius: 50%;
-            background: #f1c40f;
-            color: black;
-            border: none;
-            cursor: pointer;
-            z-index: 1000;
-            font-size: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
     </style>
 </head>
-<body style="background: #0a0a0c;">
-    <header>
-        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 20px;"><i class="fas fa-arrow-left"></i></button>
-        <h1>LUCKY DRAW 777</h1>
-        <div style="color: #f1c40f; font-weight: 900;">₹ <span id="balance">0</span></div>
-    </header>
+<body>
+    <div class="header">
+        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 24px;"><i class="fas fa-arrow-left"></i></button>
+        <div class="balance-box">₹ <span id="balance">0.00</span></div>
+    </div>
 
-    <div class="container" style="max-width: 600px; text-align: center;">
-        <div class="timer-display" id="timer">00:45</div>
+    <div class="container" style="max-width: 500px; margin: 0 auto; text-align: center;">
+        <div class="timer-display" id="timer">00:20</div>
 
         <div class="slot-container">
             <div class="slot-window">
@@ -151,42 +155,32 @@
             </div>
         </div>
 
-        <div class="payout-info">
-            <div class="payout-item"><b>10x</b> 777 Jackpot</div>
-            <div class="payout-item"><b>2x</b> Any Pair (112)</div>
-            <div class="payout-item"><b>1.2x</b> Sum is Even</div>
+        <div class="payout-grid">
+            <div class="payout-card"><b>10x</b> 777 Jackpot</div>
+            <div class="payout-card"><b>2x</b> Any Pair</div>
+            <div class="payout-card"><b>1.2x</b> Sum Even</div>
         </div>
 
-        <div class="bet-controls">
-            <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #aaa;">PLACE YOUR BET</label>
-            <input type="number" id="betAmount" value="100" style="font-size: 32px; text-align: center; color: #f1c40f; background: #000; border: 2px solid #333; height: 70px;">
-
-            <div class="quick-bet-grid">
-                <button class="quick-bet-btn" onclick="setBet(100)">100</button>
-                <button class="quick-bet-btn" onclick="setBet(500)">500</button>
-                <button class="quick-bet-btn" onclick="setBet(1000)">1000</button>
-                <button class="quick-bet-btn" onclick="setBet(5000)">5000</button>
+        <div class="bet-input-box">
+            <div class="input-row">
+                <span style="font-weight: 800;">Bet Amount</span>
+                <input type="number" id="betAmount" value="100">
             </div>
-
-            <button class="button-primary" id="betBtn" onclick="placeBet()" style="width: 100%; margin-top: 20px; height: 60px; font-size: 20px;">CONFIRM BET</button>
+            <button class="btn-bet" id="betBtn" onclick="placeBet()">CONFIRM BET</button>
         </div>
 
         <div class="history-card">
-            <h3 style="margin-bottom: 15px;"><i class="fas fa-history"></i> DRAW HISTORY</h3>
+            <h4 style="margin-bottom: 10px; opacity: 0.7;"><i class="fas fa-history"></i> RECENT DRAWS</h4>
             <div id="history"></div>
         </div>
     </div>
 
-    <button id="bgMusicBtn" onclick="toggleMusic()"><i class="fas fa-volume-mute"></i></button>
-
     <audio id="sndSpin" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
     <audio id="sndWin" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
-    <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" loop></audio>
 
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        let musicPlaying = false;
         let isRolling = false;
 
         async function fetchState() {
@@ -194,15 +188,16 @@
                 const res = await fetch(`${API_URL}/api/game/luckydraw/state`, { headers: { authorization: token } });
                 const data = await res.json();
                 if (data.success) {
-                    const mins = Math.floor(data.timer / 60);
-                    const secs = data.timer % 60;
-                    document.getElementById("timer").innerText = `Next Draw: ${secs.toString().padStart(2, '0')}s`;
+                    const secs = data.timer;
+                    document.getElementById("timer").innerText = `Next Draw: ${secs}s`;
+                    if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
+                    else document.getElementById("timer").style.color = "var(--gold)";
 
                     if (data.timer < 5) {
                         startRolling();
                         document.getElementById("betBtn").disabled = true;
                         document.getElementById("betBtn").innerText = "DRAWING...";
-                    } else if (data.timer > 40) {
+                    } else if (data.timer > 15) {
                         stopRolling(data.history[0]?.result || "777");
                         document.getElementById("betBtn").disabled = false;
                         document.getElementById("betBtn").innerText = "CONFIRM BET";
@@ -238,60 +233,38 @@
             document.getElementById("d1").classList.remove("rolling");
             document.getElementById("d2").classList.remove("rolling");
             document.getElementById("d3").classList.remove("rolling");
-
             document.getElementById("d1").innerText = res[0];
             document.getElementById("d2").innerText = res[1];
             document.getElementById("d3").innerText = res[2];
-
             if (res === "777") document.getElementById("sndWin").play().catch(e=>{});
             fetchBalance();
         }
 
         async function placeBet() {
             const amount = parseInt(document.getElementById("betAmount").value);
-            if (!amount || amount < 10) return alert("Min bet is 10");
-
             const res = await fetch(`${API_URL}/api/game/luckydraw/bet`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ amount })
             });
             const data = await res.json();
-            if (data.success) {
-                alert("Bet Placed Successfully!");
-                fetchBalance();
-            } else alert(data.message);
+            if (data.success) { alert("Bet Placed!"); fetchBalance(); }
+            else alert(data.message);
         }
 
         function renderHistory(h) {
-            const cont = document.getElementById("history");
-            cont.innerHTML = h.map(x => `
+            document.getElementById("history").innerHTML = h.slice(0, 10).map(x => `
                 <div class="hist-item">
-                    <span>Round #${x.roundId.toString().slice(-6)}</span>
+                    <span>Round #${x.roundId.toString().slice(-4)}</span>
                     <span class="win-badge">${x.result}</span>
                 </div>
             `).join('');
         }
 
-        function setBet(v) { document.getElementById("betAmount").value = v; }
-
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
-            if (data.success) document.getElementById("balance").innerText = data.user.coins.toLocaleString();
-        }
-
-        function toggleMusic() {
-            const bg = document.getElementById("bgMusic");
-            const btn = document.getElementById("bgMusicBtn");
-            if (musicPlaying) {
-                bg.pause();
-                btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            } else {
-                bg.play().catch(e=>{});
-                btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-            }
-            musicPlaying = !musicPlaying;
+            if (data.success) document.getElementById("balance").innerText = data.user.coins.toFixed(2);
         }
 
         setInterval(fetchState, 1000);

@@ -5,7 +5,7 @@ const Admin = require("../models/Admin");
 class LuckyDrawManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 45; // 45 seconds rounds for faster action
+        this.timer = 20; // 20 seconds rounds
         this.bets = []; // { userId, name, amount }
         this.history = [];
         this.forcedJackpot = false;
@@ -102,7 +102,7 @@ class LuckyDrawManager {
         if (this.history.length > 20) this.history.pop();
 
         this.roundId = Date.now();
-        this.timer = 45;
+        this.timer = 20;
         this.bets = [];
         this.forcedJackpot = false;
         this.isResolving = false;

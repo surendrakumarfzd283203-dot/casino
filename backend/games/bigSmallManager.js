@@ -5,10 +5,10 @@ const Admin = require("../models/Admin");
 class BigSmallManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 60; // 60 seconds
+        this.timer = 20; // 20 seconds
         this.bets = []; // { userId, name, prediction, amount }
         this.history = [];
-        this.forcedResult = null; // 'BIG' or 'SMALL'
+        this.forcedResult = null; // 'BIG', 'SMALL', or 'TRIPLE'
         this.autoOpen = false;
         this.isResolving = false;
 
@@ -56,7 +56,9 @@ class BigSmallManager {
             d2 = Math.floor(Math.random() * 6) + 1;
             d3 = Math.floor(Math.random() * 6) + 1;
             total = d1 + d2 + d3;
-            result = total <= 10 ? 'SMALL' : 'BIG';
+
+            if (d1 === d2 && d2 === d3) result = 'TRIPLE';
+            else result = total <= 10 ? 'SMALL' : 'BIG';
         }
 
         let totalPayout = 0;
@@ -65,7 +67,8 @@ class BigSmallManager {
         for (let bet of this.bets) {
             totalBetAmount += bet.amount;
             if (bet.prediction === result) {
-                const winAmount = Math.floor(bet.amount * 1.95);
+                const multiplier = result === 'TRIPLE' ? 24 : 1.95;
+                const winAmount = Math.floor(bet.amount * multiplier);
                 totalPayout += winAmount;
                 await User.findByIdAndUpdate(bet.userId, { $inc: { coins: winAmount } });
                 await new Transaction({
@@ -90,7 +93,7 @@ class BigSmallManager {
         if (this.history.length > 20) this.history.pop();
 
         this.roundId = Date.now();
-        this.timer = 60;
+        this.timer = 20;
         this.bets = [];
         this.forcedResult = null;
         this.isResolving = false;

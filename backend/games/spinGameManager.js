@@ -5,7 +5,7 @@ const Admin = require("../models/Admin");
 class SpinGameManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 45; // 45 second rounds
+        this.timer = 20; // 20 second rounds
         this.bets = []; // { userId, name, amount }
         this.history = [];
         this.forcedResult = null; // { index: x }
@@ -79,7 +79,7 @@ class SpinGameManager {
         if (this.history.length > 20) this.history.pop();
 
         this.roundId = Date.now();
-        this.timer = 45;
+        this.timer = 20;
         this.bets = [];
         this.forcedResult = null;
         this.isResolving = false;

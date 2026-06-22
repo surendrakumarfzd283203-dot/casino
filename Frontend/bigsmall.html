@@ -2,141 +2,208 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Big Small | Solo Casino</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Big Small Royale | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-dark: #0f172a;
             --win-green: #28a745;
             --win-red: #ef4444;
-            --gold: #d4af37;
+            --gold: #f1c40f;
+            --blue: #3498db;
         }
 
         body {
             background-color: var(--bg-dark);
             color: white;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 15px;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .balance-box {
             background: rgba(255, 255, 255, 0.05);
-            padding: 5px 15px;
-            border-radius: 20px;
+            padding: 8px 20px;
+            border-radius: 25px;
             color: var(--gold);
-            font-weight: bold;
+            font-weight: 900;
+            font-size: 18px;
+            border: 1px solid rgba(241, 196, 15, 0.3);
         }
 
-        .timer-box {
+        .timer-card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 20px;
             text-align: center;
-            margin-bottom: 20px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
         }
-        #timer { font-size: 32px; font-weight: bold; color: var(--gold); }
+        #timer { font-size: 40px; font-weight: 900; color: var(--gold); letter-spacing: 2px; }
 
         .dice-display {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 25px;
+            perspective: 1000px;
         }
         .die {
-            width: 60px; height: 60px;
+            width: 70px; height: 70px;
             background: white; color: black;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-size: 32px; font-weight: 900;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.1);
+            transform: rotateZ(5deg);
         }
 
-        .prediction-grid {
+        .prediction-section {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
         }
         .pred-btn {
             background: #1e293b;
             border: 2px solid #334155;
             color: white;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 15px 10px;
+            border-radius: 15px;
             cursor: pointer;
             text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-        .pred-btn.selected { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); }
-        .pred-btn h3 { margin: 0; font-size: 24px; }
-        .pred-btn span { font-size: 12px; opacity: 0.6; }
+        .pred-btn.selected {
+            border-color: var(--gold);
+            background: rgba(241, 196, 15, 0.1);
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(241, 196, 15, 0.2);
+        }
+        .pred-btn h3 { margin: 0; font-size: 20px; font-weight: 900; }
+        .pred-btn span { font-size: 11px; opacity: 0.6; font-weight: bold; }
+        .pred-btn .mult { color: var(--gold); font-size: 13px; }
 
-        .bet-input-section {
+        .btn-small { border-left: 5px solid var(--win-red); }
+        .btn-big { border-left: 5px solid var(--blue); }
+        .btn-triple { border-left: 5px solid var(--gold); }
+
+        .bet-input-card {
             background: #1e293b;
-            padding: 15px;
-            border-radius: 15px;
+            padding: 20px;
+            border-radius: 20px;
             margin-bottom: 20px;
+            border: 1px solid #334155;
         }
-        .input-row {
+        .input-group {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 15px;
         }
-        .input-row input {
+        .input-group input {
             background: #000;
-            border: 1px solid #334155;
-            color: white;
-            padding: 8px;
-            width: 80px;
-            border-radius: 5px;
-            text-align: center;
-        }
-
-        .action-btns { display: flex; gap: 10px; }
-        .btn-confirm { flex: 2; background: var(--win-green); color: white; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-cancel { flex: 1; background: #444; color: white; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: none; }
-
-        .result-display {
-            text-align: center;
-            padding: 15px;
-            margin-top: 20px;
+            border: 2px solid #334155;
+            color: var(--gold);
+            padding: 12px;
+            width: 120px;
             border-radius: 10px;
-            font-weight: bold;
-            display: none;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
         }
 
-        .history {
-            margin-top: 20px;
-            display: flex;
-            gap: 5px;
-            overflow-x: auto;
+        .quick-amounts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
         }
-        .hist-item {
-            width: 30px; height: 30px;
+        .amt-btn {
+            background: #334155;
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .action-row { display: flex; gap: 10px; }
+        .btn-main {
+            flex: 1;
+            height: 60px;
+            border-radius: 15px;
+            border: none;
+            font-weight: 900;
+            font-size: 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-confirm { background: var(--win-green); color: white; box-shadow: 0 4px 0 #1e7e34; }
+        .btn-cancel { background: #444; color: white; display: none; }
+
+        .res-overlay {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-weight: 900;
+            font-size: 32px;
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 100px rgba(0,0,0,1);
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } }
+
+        .history-list {
+            margin-top: 25px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .hist-circle {
+            min-width: 40px; height: 40px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: bold;
+            font-size: 14px; font-weight: 900;
             color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
-        .bg-big { background: #3b82f6; }
-        .bg-small { background: #ef4444; }
+        .bg-b { background: var(--blue); }
+        .bg-s { background: var(--win-red); }
+        .bg-t { background: var(--gold); color: black; }
     </style>
 </head>
 <body>
     <div class="header">
-        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 20px;"><i class="fas fa-arrow-left"></i></button>
+        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 24px;"><i class="fas fa-arrow-left"></i></button>
         <div class="balance-box">₹ <span id="balance">0.00</span></div>
     </div>
 
-    <div class="timer-box">
-        <div style="font-size: 12px; opacity: 0.6;">TIME LEFT</div>
-        <div id="timer">00:00</div>
+    <div class="timer-card">
+        <div style="font-size: 11px; opacity: 0.6; font-weight: 800; margin-bottom: 5px; text-transform: uppercase;">Time Remaining</div>
+        <div id="timer">00:20</div>
     </div>
 
     <div class="dice-display" id="diceBox">
@@ -145,31 +212,48 @@
         <div class="die">?</div>
     </div>
 
-    <div class="prediction-grid">
-        <div class="pred-btn" id="pred-SMALL" onclick="selectPred('SMALL')">
+    <div class="prediction-section">
+        <div class="pred-btn btn-small" id="pred-SMALL" onclick="selectPred('SMALL')">
             <h3>SMALL</h3>
             <span>3 - 10</span>
+            <span class="mult">1.95x</span>
         </div>
-        <div class="pred-btn" id="pred-BIG" onclick="selectPred('BIG')">
+        <div class="pred-btn btn-triple" id="pred-TRIPLE" onclick="selectPred('TRIPLE')">
+            <h3>TRIPLE</h3>
+            <span>Any 3 Same</span>
+            <span class="mult">24x</span>
+        </div>
+        <div class="pred-btn btn-big" id="pred-BIG" onclick="selectPred('BIG')">
             <h3>BIG</h3>
             <span>11 - 18</span>
+            <span class="mult">1.95x</span>
         </div>
     </div>
 
-    <div class="bet-input-section">
-        <div class="input-row">
-            <span>Bet Amount</span>
+    <div class="bet-input-card">
+        <div class="input-group">
+            <span style="font-weight: 800;">Amount</span>
             <input type="number" id="betAmount" value="100" min="10">
         </div>
-        <div class="action-btns">
-            <button id="cancelBtn" class="btn-cancel" onclick="cancelBet()">CANCEL</button>
-            <button id="confirmBtn" class="btn-confirm" onclick="placeBet()">PLACE BET</button>
+        <div class="quick-amounts">
+            <button class="amt-btn" onclick="setAmt(100)">100</button>
+            <button class="amt-btn" onclick="setAmt(500)">500</button>
+            <button class="amt-btn" onclick="setAmt(1000)">1000</button>
+            <button class="amt-btn" onclick="setAmt(5000)">5000</button>
+        </div>
+        <div class="action-row">
+            <button id="cancelBtn" class="btn-main btn-cancel" onclick="cancelBet()">CANCEL</button>
+            <button id="confirmBtn" class="btn-main btn-confirm" onclick="placeBet()">PLACE BET</button>
         </div>
     </div>
 
-    <div class="result-display" id="resultBox"></div>
+    <div class="res-overlay" id="resultBox"></div>
 
-    <div class="history" id="history"></div>
+    <div style="font-weight: 800; font-size: 14px; margin-top: 10px; opacity: 0.7;">RECENT RESULTS</div>
+    <div class="history-list" id="history"></div>
+
+    <audio id="sndDice" src="https://assets.mixkit.co/active_storage/sfx/1018/1018-preview.mp3"></audio>
+    <audio id="sndWin" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
 
     <script src="js/config.js"></script>
     <script>
@@ -182,16 +266,15 @@
             try {
                 const res = await fetch(`${API_URL}/api/game/bigsmall/state`, { headers: { authorization: token } });
                 const data = await res.json();
-                if (data.success) {
-                    updateUI(data);
-                }
+                if (data.success) updateUI(data);
             } catch (e) {}
         }
 
         function updateUI(data) {
-            const mins = Math.floor(data.timer / 60);
-            const secs = data.timer % 60;
-            document.getElementById("timer").innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            const secs = data.timer;
+            document.getElementById("timer").innerText = `00:${secs.toString().padStart(2, '0')}`;
+            if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
+            else document.getElementById("timer").style.color = "var(--gold)";
 
             const confirmBtn = document.getElementById("confirmBtn");
             const cancelBtn = document.getElementById("cancelBtn");
@@ -199,6 +282,7 @@
             if (data.timer < 5) {
                 confirmBtn.disabled = true;
                 confirmBtn.innerText = "WAITING...";
+                if(data.timer === 1) document.getElementById("sndDice").play().catch(e=>{});
             } else if (!isBetPlaced) {
                 confirmBtn.disabled = false;
                 confirmBtn.innerText = "PLACE BET";
@@ -223,38 +307,33 @@
         function selectPred(val) {
             if (isBetPlaced) return;
             selectedValue = val;
-            document.getElementById("pred-SMALL").classList.remove("selected");
-            document.getElementById("pred-BIG").classList.remove("selected");
+            document.querySelectorAll(".pred-btn").forEach(b => b.classList.remove("selected"));
             document.getElementById(`pred-${val}`).classList.add("selected");
         }
 
         async function placeBet() {
-            if (!selectedValue) return alert("Select BIG or SMALL");
+            if (!selectedValue) return alert("Select BIG, SMALL or TRIPLE");
             const amount = document.getElementById("betAmount").value;
-            try {
-                const res = await fetch(`${API_URL}/api/game/bigsmall/bet`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ prediction: selectedValue, amount })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    isBetPlaced = true;
-                    document.getElementById("confirmBtn").innerText = "BET PLACED";
-                    document.getElementById("confirmBtn").disabled = true;
-                    document.getElementById("cancelBtn").style.display = "block";
-                    fetchBalance();
-                } else alert(data.message);
-            } catch (e) {}
+            const res = await fetch(`${API_URL}/api/game/bigsmall/bet`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ prediction: selectedValue, amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                isBetPlaced = true;
+                document.getElementById("confirmBtn").innerText = "BET PLACED";
+                document.getElementById("confirmBtn").disabled = true;
+                document.getElementById("cancelBtn").style.display = "block";
+                fetchBalance();
+            } else alert(data.message);
         }
 
         function cancelBet() {
-            // Simplified cancel logic
             isBetPlaced = false;
             document.getElementById("confirmBtn").disabled = false;
             document.getElementById("confirmBtn").innerText = "PLACE BET";
             document.getElementById("cancelBtn").style.display = "none";
-            alert("Bet Cancelled!");
             fetchBalance();
         }
 
@@ -266,28 +345,25 @@
         function checkWin(last) {
             const resBox = document.getElementById("resultBox");
             resBox.style.display = "block";
-            if (last.result === selectedValue) {
-                resBox.innerText = `YOU WON! Total: ${last.total}`;
-                resBox.style.background = "var(--win-green)";
-            } else {
-                resBox.innerText = `YOU LOST! Total: ${last.total}`;
-                resBox.style.background = "var(--win-red)";
-            }
-            setTimeout(() => resBox.style.display = "none", 5000);
+            const isWin = last.result === selectedValue;
+            resBox.innerText = isWin ? "YOU WIN!" : "YOU LOSE";
+            resBox.style.background = isWin ? "rgba(40, 167, 69, 0.95)" : "rgba(209, 2, 20, 0.95)";
+            if(isWin) document.getElementById("sndWin").play().catch(e=>{});
+            setTimeout(() => resBox.style.display = "none", 4000);
         }
 
         function renderHistory(history) {
-            document.getElementById("history").innerHTML = history.slice(0, 10).map(h => `
-                <div class="hist-item ${h.result === 'BIG' ? 'bg-big' : 'bg-small'}">${h.result[0]}</div>
+            document.getElementById("history").innerHTML = history.slice(0, 15).map(h => `
+                <div class="hist-circle ${h.result === 'BIG' ? 'bg-b' : (h.result === 'SMALL' ? 'bg-s' : 'bg-t')}">${h.result[0]}</div>
             `).join('');
         }
+
+        function setAmt(v) { document.getElementById("betAmount").value = v; }
 
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
-            if (data.success) {
-                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
-            }
+            if (data.success) document.getElementById("balance").innerText = data.user.coins.toFixed(2);
         }
 
         setInterval(fetchState, 1000);

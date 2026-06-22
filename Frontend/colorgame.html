@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Win Go | Solo Casino</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Win Go 5 Color | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-dark: #0f172a;
-            --win-green: #28a745;
-            --win-red: #ef4444;
-            --win-violet: #722ed1;
-            --gold: #d4af37;
+            --red: #ef4444; --blue: #3b82f6; --green: #22c55e; --yellow: #eab308; --violet: #8b5cf6;
+            --gold: #f1c40f;
         }
 
         body {
             background-color: var(--bg-dark);
             color: white;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 10px;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
         }
 
         .header {
@@ -27,126 +27,162 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .balance-box {
             background: rgba(255, 255, 255, 0.05);
-            padding: 5px 15px;
+            padding: 8px 15px;
             border-radius: 20px;
             color: var(--gold);
-            font-weight: bold;
+            font-weight: 900;
+            border: 1px solid rgba(241, 196, 15, 0.2);
         }
 
-        .timer-section {
+        .timer-panel {
             text-align: center;
-            margin: 20px 0;
-            background: #1e293b;
-            padding: 15px;
-            border-radius: 15px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        #timer { font-size: 32px; font-weight: bold; color: var(--gold); }
+        #timer { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 0 15px rgba(241,196,15,0.3); }
 
-        .color-btns {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .color-btn {
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-        }
-
-        .number-grid {
+        .color-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
             margin-bottom: 20px;
         }
+        .color-btn {
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 900;
+            color: white;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: 0.1s;
+        }
+        .color-btn:active { transform: translateY(2px); box-shadow: none; }
+        .color-btn.selected { outline: 3px solid white; outline-offset: -3px; }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
         .num-btn {
-            aspect-ratio: 1;
+            height: 55px;
             background: #1e293b;
             border: 1px solid #334155;
             color: white;
-            border-radius: 50%;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 900;
+            font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
         }
-        .num-btn.selected { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+        .num-btn.selected {
+            background: var(--gold);
+            color: black;
+            transform: scale(1.1);
+            border-color: white;
+            z-index: 10;
+        }
 
-        .bet-input-box {
+        .bet-input-card {
             background: #1e293b;
-            padding: 15px;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .bet-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .bet-row input { background: #000; border: 2px solid #334155; color: var(--gold); padding: 10px; width: 100px; text-align: center; border-radius: 10px; font-size: 20px; font-weight: 900; }
+
+        .btn-confirm { background: #22c55e; color: white; width: 100%; height: 55px; border: none; border-radius: 15px; font-weight: 900; font-size: 18px; cursor: pointer; box-shadow: 0 4px 0 #15803d; }
+        .btn-confirm:disabled { opacity: 0.5; background: #444; box-shadow: none; }
+
+        .history-card {
+            background: #1e293b;
             border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        .bet-actions { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-confirm { flex: 2; background: var(--win-green); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-cancel { flex: 1; background: #444; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; }
-
-        .result-msg {
-            text-align: center;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            font-weight: bold;
-            display: none;
-        }
-
-        .history-table {
-            background: #1e293b;
-            border-radius: 10px;
             overflow: hidden;
             font-size: 13px;
+            border: 1px solid #334155;
         }
+        .hist-header { background: #334155; padding: 10px 15px; font-weight: 900; display: flex; justify-content: space-between; }
         .hist-row {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            padding: 8px 15px;
-            border-bottom: 1px solid #334155;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
         }
+
+        #resPopup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px 50px;
+            border-radius: 30px;
+            font-weight: 900;
+            font-size: 32px;
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 100px rgba(0,0,0,1);
+            animation: zoomIn 0.3s;
+        }
+        @keyframes zoomIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } }
     </style>
 </head>
 <body>
     <div class="header">
-        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white;"><i class="fas fa-arrow-left"></i></button>
+        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 24px;"><i class="fas fa-arrow-left"></i></button>
         <div class="balance-box">₹ <span id="balance">0.00</span></div>
     </div>
 
-    <div class="timer-section">
-        <div style="font-size: 12px; opacity: 0.6;">PERIOD: <span id="period">0</span></div>
-        <div id="timer">00:00</div>
+    <div class="timer-panel">
+        <div style="font-size: 11px; opacity: 0.6; font-weight: 800; text-transform: uppercase;">Next Draw In</div>
+        <div id="timer">00:20</div>
     </div>
 
-    <div class="result-msg" id="resultMsg"></div>
-
-    <div class="color-btns">
-        <button class="color-btn" style="background: var(--win-green);" onclick="selectBet('COLOR', 'GREEN')">GREEN</button>
-        <button class="color-btn" style="background: var(--win-violet);" onclick="selectBet('COLOR', 'VIOLET')">VIOLET</button>
-        <button class="color-btn" style="background: var(--win-red);" onclick="selectBet('COLOR', 'RED')">RED</button>
+    <div class="color-grid">
+        <button class="color-btn" style="background: var(--red);" onclick="selectBet('COLOR', 'RED')">RED</button>
+        <button class="color-btn" style="background: var(--blue);" onclick="selectBet('COLOR', 'BLUE')">BLUE</button>
+        <button class="color-btn" style="background: var(--green);" onclick="selectBet('COLOR', 'GREEN')">GREEN</button>
+        <button class="color-btn" style="background: var(--yellow);" onclick="selectBet('COLOR', 'YELLOW')">YELLOW</button>
+        <button class="color-btn" style="background: var(--violet);" onclick="selectBet('COLOR', 'VIOLET')">VIOLET</button>
     </div>
 
     <div class="number-grid" id="numGrid"></div>
 
-    <div class="bet-input-box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span>Bet Amount</span>
-            <input type="number" id="betAmount" value="100" style="background:#000; border:1px solid #334155; color:white; padding:8px; width:80px; text-align:center; border-radius:5px;">
+    <div class="bet-input-card">
+        <div class="bet-row">
+            <span style="font-weight: 800;">Bet Amount</span>
+            <input type="number" id="betAmount" value="100">
         </div>
-        <div class="bet-actions">
-            <button id="cancelBtn" class="btn-cancel" onclick="cancelBet()">CANCEL</button>
-            <button id="confirmBtn" class="btn-confirm" onclick="placeBet()">PLACE BET</button>
-        </div>
+        <button id="confirmBtn" class="btn-confirm" onclick="placeBet()">PLACE BET</button>
     </div>
 
-    <div class="history-table">
-        <div style="background: #334155; padding: 8px 15px; font-weight: bold;">RECENT RESULTS</div>
+    <div class="history-card">
+        <div class="hist-header">
+            <span>PERIOD</span>
+            <span>NUM</span>
+            <span>COLOR</span>
+            <span>SIZE</span>
+        </div>
         <div id="historyRows"></div>
     </div>
+
+    <div id="resPopup"></div>
 
     <script src="js/config.js"></script>
     <script>
@@ -157,7 +193,7 @@
         let lastRoundId = null;
 
         const grid = document.getElementById("numGrid");
-        for(let i=0; i<=9; i++) {
+        for(let i=1; i<=20; i++) {
             grid.innerHTML += `<button class="num-btn" id="num-${i}" onclick="selectBet('NUMBER', ${i})">${i}</button>`;
         }
 
@@ -165,28 +201,23 @@
             try {
                 const res = await fetch(`${API_URL}/api/game/color/state`, { headers: { authorization: token } });
                 const data = await res.json();
-                if (data.success) {
-                    updateUI(data);
-                }
+                if (data.success) updateUI(data);
             } catch (e) {}
         }
 
         function updateUI(data) {
-            document.getElementById("period").innerText = data.roundId;
-            const mins = Math.floor(data.timer / 60);
-            const secs = data.timer % 60;
-            document.getElementById("timer").innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            const secs = data.timer;
+            document.getElementById("timer").innerText = `00:${secs.toString().padStart(2, '0')}`;
+            if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
+            else document.getElementById("timer").style.color = "var(--gold)";
 
             const confirmBtn = document.getElementById("confirmBtn");
-            const cancelBtn = document.getElementById("cancelBtn");
-
             if (data.timer < 5) {
                 confirmBtn.disabled = true;
                 confirmBtn.innerText = "WAITING...";
             } else if (!isBetPlaced) {
                 confirmBtn.disabled = false;
                 confirmBtn.innerText = "PLACE BET";
-                cancelBtn.style.display = "none";
             }
 
             if (data.history && data.history.length > 0) {
@@ -207,79 +238,58 @@
             if (isBetPlaced) return;
             selectedType = type;
             selectedValue = val;
-            document.querySelectorAll(".num-btn").forEach(b => b.classList.remove("selected"));
+            document.querySelectorAll(".num-btn, .color-btn").forEach(b => b.classList.remove("selected"));
             if(type === 'NUMBER') document.getElementById(`num-${val}`).classList.add("selected");
-            alert(`Selected: ${val}`);
+            else {
+                const btns = document.querySelectorAll(".color-btn");
+                btns.forEach(b => { if(b.innerText === val) b.classList.add("selected"); });
+            }
         }
 
         async function placeBet() {
             if (!selectedType) return alert("Select a color or number");
             const amount = document.getElementById("betAmount").value;
-            try {
-                const res = await fetch(`${API_URL}/api/game/color/bet`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ type: selectedType, value: selectedValue, amount })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    isBetPlaced = true;
-                    document.getElementById("confirmBtn").innerText = "BET PLACED";
-                    document.getElementById("confirmBtn").disabled = true;
-                    document.getElementById("cancelBtn").style.display = "block";
-                    fetchBalance();
-                } else alert(data.message);
-            } catch (e) {}
-        }
-
-        function cancelBet() {
-            isBetPlaced = false;
-            document.getElementById("confirmBtn").disabled = false;
-            document.getElementById("confirmBtn").innerText = "PLACE BET";
-            document.getElementById("cancelBtn").style.display = "none";
-            alert("Bet Cancelled!");
-            fetchBalance();
+            const res = await fetch(`${API_URL}/api/game/color/bet`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ type: selectedType, value: selectedValue, amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                isBetPlaced = true;
+                document.getElementById("confirmBtn").innerText = "BET PLACED";
+                document.getElementById("confirmBtn").disabled = true;
+                fetchBalance();
+            } else alert(data.message);
         }
 
         function checkWin(last) {
-            const msg = document.getElementById("resultMsg");
+            const msg = document.getElementById("resPopup");
             msg.style.display = "block";
             let won = false;
             if (selectedType === 'COLOR' && last.color === selectedValue) won = true;
             if (selectedType === 'NUMBER' && last.number == selectedValue) won = true;
 
-            if (won) {
-                msg.innerText = "YOU WON!";
-                msg.style.background = "var(--win-green)";
-            } else {
-                msg.innerText = "YOU LOST!";
-                msg.style.background = "var(--win-red)";
-            }
-            setTimeout(() => msg.style.display = "none", 5000);
+            msg.innerText = won ? "WINNER!" : "LOST";
+            msg.style.background = won ? "rgba(34, 197, 94, 0.95)" : "rgba(239, 68, 68, 0.95)";
+            setTimeout(() => msg.style.display = "none", 4000);
         }
 
         function renderHistory(history) {
             document.getElementById("historyRows").innerHTML = history.slice(0, 10).map(h => `
                 <div class="hist-row">
-                    <span>${h.roundId}</span>
-                    <span style="font-weight:bold;">${h.number}</span>
-                    <span style="color:${getHex(h.color)}; font-weight:bold;">${h.color}</span>
+                    <span>${h.roundId.toString().slice(-4)}</span>
+                    <span style="font-weight:900;">${h.number}</span>
+                    <span style="color:var(--${h.color.toLowerCase()}); font-weight:900;">${h.color}</span>
+                    <span>${h.size}</span>
                 </div>
             `).join('');
-        }
-
-        function getHex(c) {
-            if(c==='RED') return '#ef4444';
-            if(c==='GREEN') return '#28a745';
-            return '#722ed1';
         }
 
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
-            if (data.success) {
-                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
-            }
+            if (data.success) document.getElementById("balance").innerText = data.user.coins.toFixed(2);
         }
 
         setInterval(fetchState, 1000);
