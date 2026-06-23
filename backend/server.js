@@ -485,13 +485,15 @@ async function startAviatorFlight() {
 
         // Process losers (those who didn't cash out)
         for (let bet of activeBets.aviator) {
-            await new Transaction({
-                user_id: bet.userId,
-                amount: -bet.betAmount,
-                type: "game_aviator",
-                details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
-            }).save();
-            await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
+            if (!bet.cashedOut) {
+                await new Transaction({
+                    user_id: bet.userId,
+                    amount: -bet.betAmount,
+                    type: "game_aviator",
+                    details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
+                }).save();
+                await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
+            }
         }
 
         // Reset for next round
@@ -530,6 +532,9 @@ app.post("/api/play/aviator", auth, async (req, res) => {
             name: user.name,
             betAmount: Number(betAmount),
             cashOutMultiplier: Number(cashOutMultiplier),
+            cashedOut: false,
+            multiplier: 0,
+            winAmount: 0,
             timestamp: Date.now()
         });
 
@@ -575,8 +580,10 @@ app.post("/api/game/aviator/cashout", auth, async (req, res) => {
 
         await Admin.findOneAndUpdate({}, { $inc: { balance: -(winAmount - bet.betAmount) } });
 
-        // Remove from active bets so they don't lose on crash
-        activeBets.aviator.splice(betIndex, 1);
+        // Mark as cashed out instead of removing immediately
+        bet.cashedOut = true;
+        bet.multiplier = multiplier;
+        bet.winAmount = winAmount;
 
         res.json({ success: true, winAmount, newBalance: user.coins });
     } catch (e) { res.status(500).json({ success: false }); }

@@ -467,6 +467,7 @@
     <audio id="sndCrash" src="https://assets.mixkit.co/active_storage/sfx/1018/1018-preview.mp3"></audio>
 
     <script>
+        const API_URL = window.location.origin;
         const token = localStorage.getItem("token");
         if (!token) location.href = "login.html";
 
@@ -484,6 +485,7 @@
         const ctx = canvas.getContext('2d');
         const planeImg = new Image();
         planeImg.src = 'image/aviator.png';
+        planeImg.onerror = () => { console.error("Plane image failed to load at", planeImg.src); };
 
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
@@ -495,11 +497,12 @@
         async function fetchState() {
             try {
                 const res = await fetch(`${API_URL}/api/game/aviator/state`, { headers: { authorization: token } });
+                if (!res.ok) throw new Error("State fetch failed");
                 const data = await res.json();
                 if (data.success) {
                     syncUI(data);
                 }
-            } catch (e) {}
+            } catch (e) { console.error(e); }
         }
 
         function syncUI(data) {
@@ -528,10 +531,23 @@
             if (!container) return;
 
             let html = "";
-            const all = [...real, ...(fake || [])].sort((a,b) => b.betAmount - a.betAmount);
+            let totalWin = 0;
+
+            // Process fake users to simulate cashouts
+            const processedFake = (fake || []).map(f => {
+                const cashOutAt = parseFloat(f.cashOutAt);
+                if (isFlying && currentMult >= cashOutAt) {
+                    return { ...f, cashedOut: true, multiplier: cashOutAt, winAmount: f.betAmount * cashOutAt };
+                }
+                return f;
+            });
+
+            const all = [...real, ...processedFake].sort((a,b) => b.betAmount - a.betAmount);
 
             all.forEach(b => {
                 const isWin = b.cashedOut;
+                if (isWin) totalWin += b.winAmount;
+
                 html += `<div class="bet-row ${isWin ? 'won' : ''}">
                     <div class="user-info">
                         <img src="https://i.pravatar.cc/50?u=${b.name}" alt="avatar">
@@ -543,6 +559,8 @@
                 </div>`;
             });
             container.innerHTML = html;
+            document.getElementById("totalWin").innerText = totalWin.toFixed(2);
+            document.getElementById("betCount").innerText = all.length;
         }
 
         function startFlight() {
