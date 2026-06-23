@@ -1,17 +1,17 @@
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
 const Admin = require("../models/Admin");
+const { checkReferralReward } = require("../utils/referral");
 
 class SpinGameManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 20; // 20 second rounds
+        this.timer = 20;
         this.bets = []; // { userId, name, amount }
         this.history = [];
-        this.forcedResult = null; // { index: x }
+        this.forcedResult = null;
         this.isResolving = false;
 
-        // Sections: [multiplier, color]
         this.sections = [
             [0, "GRAY"], [2, "RED"], [0, "GRAY"], [5, "BLUE"],
             [0, "GRAY"], [2, "RED"], [0, "GRAY"], [10, "GOLD"],
@@ -53,22 +53,25 @@ class SpinGameManager {
 
             if (winAmount > 0) {
                 totalPayout += winAmount;
-                await User.findByIdAndUpdate(bet.userId, { $inc: { coins: winAmount } });
-                const txn = new Transaction({
+                await User.findByIdAndUpdate(bet.userId, { $inc: { coins: winAmount }, referral_played: true });
+                await checkReferralReward(bet.userId);
+                await new Transaction({
                     user_id: bet.userId,
-                    amount: winAmount - bet.amount,
-                    type: "game_spin",
-                    details: `Round ${this.roundId} WIN ${multiplier}x`
-                });
-                await txn.save();
+                    amount: winAmount,
+                    type: "game_win",
+                    game_name: "Spin Game",
+                    details: `Won ${multiplier}x`
+                }).save();
             } else {
-                const txn = new Transaction({
+                await User.findByIdAndUpdate(bet.userId, { referral_played: true });
+                await checkReferralReward(bet.userId);
+                await new Transaction({
                     user_id: bet.userId,
                     amount: -bet.amount,
-                    type: "game_spin",
-                    details: `Round ${this.roundId} LOSE`
-                });
-                await txn.save();
+                    type: "game_loss",
+                    game_name: "Spin Game",
+                    details: `Lost`
+                }).save();
             }
         }
 
@@ -76,7 +79,7 @@ class SpinGameManager {
         await Admin.findOneAndUpdate({}, { $inc: { balance: netProfit } });
 
         this.history.unshift({ roundId: this.roundId, index: resultIndex, multiplier, time: new Date() });
-        if (this.history.length > 20) this.history.pop();
+        if (this.history.length > 50) this.history.pop();
 
         this.roundId = Date.now();
         this.timer = 20;
@@ -86,13 +89,20 @@ class SpinGameManager {
     }
 
     placeBet(userId, name, amount) {
-        if (this.timer < 5) return { success: false, message: "Spinning soon" };
+        if (this.timer < 3) return { success: false, message: "Spinning soon" };
         this.bets.push({ userId, name, amount: Number(amount) });
         return { success: true };
     }
 
     getGameState() {
-        return { roundId: this.roundId, timer: this.timer, history: this.history, sections: this.sections };
+        return {
+            roundId: this.roundId,
+            timer: this.timer,
+            history: this.history,
+            sections: this.sections,
+            totalBet: this.bets.reduce((a, b) => a + b.amount, 0),
+            activeBets: this.bets.length
+        };
     }
 
     forceResult(index) {

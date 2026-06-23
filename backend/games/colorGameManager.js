@@ -1,18 +1,18 @@
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
 const Admin = require("../models/Admin");
+const { checkReferralReward } = require("../utils/referral");
 
 class ColorGameManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 20; // 20 seconds
+        this.timer = 30; // Updated to 30 seconds
         this.bets = []; // { userId, type, value, amount, name }
         this.history = [];
         this.forcedResult = null; // { number: x }
         this.autoOpen = false;
         this.isResolving = false;
 
-        // Colors mapping: 1-20
         this.colors = {
             1: "RED", 2: "BLUE", 3: "GREEN", 4: "YELLOW", 5: "VIOLET",
             6: "RED", 7: "BLUE", 8: "GREEN", 9: "YELLOW", 10: "VIOLET",
@@ -42,7 +42,6 @@ class ColorGameManager {
         if (this.forcedResult && this.forcedResult.number) {
             resultNumber = this.forcedResult.number;
         } else if (this.autoOpen) {
-            // Find numbers with 0 total bet
             const betTotals = {};
             for (let i = 1; i <= 20; i++) betTotals[i] = 0;
 
@@ -50,14 +49,14 @@ class ColorGameManager {
                 if (b.type === 'NUMBER') betTotals[b.value] += b.amount;
                 if (b.type === 'COLOR') {
                     for (let n in this.colors) {
-                        if (this.colors[n] === b.value) betTotals[n] += b.amount / 4; // Weighted approximation
+                        if (this.colors[n] === b.value) betTotals[n] += b.amount / 4;
                     }
                 }
                 if (b.type === 'SIZE') {
                     const isSmall = b.value === 'SMALL';
                     for (let i = 1; i <= 20; i++) {
-                        if (isSmall && i <= 11) betTotals[i] += b.amount / 11;
-                        if (!isSmall && i > 11) betTotals[i] += b.amount / 9;
+                        if (isSmall && i <= 10) betTotals[i] += b.amount / 10;
+                        if (!isSmall && i > 10) betTotals[i] += b.amount / 10;
                     }
                 }
             });
@@ -66,7 +65,6 @@ class ColorGameManager {
             if (zeroBetNumbers.length > 0) {
                 resultNumber = Number(zeroBetNumbers[Math.floor(Math.random() * zeroBetNumbers.length)]);
             } else {
-                // Pick number with minimum bet
                 resultNumber = Number(Object.keys(betTotals).reduce((a, b) => betTotals[a] < betTotals[b] ? a : b));
             }
         } else {
@@ -74,9 +72,8 @@ class ColorGameManager {
         }
 
         const resultColor = this.colors[resultNumber];
-        const resultSize = resultNumber <= 11 ? 'SMALL' : 'BIG';
+        const resultSize = resultNumber <= 10 ? 'SMALL' : 'BIG';
 
-        const winners = [];
         let totalPayout = 0;
         let totalBetAmount = 0;
 
@@ -87,45 +84,41 @@ class ColorGameManager {
 
             if (bet.type === 'NUMBER' && Number(bet.value) === resultNumber) {
                 isWin = true;
-                multiplier = 18; // 18x for number
+                multiplier = 18;
             } else if (bet.type === 'COLOR' && bet.value === resultColor) {
                 isWin = true;
-                multiplier = 4.5; // 4.5x for color
+                multiplier = 4.5;
             } else if (bet.type === 'SIZE' && bet.value === resultSize) {
                 isWin = true;
-                multiplier = 1.95; // 1.95x for size
+                multiplier = 1.95;
             }
 
             if (isWin) {
                 const winAmount = Math.floor(bet.amount * multiplier);
                 totalPayout += winAmount;
-                winners.push({ userId: bet.userId, amount: winAmount, betType: bet.type });
-
-                // Update User Balance
-                await User.findByIdAndUpdate(bet.userId, { $inc: { coins: winAmount } });
-
-                // Log Transaction
-                const txn = new Transaction({
+                await User.findByIdAndUpdate(bet.userId, { $inc: { coins: winAmount }, referral_played: true });
+                await checkReferralReward(bet.userId);
+                await new Transaction({
                     user_id: bet.userId,
-                    amount: winAmount - bet.amount,
-                    type: "game_color_number",
-                    details: `Round ${this.roundId} WIN. Result: ${resultNumber} (${resultColor})`
-                });
-                await txn.save();
+                    amount: winAmount,
+                    type: "game_win",
+                    game_name: "Color Game",
+                    details: `Won on ${bet.type} ${bet.value}. Result: ${resultNumber}`
+                }).save();
             } else {
-                const txn = new Transaction({
+                await User.findByIdAndUpdate(bet.userId, { referral_played: true });
+                await checkReferralReward(bet.userId);
+                await new Transaction({
                     user_id: bet.userId,
                     amount: -bet.amount,
-                    type: "game_color_number",
-                    details: `Round ${this.roundId} LOSE. Result: ${resultNumber} (${resultColor})`
-                });
-                await txn.save();
+                    type: "game_loss",
+                    game_name: "Color Game",
+                    details: `Lost on ${bet.type} ${bet.value}. Result: ${resultNumber}`
+                }).save();
             }
         }
 
-        // Update Admin Balance
-        const netProfit = totalBetAmount - totalPayout;
-        await Admin.findOneAndUpdate({}, { $inc: { balance: netProfit } });
+        await Admin.findOneAndUpdate({}, { $inc: { balance: totalBetAmount - totalPayout } });
 
         this.history.unshift({
             roundId: this.roundId,
@@ -134,18 +127,17 @@ class ColorGameManager {
             size: resultSize,
             time: new Date()
         });
-        if (this.history.length > 20) this.history.pop();
+        if (this.history.length > 500) this.history.pop(); // Keep more history
 
-        // Reset for next round
         this.roundId = Date.now();
-        this.timer = 20;
+        this.timer = 30;
         this.bets = [];
         this.forcedResult = null;
         this.isResolving = false;
     }
 
     placeBet(userId, name, type, value, amount) {
-        if (this.timer < 5) return { success: false, message: "Round ending soon, cannot bet" };
+        if (this.timer < 3) return { success: false, message: "Round closing" };
         this.bets.push({ userId, name, type, value, amount: Number(amount) });
         return { success: true };
     }
@@ -155,8 +147,27 @@ class ColorGameManager {
             roundId: this.roundId,
             timer: this.timer,
             history: this.history,
-            colors: this.colors
+            colors: this.colors,
+            betStats: this.getBetStats()
         };
+    }
+
+    getBetStats() {
+        const stats = {
+            colors: { RED: 0, BLUE: 0, GREEN: 0, YELLOW: 0, VIOLET: 0 },
+            numbers: {},
+            sizes: { BIG: 0, SMALL: 0 },
+            totalBet: 0
+        };
+        for (let i = 1; i <= 20; i++) stats.numbers[i] = 0;
+
+        this.bets.forEach(b => {
+            stats.totalBet += b.amount;
+            if (b.type === 'COLOR') stats.colors[b.value] += b.amount;
+            if (b.type === 'NUMBER') stats.numbers[b.value] += b.amount;
+            if (b.type === 'SIZE') stats.sizes[b.value] += b.amount;
+        });
+        return stats;
     }
 
     getLiveBets() {

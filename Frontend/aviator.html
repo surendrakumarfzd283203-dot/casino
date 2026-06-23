@@ -209,6 +209,9 @@
 <body>
     <div class="header">
         <div class="logo">AVIATOR</div>
+        <div style="font-size: 11px; background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <i class="fas fa-users" style="color: #28a745;"></i> <span id="fakeUsers">245</span> Online
+        </div>
         <div class="balance-box">₹ <span id="balance">0.00</span></div>
     </div>
 
@@ -227,6 +230,9 @@
     </div>
 
     <div class="betting-section">
+        <div style="width: 100%; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; margin-bottom: 10px; font-size: 11px;" id="allBets">
+            <!-- Bets list -->
+        </div>
         <!-- Panel 1 -->
         <div class="bet-card">
             <div class="bet-input-row">
@@ -320,6 +326,32 @@
                 document.getElementById("planeBox").style.transform = "translate(0,0)";
             }
             renderHistory(data.history);
+            renderBets(data.activeBets, data.fakeUsers);
+        }
+
+        function renderBets(real, fake) {
+            const container = document.getElementById("allBets");
+            if (!container) return;
+
+            let html = "";
+            // Real bets first
+            real.forEach(b => {
+                html += `<div class="bet-item">
+                    <span>${b.name}</span>
+                    <span style="color:var(--primary)">${b.betAmount} ₹</span>
+                </div>`;
+            });
+            // Fake bets
+            const isAdmin = localStorage.getItem("adminToken");
+            if (!isAdmin) {
+                (fake || []).forEach(b => {
+                    html += `<div class="bet-item fake" style="opacity:0.6">
+                        <span>${b.name}</span>
+                        <span>${b.betAmount} ₹</span>
+                    </div>`;
+                });
+            }
+            container.innerHTML = html;
         }
 
         function startFlight() {
@@ -455,6 +487,19 @@
             document.getElementById(`amt${i}`).value = v;
             if(!activeBets[i].placed) document.getElementById(`sub${i}`).innerText = v + ".00 ₹";
         }
+
+        function updateFakeUsers() {
+            if (localStorage.getItem("adminToken")) {
+                // If an admin is viewing the page, show "REAL" players betting count if available
+                // For now just show a "REAL" label or lower count to distinguish
+                document.getElementById("fakeUsers").innerText = "Real Monitoring";
+                return;
+            }
+            const base = 200 + Math.floor(Math.random() * 100);
+            document.getElementById("fakeUsers").innerText = base;
+        }
+        setInterval(updateFakeUsers, 5000);
+        updateFakeUsers();
 
         setInterval(fetchState, 1000);
         fetchBalance();

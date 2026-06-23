@@ -167,7 +167,6 @@
         .btn-chaal { background: #3b82f6; color: white; }
         .btn-pack { background: #ef4444; color: white; }
         .btn-see { background: #10b981; color: white; }
-        .btn-blind { background: #f5a623; color: black; }
 
         .timer-box {
             width: 60px; height: 60px;
@@ -183,16 +182,17 @@
             top: 70px;
             left: 20px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             z-index: 100;
         }
         .table-btn {
             background: rgba(255,255,255,0.1);
             border: 1px solid var(--gold);
             color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 11px;
             font-weight: bold;
         }
         .table-btn.active { background: var(--gold); color: black; }
@@ -210,26 +210,6 @@
             text-align: center;
             box-shadow: 0 0 100px rgba(0,0,0,1);
         }
-
-        #bgMusicBtn {
-            position: absolute;
-            top: 70px;
-            right: 20px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid #444;
-            color: white;
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .chip-stack {
-            position: absolute;
-            bottom: -30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 2px;
-        }
-        .chip { width: 12px; height: 12px; background: gold; border-radius: 50%; border: 1px solid #947a00; }
     </style>
 </head>
 <body>
@@ -249,9 +229,9 @@
         <button class="table-btn active" onclick="switchTable(1)">T1</button>
         <button class="table-btn" onclick="switchTable(2)">T2</button>
         <button class="table-btn" onclick="switchTable(3)">T3</button>
+        <button class="table-btn" onclick="switchTable(4)">T4</button>
+        <button class="table-btn" onclick="switchTable(5)">T5</button>
     </div>
-
-    <button id="bgMusicBtn" onclick="toggleMusic()"><i class="fas fa-volume-mute"></i></button>
 
     <div class="table-area">
         <div class="dealer-box">
@@ -263,7 +243,6 @@
         <div class="pot-box">
             <i class="fas fa-coins" style="color: gold;"></i><br>
             <span id="centerPot">0</span>
-            <div class="chip-stack" id="chipStack"></div>
         </div>
 
         <!-- Result -->
@@ -290,17 +269,10 @@
              <button class="action-btn btn-pack" onclick="handleMove('PACK')">PACK</button>
              <div style="display: flex; flex-direction: column; gap: 5px;">
                 <button class="action-btn btn-see" id="seeBtn" onclick="handleMove('SEE')">SEE</button>
-                <button class="action-btn btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">CHAAL (₹<span id="chaalAmt">10</span>)</button>
+                <button class="action-btn btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">CHAAL</button>
              </div>
         </div>
     </div>
-
-    <!-- Audio -->
-    <audio id="sndDeal" src="https://assets.mixkit.co/active_storage/sfx/1070/1070-preview.mp3"></audio>
-    <audio id="sndFlip" src="https://assets.mixkit.co/active_storage/sfx/1018/1018-preview.mp3"></audio>
-    <audio id="sndWin" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
-    <audio id="sndChip" src="https://assets.mixkit.co/active_storage/sfx/1074/1074-preview.mp3"></audio>
-    <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
 
     <script src="js/config.js"></script>
     <script>
@@ -308,7 +280,6 @@
         let myId = "";
         let currentTable = 1;
         let lastState = "";
-        let musicPlaying = false;
 
         async function fetchState() {
             try {
@@ -326,17 +297,11 @@
             document.getElementById("potVal").innerText = table.pot;
             document.getElementById("centerPot").innerText = table.pot;
 
-            // Chips visualization
-            const stack = document.getElementById("chipStack");
-            stack.innerHTML = "";
-            for(let i=0; i<Math.min(10, Math.floor(table.pot/10)); i++) {
-                stack.innerHTML += `<div class="chip" style="margin-bottom: ${i*2}px"></div>`;
-            }
-
             const me = table.players[myId];
             if (me) {
-                renderHand("cards-me", me.hand, me.blind);
-                document.getElementById("seeBtn").style.display = (me.blind && table.state === 'PLAYING') ? "block" : "none";
+                // User ONLY sees their own cards if seen or if state is SHOW
+                renderHand("cards-me", me.hand, me.blind && table.state !== 'SHOW');
+                document.getElementById("seeBtn").style.display = (me.blind && table.state === 'PLAYING' && me.status === 'ACTIVE') ? "block" : "none";
                 document.getElementById("chaalBtn").innerHTML = me.blind ? `BLIND (₹${table.lastBet})` : `CHAAL (₹${table.lastBet*2})`;
 
                 if (table.currentTurn === myId) {
@@ -348,37 +313,30 @@
                     document.getElementById("actionArea").style.opacity = "0.5";
                     document.getElementById("actionArea").style.pointerEvents = "none";
                 }
-            } else {
-                 // Not in table? Show Join?
             }
 
             // Other Players
             const otherDiv = document.getElementById("otherSeats");
             otherDiv.innerHTML = "";
             let seatIdx = 2;
-            const uids = Object.keys(table.players);
-            uids.forEach(uid => {
+            Object.keys(table.players).forEach(uid => {
                 if (uid === myId) return;
                 const p = table.players[uid];
                 const seat = document.createElement("div");
                 seat.className = `player-seat seat-${seatIdx++}`;
+                // OTHER players cards are ALWAYS hidden unless state is SHOW
+                const isHidden = table.state !== 'SHOW';
                 seat.innerHTML = `
                     <div class="avatar ${table.currentTurn === uid ? 'active-turn' : ''}">
                         <i class="fas ${p.isBot ? 'fa-robot' : 'fa-user'}"></i>
                     </div>
                     <div class="name-tag">${p.name}</div>
-                    <div class="cards-hand">${renderHandHtml(p.hand, p.blind && table.state !== 'SHOW')}</div>
+                    <div class="cards-hand">${renderHandHtml(p.hand, isHidden)}</div>
                 `;
                 otherDiv.appendChild(seat);
             });
 
             if (table.state === 'SHOW' && lastState !== 'SHOW') showResult(table);
-            if (table.state === 'DEALING' && lastState !== 'DEALING') {
-                document.getElementById("sndDeal").play().catch(e=>{});
-            }
-            if (table.pot > parseInt(document.getElementById("potVal").innerText)) {
-                document.getElementById("sndChip").play().catch(e=>{});
-            }
             lastState = table.state;
         }
 
@@ -388,13 +346,6 @@
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ tableId: currentTable, move })
             });
-            const data = await res.json();
-            if (!data.success) {
-                // alert(data.message);
-            } else {
-                if (move === 'SEE') document.getElementById("sndFlip").play().catch(e=>{});
-                if (move === 'CHAAL' || move === 'BLIND') document.getElementById("sndChip").play().catch(e=>{});
-            }
             fetchBalance();
             fetchState();
         }
@@ -419,20 +370,14 @@
         function showResult(table) {
             const me = table.players[myId];
             const overlay = document.getElementById("resultOverlay");
-            const title = document.getElementById("resultTitle");
-            const body = document.getElementById("resultBody");
-
             overlay.style.display = "block";
             if (me && me.result === 'WIN') {
-                title.innerText = "YOU WIN!";
-                title.style.color = "var(--gold)";
-                body.innerText = `Congratulations! You won ₹ ${me.winAmount}`;
-                document.getElementById("sndWin").play().catch(e=>{});
+                document.getElementById("resultTitle").innerText = "YOU WIN!";
+                document.getElementById("resultBody").innerText = `Won ₹ ${me.winAmount}`;
             } else {
                 const winner = Object.values(table.players).find(p => p.result === 'WIN');
-                title.innerText = "YOU LOSE";
-                title.style.color = "#ef4444";
-                body.innerText = winner ? `${winner.name} won the pot!` : "Better luck next time!";
+                document.getElementById("resultTitle").innerText = "YOU LOSE";
+                document.getElementById("resultBody").innerText = winner ? `${winner.name} won the pot!` : "Better luck next time!";
             }
             fetchBalance();
         }
@@ -462,19 +407,6 @@
                 document.getElementById("balance").innerText = data.user.coins.toFixed(2);
                 myId = data.user.id;
             }
-        }
-
-        function toggleMusic() {
-            const bg = document.getElementById("bgMusic");
-            const btn = document.getElementById("bgMusicBtn");
-            if (musicPlaying) {
-                bg.pause();
-                btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            } else {
-                bg.play().catch(e=>{});
-                btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-            }
-            musicPlaying = !musicPlaying;
         }
 
         joinGame();

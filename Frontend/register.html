@@ -39,6 +39,11 @@
                 <input type="password" id="password" placeholder="Create Password" style="padding-left: 45px;">
             </div>
 
+            <div style="position: relative;">
+                <i class="fas fa-user-plus" style="position: absolute; left: 15px; top: 15px; color: var(--text-dim); font-size: 14px;"></i>
+                <input type="text" id="referral" placeholder="Referral Code (Optional)" style="padding-left: 45px;">
+            </div>
+
             <button onclick="register()" class="button-primary" style="width: 100%; padding: 15px; font-size: 16px; margin-top: 10px;" id="regBtn">
                 Register Now
             </button>
@@ -55,6 +60,7 @@
             const name = document.getElementById("name").value;
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
+            const referral = document.getElementById("referral").value;
             const btn = document.getElementById("regBtn");
 
             if (!name || !email || !password) {
@@ -65,7 +71,7 @@
             btn.disabled = true;
 
             try {
-                const data = { name, email, password };
+                const data = { name, email, password, referral };
                 const res = await fetch(`${API_URL}/api/register`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

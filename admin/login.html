@@ -4,37 +4,199 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login | Solo Casino</title>
-   <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff9800;
+            --primary-dark: #e68a00;
+            --bg-dark: #050507;
+            --card-bg: rgba(25, 25, 30, 0.95);
+            --text-dim: rgba(255, 255, 255, 0.6);
+            --gold-gradient: linear-gradient(45deg, #ff9800, #ffc107);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #050507 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .login-container {
+            width: 90%;
+            max-width: 420px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid rgba(255, 152, 0, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .login-header i {
+            font-size: 56px;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .login-header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .login-header p {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            margin-left: 5px;
+        }
+
+        .input-field {
+            position: relative;
+        }
+
+        .input-field i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 152, 0, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--gold-gradient);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 152, 0, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        #loginStatus {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            min-height: 20px;
+        }
+
+        .animate {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
 </head>
-<body style="background: radial-gradient(circle at center, #1a1a1a 0%, #050507 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+<body>
 
-    <div class="form-box animate" style="width: 100%; max-width: 400px; padding: 40px; background: rgba(21, 21, 24, 0.9); backdrop-filter: blur(10px);">
-        <div style="text-align: center; margin-bottom: 30px;">
-            <i class="fas fa-user-shield" style="font-size: 50px; color: var(--primary); margin-bottom: 15px;"></i>
-            <h1 style="font-size: 24px; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ADMIN SECURE LOGIN</h1>
-            <p style="color: var(--text-dim); font-size: 14px; margin-top: 10px;">Authorized Access Only</p>
+    <div class="login-container animate">
+        <div class="login-header">
+            <i class="fas fa-shield-halved"></i>
+            <h1>Admin Control</h1>
+            <p>Enter credentials to access Solo Casino backend</p>
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 8px;">Username</label>
-            <input type="text" id="username" placeholder="Enter admin username" style="margin-bottom: 0;">
+        <div class="input-group">
+            <label>Username</label>
+            <div class="input-field">
+                <i class="fas fa-user"></i>
+                <input type="text" id="username" placeholder="admin_username" autocomplete="off">
+            </div>
         </div>
 
-        <div style="margin-bottom: 30px;">
-            <label style="font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 8px;">Password</label>
-            <input type="password" id="password" placeholder="Enter password" style="margin-bottom: 0;">
+        <div class="input-group">
+            <label>Password</label>
+            <div class="input-field">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
         </div>
 
-        <button class="button-primary" onclick="login()" style="width: 100%; padding: 16px; font-size: 16px;">
-            <i class="fas fa-sign-in-alt" style="margin-right: 10px;"></i> ACCESS DASHBOARD
+        <button class="login-btn" onclick="login()">
+            <span>Sign In</span>
+            <i class="fas fa-arrow-right"></i>
         </button>
 
-        <div id="loginStatus" style="margin-top: 20px; text-align: center; font-size: 14px;"></div>
+        <div id="loginStatus"></div>
     </div>
 
     <script>
-        // Dynamically detect API URL
         const API_URL = window.location.origin;
 
         async function login(){
@@ -43,13 +205,11 @@
             const status = document.getElementById("loginStatus");
 
             if(!username || !password) {
-                status.innerText = "Please fill all fields";
-                status.style.color = "var(--accent-red)";
+                showStatus("Please fill all fields", "#f44336");
                 return;
             }
 
-            status.innerText = "Authenticating...";
-            status.style.color = "var(--primary)";
+            showStatus("Authenticating...", "#ff9800");
 
             try {
                 const res = await fetch(`${API_URL}/api/admin/login`, {
@@ -59,27 +219,27 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    status.innerText = "Access Granted! Redirecting...";
-                    status.style.color = "var(--accent-green)";
+                    showStatus("Access Granted! Redirecting...", "#4caf50");
                     localStorage.setItem("adminToken", data.token);
                     setTimeout(() => {
                         location.href = "dashboard.html";
-                    }, 1000);
+                    }, 800);
                 } else {
-                    status.innerText = data.message || "Invalid Credentials";
-                    status.style.color = "var(--accent-red)";
+                    showStatus(data.message || "Invalid Credentials", "#f44336");
                 }
             } catch (err) {
-                status.innerText = "Server error. Connection failed.";
-                status.style.color = "var(--accent-red)";
+                showStatus("Connection error. Check your server.", "#f44336");
             }
         }
 
-        // Enter key to login
-        document.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                login();
-            }
+        function showStatus(msg, color) {
+            const status = document.getElementById("loginStatus");
+            status.innerText = msg;
+            status.style.color = color;
+        }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
         });
     </script>
 </body>

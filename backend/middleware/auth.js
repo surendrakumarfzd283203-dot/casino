@@ -1,9 +1,10 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 const SECRET = process.env.JWT_SECRET || "solo_secret_key";
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
     try {
         const token = req.headers.authorization;
         if (!token) {
@@ -16,6 +17,10 @@ module.exports = (req, res, next) => {
 
         const decoded = jwt.verify(token, SECRET);
         req.user = decoded;
+
+        // Async update last_seen without blocking
+        User.findByIdAndUpdate(decoded.id, { last_seen: new Date() }).catch(e => {});
+
         next();
     } catch (error) {
         console.error("Auth Middleware: Invalid Token Error:", error.message);

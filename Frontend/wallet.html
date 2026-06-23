@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,55 +7,85 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .wallet-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 20px;
+        .wallet-tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            border: 1px solid var(--glass-border);
         }
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            color: var(--text-dim);
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--gold-gradient);
+            color: #000;
+        }
+
         .action-card {
             background: var(--bg-card);
-            padding: 30px;
-            border-radius: 20px;
+            padding: 25px;
+            border-radius: 24px;
             border: 1px solid var(--glass-border);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            box-shadow: var(--shadow);
         }
-        .action-card h3 {
+
+        .qr-section {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            display: inline-block;
+            width: 100%;
+        }
+        .qr-section img { width: 200px; height: 200px; }
+
+        .steps-box {
+            background: rgba(255,255,255,0.02);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .step-num {
+            background: var(--primary);
+            color: #000;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 20px;
-            margin-bottom: 10px;
+            justify-content: center;
+            font-weight: 800;
+            flex-shrink: 0;
         }
-        .qr-preview {
-            background: white;
-            padding: 10px;
-            border-radius: 12px;
-            width: 180px;
-            height: 180px;
-            margin: 10px auto;
-        }
-        .qr-preview img { width: 100%; height: 100%; }
 
+        .txn-history { margin-top: 30px; }
         .txn-item {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid transparent;
+            border: 1px solid var(--glass-border);
         }
-        .txn-item.pending { border-left-color: var(--primary); }
-        .txn-item.approved { border-left-color: var(--accent-green); }
-        .txn-item.rejected { border-left-color: var(--accent-red); }
-
-        .txn-info h4 { font-size: 14px; margin-bottom: 4px; }
-        .txn-info small { color: var(--text-dim); font-size: 11px; }
-        .txn-amount { font-weight: 700; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -68,72 +98,69 @@
         </nav>
     </header>
 
-    <div class="container">
-        <div class="balance-card animate" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <div>
-                <h3>Total Balance</h3>
-                <div class="amount" id="mainBalance">0.00 INR</div>
-            </div>
-            <i class="fas fa-wallet" style="font-size: 50px; opacity: 0.3;"></i>
+    <div class="container" style="max-width: 600px;">
+        <div class="balance-card animate" style="text-align: center; margin-bottom: 30px;">
+            <h3 style="opacity: 0.7;">Current Balance</h3>
+            <div class="amount" id="mainBalance" style="font-size: 40px;">0.00 INR</div>
         </div>
 
-        <div class="wallet-container animate" style="animation-delay: 0.1s;">
-            <!-- Deposit -->
-            <div class="action-card">
-                <h3><i class="fas fa-plus-circle" style="color: var(--accent-green);"></i> Add Funds</h3>
-                <p style="color: var(--text-dim); font-size: 13px;">First add coins to your wallet to start playing games.</p>
+        <div class="wallet-tabs animate">
+            <button class="tab-btn active" onclick="showTab('deposit')">DEPOSIT</button>
+            <button class="tab-btn" onclick="showTab('withdraw')">WITHDRAW</button>
+        </div>
 
-                <label>Amount (INR)</label>
+        <!-- Deposit Section -->
+        <div id="deposit-section" class="action-card animate">
+            <h3 style="color: var(--primary);"><i class="fas fa-qrcode"></i> ADD FUNDS (QR PAY)</h3>
+
+            <div style="margin: 20px 0;">
+                <label>Enter Amount to Add</label>
                 <input type="number" id="depositAmount" value="500" min="100" oninput="updateQR()">
-
-                <label>Payment Mode</label>
-                <select id="payMode" onchange="updateQR()">
-                    <option value="upi">Direct UPI (Mobile Only)</option>
-                    <option value="qr">Scan QR Code</option>
-                </select>
-
-                <div id="qrArea" style="display: none; text-align: center;">
-                    <div class="qr-preview">
-                        <img id="qrImg" src="" alt="QR">
-                    </div>
-                    <p style="font-size: 12px; margin-top: 5px;">Scan and Pay, then enter Reference ID below</p>
-                </div>
-
-                <div id="upiArea">
-                    <p style="font-size: 12px; color: var(--primary);">Admin UPI: <span id="adminUpi">954870514001@ybl</span></p>
-                    <button class="button-secondary" onclick="openUpi()" style="width: 100%; margin-top: 5px;"><i class="fas fa-mobile-alt"></i> Open UPI App</button>
-                </div>
-
-                <label style="margin-top: 10px;">UTR / Transaction ID</label>
-                <input type="text" id="utr" placeholder="12-digit Reference Number">
-
-                <button class="button-primary" onclick="submitDeposit()">Submit Deposit Request</button>
             </div>
 
-            <!-- Withdraw -->
-            <div class="action-card">
-                <h3><i class="fas fa-minus-circle" style="color: var(--accent-red);"></i> Withdraw</h3>
-                <p style="color: var(--text-dim); font-size: 13px;">Transfer your winnings to your UPI ID instantly.</p>
+            <div class="qr-section">
+                <img id="qrImg" src="" alt="Scan QR">
+                <p style="color: #000; font-weight: 800; margin-top: 10px; font-size: 14px;">SCAN THIS QR TO PAY</p>
+            </div>
 
-                <label>Withdraw Amount</label>
-                <input type="number" id="withdrawAmount" placeholder="Min 100 INR">
+            <div class="steps-box" style="border: 1px dashed var(--primary); background: rgba(255,152,0,0.05);">
+                <h4 style="color: var(--primary); margin-bottom: 15px;"><i class="fas fa-info-circle"></i> HOW TO PAY:</h4>
+                <div class="step"><div class="step-num">1</div><p>Take a <b>screenshot</b> of the QR code above.</p></div>
+                <div class="step"><div class="step-num">2</div><p>Open <b>PhonePe, GPay, or Paytm</b>.</p></div>
+                <div class="step"><div class="step-num">3</div><p>Click "Scan QR" and <b>choose the screenshot</b> from gallery.</p></div>
+                <div class="step"><div class="step-num">4</div><p>Pay the exact amount and <b>Copy the 12-digit UTR/Ref No.</b></p></div>
+                <div class="step"><div class="step-num">5</div><p>Enter the 12-digit number below and click Submit.</p></div>
+            </div>
 
-                <label>Your UPI ID</label>
+            <div style="margin-top: 20px;">
+                <label>UTR / Reference ID (12 Digits)</label>
+                <input type="text" id="utr" placeholder="Enter 12-digit Number">
+                <button class="button-primary" style="width: 100%; height: 55px;" onclick="submitDeposit()">SUBMIT REQUEST</button>
+            </div>
+        </div>
+
+        <!-- Withdraw Section -->
+        <div id="withdraw-section" class="action-card animate" style="display: none;">
+            <h3 style="color: var(--accent-red);"><i class="fas fa-university"></i> WITHDRAW WINNINGS</h3>
+
+            <div style="margin: 20px 0;">
+                <label>Withdraw Amount (INR)</label>
+                <input type="number" id="withdrawAmount" placeholder="Min 100">
+
+                <label style="margin-top: 15px;">Your UPI ID</label>
                 <input type="text" id="withdrawUpi" placeholder="example@ybl">
 
-                <button class="button-primary" style="margin-top: auto; background: var(--bg-dark); color: white; border: 1px solid var(--glass-border);" onclick="submitWithdraw()">Request Payout</button>
+                <p style="font-size: 11px; color: var(--text-dim); margin-top: 10px;">
+                    <i class="fas fa-clock"></i> Payouts are processed within 24 hours to your bank account via UPI.
+                </p>
 
-                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; font-size: 12px; color: var(--text-dim);">
-                    <i class="fas fa-info-circle"></i> Payouts are usually processed within 2-4 hours by admin.
-                </div>
+                <button class="button-primary" style="width: 100%; height: 55px; margin-top: 20px;" onclick="submitWithdraw()">REQUEST PAYOUT</button>
             </div>
         </div>
 
-        <div class="form-box animate" style="margin-top: 40px; animation-delay: 0.2s;">
-            <h3>Transaction History</h3>
-            <div id="txnHistory" style="margin-top: 20px;">
-                <!-- Txn items here -->
-            </div>
+        <div class="txn-history animate" style="animation-delay: 0.2s;">
+            <h3 style="margin-bottom: 15px;"><i class="fas fa-list"></i> Recent Transactions</h3>
+            <div id="txnHistory"></div>
         </div>
     </div>
 
@@ -142,85 +169,57 @@
         const token = localStorage.getItem("token");
         const DEFAULT_UPI = "954870514001@ybl";
 
+        function showTab(type) {
+            document.getElementById('deposit-section').style.display = type === 'deposit' ? 'block' : 'none';
+            document.getElementById('withdraw-section').style.display = type === 'withdraw' ? 'block' : 'none';
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
         async function fetchWallet() {
-            const res = await fetch(`${API_URL}/api/wallet`, {
-                headers: { authorization: token }
-            });
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
             if(data.success) {
-                document.getElementById('mainBalance').innerText = data.balance.toLocaleString() + " INR";
+                document.getElementById('mainBalance').innerText = data.user.coins.toLocaleString() + " INR";
             }
         }
 
         async function fetchHistory() {
-            const res = await fetch(`${API_URL}/api/wallet/transactions`, {
-                headers: { authorization: token }
-            });
+            const res = await fetch(`${API_URL}/api/wallet/transactions`, { headers: { authorization: token } });
             const data = await res.json();
             if(data.success) {
-                const html = data.transactions.map(t => `
-                    <div class="txn-item ${t.status}">
-                        <div class="txn-info">
-                            <h4>${t.payment_method === 'withdraw' ? 'Withdrawal' : 'Deposit'}</h4>
-                            <small>${new Date(t.created_at).toLocaleString()}</small>
+                document.getElementById('txnHistory').innerHTML = data.transactions.map(t => `
+                    <div class="txn-item">
+                        <div>
+                            <div style="font-weight: 800; font-size: 14px; text-transform: uppercase;">${t.type}</div>
+                            <small style="color: var(--text-dim); font-size: 11px;">${new Date(t.created_at).toLocaleString()}</small>
                         </div>
                         <div style="text-align: right;">
-                            <div class="txn-amount" style="color: ${t.payment_method === 'withdraw' ? 'var(--accent-red)' : 'var(--accent-green)'}">
-                                ${t.payment_method === 'withdraw' ? '-' : '+'}${t.amount}
+                            <div style="font-weight: 900; color: ${t.amount < 0 ? 'var(--accent-red)' : 'var(--accent-green)'}">
+                                ${t.amount > 0 ? '+' : ''}${t.amount}
                             </div>
-                            <span class="badge ${t.status === 'pending' ? 'badge-pending' : (t.status === 'approved' ? 'badge-success' : 'badge-failed')}">${t.status}</span>
+                            <span class="badge badge-${t.status}">${t.status}</span>
                         </div>
                     </div>
-                `).join('');
-                document.getElementById('txnHistory').innerHTML = html || '<p style="text-align: center; color: var(--text-dim);">No transactions yet.</p>';
+                `).join('') || '<p style="text-align:center; opacity:0.5;">No transactions found</p>';
             }
         }
 
         function updateQR() {
-            const mode = document.getElementById('payMode').value;
-            const amount = document.getElementById('depositAmount').value || 0;
-            const qrArea = document.getElementById('qrArea');
-            const upiArea = document.getElementById('upiArea');
-
-            if(mode === 'qr') {
-                qrArea.style.display = 'block';
-                upiArea.style.display = 'none';
-                const qrData = encodeURIComponent(`upi://pay?pa=${DEFAULT_UPI}&pn=Solo%20Casino&cu=INR&am=${amount}`);
-                document.getElementById("qrImg").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
-            } else {
-                qrArea.style.display = 'none';
-                upiArea.style.display = 'block';
-            }
-        }
-
-        function openUpi() {
-            const amount = document.getElementById('depositAmount').value;
-            if(!amount || amount < 100) return alert("Minimum amount is 100 INR");
-
-            // Standard UPI Intent URL to open any UPI app on mobile
-            const upiUrl = `upi://pay?pa=${DEFAULT_UPI}&pn=Solo%20Casino&am=${amount}&cu=INR`;
-
-            // Open the URL
-            window.location.href = upiUrl;
-
-            // Fallback for some browsers
-            setTimeout(() => {
-                if (confirm("If UPI app did not open, would you like to use the QR Code mode instead?")) {
-                    document.getElementById('payMode').value = 'qr';
-                    updateQR();
-                }
-            }, 3000);
+            const amount = document.getElementById('depositAmount').value || 100;
+            const qrData = encodeURIComponent(`upi://pay?pa=${DEFAULT_UPI}&pn=Solo%20Casino&cu=INR&am=${amount}`);
+            document.getElementById("qrImg").src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${qrData}`;
         }
 
         async function submitDeposit() {
             const amount = document.getElementById('depositAmount').value;
             const utr = document.getElementById('utr').value;
-            if(!amount || !utr) return alert("Please enter amount and Reference ID");
+            if(!amount || utr.length < 10) return alert("Enter valid Amount and 12-digit UTR");
 
             const res = await fetch(`${API_URL}/api/wallet/request-deposit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ amount, paymentMethod: 'upi', reference: utr })
+                body: JSON.stringify({ amount, paymentMethod: 'QR_UPI', reference: utr })
             });
             const data = await res.json();
             alert(data.message);
@@ -248,6 +247,7 @@
             }
         }
 
+        updateQR();
         fetchWallet();
         fetchHistory();
     </script>

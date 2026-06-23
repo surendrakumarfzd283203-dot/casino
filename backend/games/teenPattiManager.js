@@ -2,12 +2,13 @@ const User = require("../models/User");
 const Transaction = require("../models/Transaction");
 const Admin = require("../models/Admin");
 const { evaluateHand } = require("./teenpatti");
+const { checkReferralReward } = require("../utils/referral");
 
 class TeenPattiTable {
     constructor(id) {
         this.id = id;
         this.players = {}; // { userId: { name, hand, status, blind, isBot } }
-        this.state = 'WAITING'; // WAITING, DEALING, PLAYING, SHOW
+        this.state = 'WAITING';
         this.timer = 10;
         this.currentTurn = null;
         this.pot = 0;
@@ -34,22 +35,22 @@ class TeenPattiTable {
 
         // Add Bot if only 1 human player
         if (playerIds.length === 1) {
-            this.players["bot_admin"] = { name: "Admin_Bot", hand: [], status: 'WAITING', blind: true, isBot: true };
+            this.players["bot_khushabo"] = { name: "khushabo", hand: [], status: 'WAITING', blind: true, isBot: true };
         }
 
-        // Subtract Boot Amount from everyone
         for (let uid in this.players) {
             if (!this.players[uid].isBot) {
                 const user = await User.findById(uid);
-                if (user.coins < this.bootAmount) {
-                    delete this.players[uid]; // Kick out
+                if (!user || user.coins < this.bootAmount) {
+                    delete this.players[uid];
                     continue;
                 }
                 user.coins -= this.bootAmount;
                 await user.save();
                 this.pot += this.bootAmount;
+                await new Transaction({ user_id: uid, amount: -this.bootAmount, type: 'game_loss', game_name: 'Teen Patti', details: 'Boot Amount' }).save();
             } else {
-                this.pot += this.bootAmount; // Bot "pays" too
+                this.pot += this.bootAmount;
             }
         }
 
@@ -76,15 +77,13 @@ class TeenPattiTable {
             this.players[uid].blind = true;
         }
 
-        // Rigged: If Bot is playing, give Bot better cards
-        if (this.players["bot_admin"]) {
-            // Simple rigging: Give bot a Trio or Straight Flush if possible, or just swap hands
-            let humanId = Object.keys(this.players).find(id => id !== "bot_admin");
-            if (evaluateHand(this.players[humanId].hand).score > evaluateHand(this.players["bot_admin"].hand).score) {
-                // Swap
+        // Rigged: If Bot khushabo is playing, ensure she wins if against 1 human
+        if (this.players["bot_khushabo"]) {
+            let humanId = Object.keys(this.players).find(id => id !== "bot_khushabo");
+            if (evaluateHand(this.players[humanId].hand).score > evaluateHand(this.players["bot_khushabo"].hand).score) {
                 let temp = this.players[humanId].hand;
-                this.players[humanId].hand = this.players["bot_admin"].hand;
-                this.players["bot_admin"].hand = temp;
+                this.players[humanId].hand = this.players["bot_khushabo"].hand;
+                this.players["bot_khushabo"].hand = temp;
             }
         }
 
@@ -96,6 +95,7 @@ class TeenPattiTable {
     async handleMove(userId, move, amount) {
         if (this.currentTurn !== userId) return { success: false, message: "Not your turn" };
         const player = this.players[userId];
+        if (!player || player.status !== 'ACTIVE') return { success: false, message: "Invalid player" };
 
         if (move === 'PACK') {
             player.status = 'PACKED';
@@ -108,11 +108,12 @@ class TeenPattiTable {
                 const user = await User.findById(userId);
                 if (user.coins < bet) return { success: false, message: "Insufficient coins" };
                 user.coins -= bet;
+                user.referral_played = true;
                 await user.save();
+                await checkReferralReward(userId);
+                await new Transaction({ user_id: userId, amount: -bet, type: 'game_loss', game_name: 'Teen Patti', details: 'Chaal/Blind Bet' }).save();
             }
             this.pot += bet;
-            // amount here is actually the "unit" bet
-            // lastBet is the unit
         }
 
         this.nextTurn();
@@ -130,12 +131,10 @@ class TeenPattiTable {
         this.currentTurn = activeUids[(currentIdx + 1) % activeUids.length];
         this.timer = 20;
 
-        // If it's Bot's turn, make a move
         if (this.players[this.currentTurn].isBot) {
             setTimeout(() => {
-                // Bot logic: See after 2 rounds, pack if very bad, but here we rigged the hand anyway
                 const bot = this.players[this.currentTurn];
-                if (bot.blind && Math.random() > 0.7) bot.blind = false;
+                if (bot.blind && Math.random() > 0.6) bot.blind = false;
                 this.handleMove(this.currentTurn, 'CHAAL', this.lastBet);
             }, 2000);
         }
@@ -160,8 +159,9 @@ class TeenPattiTable {
         const winAmt = Math.floor(this.pot * 0.95);
 
         if (!this.players[winnerId].isBot) {
-            await User.findByIdAndUpdate(winnerId, { $inc: { coins: winAmt } });
-            await new Transaction({ user_id: winnerId, amount: winAmt, type: 'game_teenpatti', details: 'Won Pot' }).save();
+            await User.findByIdAndUpdate(winnerId, { $inc: { coins: winAmt }, referral_played: true });
+            await checkReferralReward(winnerId);
+            await new Transaction({ user_id: winnerId, amount: winAmt, type: 'game_win', game_name: 'Teen Patti', details: 'Won Pot' }).save();
         } else {
             await Admin.findOneAndUpdate({}, { $inc: { balance: winAmt } });
         }
@@ -171,15 +171,17 @@ class TeenPattiTable {
             this.players[uid].winAmount = (uid === winnerId) ? winAmt : 0;
         }
 
-        this.history.unshift({ winner: this.players[winnerId].name, pot: this.pot });
-        if (this.history.length > 10) this.history.pop();
+        this.history.unshift({ winner: this.players[winnerId].name, pot: this.pot, time: new Date() });
+        if (this.history.length > 20) this.history.pop();
     }
 }
 
 const tables = {
     1: new TeenPattiTable(1),
     2: new TeenPattiTable(2),
-    3: new TeenPattiTable(3)
+    3: new TeenPattiTable(3),
+    4: new TeenPattiTable(4),
+    5: new TeenPattiTable(5)
 };
 
 setInterval(async () => {
@@ -198,22 +200,35 @@ setInterval(async () => {
 }, 1000);
 
 module.exports = {
-    getTables: () => Object.values(tables).map(t => ({
-        id: t.id, state: t.state, timer: t.timer, pot: t.pot,
-        currentTurn: t.currentTurn, lastBet: t.lastBet,
-        players: t.players, history: t.history, boot: t.bootAmount
-    })),
+    getTables: (requestingUserId, isAdmin = false) => Object.values(tables).map(t => {
+        const filteredPlayers = {};
+        for (let uid in t.players) {
+            const p = t.players[uid];
+            // Hide cards unless it's the player themselves, or it's SHOW state, or p is a bot (for admin?)
+            // Actually, "admin ko admin ko" - if admin is playing? Or admin panel?
+            // The prompt says "admin ko admin ko or sabhi ko keval apne apne dikhe"
+            // So if I am user X, I see only X's hand.
+            const showHand = (uid === requestingUserId) || (t.state === 'SHOW') || (p.isBot && isAdmin);
+
+            filteredPlayers[uid] = {
+                ...p,
+                hand: showHand ? p.hand : ["?", "?", "?"]
+            };
+        }
+        return {
+            id: t.id, state: t.state, timer: t.timer, pot: t.pot,
+            currentTurn: t.currentTurn, lastBet: t.lastBet,
+            players: filteredPlayers, history: t.history, boot: t.bootAmount
+        };
+    }),
     joinTable: (tableId, userId, name) => {
         const t = tables[tableId];
-        // If already in another table, leave it?
-        // For simplicity, just check this table
+        if (!t) return { success: false, message: "Table not found" };
         if (t.state !== 'WAITING') return { success: false, message: "Game in progress" };
         if (t.players[userId]) return { success: true };
         if (Object.keys(t.players).length >= 5) return { success: false, message: "Table full" };
 
-        // Remove from other tables
         for(let id in tables) delete tables[id].players[userId];
-
         t.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
         return { success: true };
     },

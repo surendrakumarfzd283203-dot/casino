@@ -72,7 +72,7 @@ const adminAuth = (req, res, next) => {
 
 app.post("/api/register", async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, referral } = req.body;
         if (!name || !email || !password) {
             return res.json({ success: false, message: "All fields required" });
         }
@@ -82,8 +82,21 @@ app.post("/api/register", async (req, res) => {
             return res.json({ success: false, message: "Email Already Exists" });
         }
 
+        let referredBy = null;
+        if (referral) {
+            const referrer = await User.findOne({ referral_code: referral });
+            if (referrer) referredBy = referrer._id;
+        }
+
         const hash = await bcrypt.hash(password, 10);
-        const newUser = new User({ name, email, password: hash });
+        const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        const newUser = new User({
+            name, email, password: hash,
+            referral_code: referralCode,
+            referred_by: referredBy,
+            coins: 0
+        });
         await newUser.save();
 
         res.json({ success: true, message: "Registration Successful" });
@@ -413,6 +426,22 @@ let activeBets = {
     aviator: [] // [{ userId, name, betAmount, cashOutMultiplier }]
 };
 
+let aviatorFakeUsers = [];
+function updateAviatorFakeUsers() {
+    const count = Math.floor(Math.random() * 101) + 200; // 200-300
+    const names = ["Rahul", "Amit", "Priya", "Sonia", "Vikram", "Anjali", "Arjun", "Sneha", "Kabir", "Ishita", "Rohan", "Maya", "Deepak", "Karan", "Simran", "Raj", "Pooja", "Aditya", "Meera", "Yash"];
+    aviatorFakeUsers = [];
+    for (let i = 0; i < count; i++) {
+        aviatorFakeUsers.push({
+            name: names[Math.floor(Math.random() * names.length)] + " " + (Math.floor(Math.random() * 900) + 100),
+            betAmount: [10, 50, 100, 500, 1000, 2000][Math.floor(Math.random() * 6)],
+            cashOutAt: (1.1 + Math.random() * 3).toFixed(2),
+            isFake: true
+        });
+    }
+}
+updateAviatorFakeUsers();
+
 // --- AVIATOR AUTOMATION (20 SECOND BETTING GAP) ---
 let aviatorState = {
     roundId: Date.now(),
@@ -425,6 +454,7 @@ let aviatorState = {
 setInterval(() => {
     if (aviatorState.timer > 0) {
         aviatorState.timer--;
+        if (aviatorState.timer === 19) updateAviatorFakeUsers();
     } else {
         if (!aviatorState.isFlying) {
             startAviatorFlight();
@@ -473,7 +503,12 @@ async function startAviatorFlight() {
 }
 
 app.get("/api/game/aviator/state", auth, (req, res) => {
-    res.json({ success: true, ...aviatorState, activeBets: activeBets.aviator });
+    res.json({
+        success: true,
+        ...aviatorState,
+        activeBets: activeBets.aviator,
+        fakeUsers: aviatorFakeUsers.slice(0, 50) // Send a subset to avoid huge payload
+    });
 });
 
 app.post("/api/play/aviator", auth, async (req, res) => {
@@ -608,21 +643,25 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
 
         stats.liveBets = {
             color: colorGameManager.getLiveBets(),
+            colorStats: colorGameManager.getBetStats(),
             luckydraw: luckyDrawManager.bets,
             spin: spinGameManager.bets,
             rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
             bigsmall: {
                 BIG: bigSmallState.activeBets.filter(b => b.prediction === 'BIG').reduce((a, b) => a + b.amount, 0),
                 SMALL: bigSmallState.activeBets.filter(b => b.prediction === 'SMALL').reduce((a, b) => a + b.amount, 0),
-                bets: bigSmallState.activeBets // Sending full list for admin detail view
+                TRIPLE: bigSmallState.activeBets.filter(b => b.prediction === 'TRIPLE').reduce((a, b) => a + b.amount, 0),
+                bets: bigSmallState.activeBets
             },
-            teenpatti: teenPattiManager.getTables().map(t => ({ id: t.id, players: t.players })),
+            teenpatti: teenPattiManager.getTables(null, true).map(t => ({ id: t.id, players: t.players, pot: t.pot })),
             aviator: activeBets.aviator
         };
 
         const totalUsers = await User.countDocuments({});
+        const onlineUsers = await User.countDocuments({ last_seen: { $gt: new Date(Date.now() - 5 * 60 * 1000) } });
         const totalCoinsAgg = await User.aggregate([{ $group: { _id: null, total: { $sum: "$coins" } } }]);
         stats.totalUsers = totalUsers;
+        stats.onlineUsers = onlineUsers;
         stats.totalCoins = totalCoinsAgg.length > 0 ? totalCoinsAgg[0].total : 0;
 
         const admin = await Admin.findOne({});
@@ -783,19 +822,24 @@ app.get("/api/admin/pending-requests", adminAuth, async (req, res) => {
     }
 });
 
+const { checkReferralReward } = require("./utils/referral");
+
 app.post("/api/admin/approve-request", adminAuth, async (req, res) => {
     try {
         const { requestId } = req.body;
         const txn = await Transaction.findById(requestId);
         if (!txn || txn.status !== 'pending') return res.json({ success: false, message: "Invalid request" });
 
+        const user = await User.findById(txn.user_id);
         if (txn.type === 'deposit') {
-            await User.findByIdAndUpdate(txn.user_id, { $inc: { coins: txn.amount } });
-            await Admin.findOneAndUpdate({}, { $inc: { balance: -txn.amount } }); // Reversing profit since it's a deposit inflow
+            user.coins += txn.amount;
+            user.total_deposited += txn.amount;
+            await user.save();
+            await Admin.findOneAndUpdate({}, { $inc: { balance: -txn.amount } });
+
+            // Check Referral Reward
+            await checkReferralReward(user._id);
         } else if (txn.type === 'withdraw') {
-            // Commission already handled at request time by deducting full amount
-            // and tracking commission in the txn object.
-            // Admin balance increase (profit)
             await Admin.findOneAndUpdate({}, { $inc: { balance: txn.commission } });
         }
 
@@ -869,6 +913,10 @@ app.post("/api/daily-bonus", auth, async (req, res) => {
             return res.status(500).json({ success: false, message: "Unable to load bonus status" });
         }
 
+        if (user.daily_bonus_count >= 7) {
+            return res.json({ success: false, message: "Daily bonus is only available for the first 7 days." });
+        }
+
         const lastBonus = user.last_bonus;
         const now = new Date();
 
@@ -880,10 +928,18 @@ app.post("/api/daily-bonus", auth, async (req, res) => {
             }
         }
 
-        const bonusAmount = 50;
+        const bonusAmount = 5;
         user.coins += bonusAmount;
         user.last_bonus = now;
+        user.daily_bonus_count += 1;
         await user.save();
+
+        await new Transaction({
+            user_id: user._id,
+            amount: bonusAmount,
+            type: 'bonus',
+            details: `Day ${user.daily_bonus_count} Bonus`
+        }).save();
 
         res.json({ success: true, message: `+${bonusAmount} Coins Added!` });
     } catch (error) {
