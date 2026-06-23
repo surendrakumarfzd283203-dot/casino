@@ -452,7 +452,14 @@
             if (game === 'color') {
                 const stats = statsData?.liveBets?.colorStats;
                 if (!stats) return;
-                let html = `<div style="display:flex; justify-content: space-between; margin-bottom:12px;">
+                let html = `<div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px; margin-bottom:12px; font-size:9px; text-align:center;">
+                    <div style="color:#ef4444">RED: ₹${stats.colors.RED}</div>
+                    <div style="color:#34b4ff">BLUE: ₹${stats.colors.BLUE}</div>
+                    <div style="color:#10b981">GREEN: ₹${stats.colors.GREEN}</div>
+                    <div style="color:#ffc107">YELLOW: ₹${stats.colors.YELLOW}</div>
+                    <div style="color:#913ef8">VIOLET: ₹${stats.colors.VIOLET}</div>
+                </div>`;
+                html += `<div style="display:flex; justify-content: space-between; margin-bottom:12px;">
                     <div style="color:#10b981; font-weight:800">BIG: ₹${stats.sizes.BIG}</div>
                     <div style="color:#ef4444; font-weight:800">SMALL: ₹${stats.sizes.SMALL}</div>
                 </div>`;
@@ -462,6 +469,12 @@
                     html += `<div style="background:${hasBet?'rgba(255,152,0,0.2)':'rgba(255,255,255,0.02)'}; border: 1px solid ${hasBet?'#ff9800':'transparent'}; padding:5px; text-align:center; border-radius:6px;">${n}<br><b>₹${stats.numbers[n]}</b></div>`;
                 }
                 html += `</div>`;
+
+                // Show player list too
+                html += `<div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px; max-height:80px; overflow-y:auto;">
+                    ${(bets || []).map(b => `<div style="font-size:10px; opacity:0.7; margin-bottom:3px;">${b.name}: ₹${b.amount} (${b.type} ${b.value})</div>`).join('')}
+                </div>`;
+
                 container.innerHTML = html;
                 return;
             }
