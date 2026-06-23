@@ -381,19 +381,19 @@
                 <div class="amount-input-box">
                     <div class="input-stepper">
                         <button onclick="changeAmt(1, -1)">-</button>
-                        <input type="number" id="amt1" value="1.00">
+                        <input type="number" id="amt1" value="10.00" min="10">
                         <button onclick="changeAmt(1, 1)">+</button>
                     </div>
                     <div class="quick-amounts">
-                        <button onclick="setAmt(1, 1)">1</button>
-                        <button onclick="setAmt(1, 2)">2</button>
-                        <button onclick="setAmt(1, 5)">5</button>
                         <button onclick="setAmt(1, 10)">10</button>
+                        <button onclick="setAmt(1, 20)">20</button>
+                        <button onclick="setAmt(1, 50)">50</button>
+                        <button onclick="setAmt(1, 100)">100</button>
                     </div>
                 </div>
                 <button id="btn1" class="big-bet-btn btn-green" onclick="handleBtn(1)">
                     <span class="label">BET</span>
-                    <span class="value" id="sub1">1.00 INR</span>
+                    <span class="value" id="sub1">10.00 INR</span>
                 </button>
             </div>
         </div>
@@ -408,19 +408,19 @@
                 <div class="amount-input-box">
                     <div class="input-stepper">
                         <button onclick="changeAmt(2, -1)">-</button>
-                        <input type="number" id="amt2" value="1.00">
+                        <input type="number" id="amt2" value="10.00" min="10">
                         <button onclick="changeAmt(2, 1)">+</button>
                     </div>
                     <div class="quick-amounts">
-                        <button onclick="setAmt(2, 1)">1</button>
-                        <button onclick="setAmt(2, 2)">2</button>
-                        <button onclick="setAmt(2, 5)">5</button>
                         <button onclick="setAmt(2, 10)">10</button>
+                        <button onclick="setAmt(2, 20)">20</button>
+                        <button onclick="setAmt(2, 50)">50</button>
+                        <button onclick="setAmt(2, 100)">100</button>
                     </div>
                 </div>
                 <button id="btn2" class="big-bet-btn btn-green" onclick="handleBtn(2)">
                     <span class="label">BET</span>
-                    <span class="value" id="sub2">1.00 INR</span>
+                    <span class="value" id="sub2">10.00 INR</span>
                 </button>
             </div>
         </div>
@@ -718,7 +718,7 @@
 
         function changeAmt(i, v) {
             const inp = document.getElementById(`amt${i}`);
-            inp.value = Math.max(1, parseFloat(inp.value) + v).toFixed(2);
+            inp.value = Math.max(10, parseFloat(inp.value) + v).toFixed(2);
             if(!activeBets[i].placed) document.getElementById(`sub${i}`).innerText = inp.value + " INR";
         }
         function setAmt(i, v) {

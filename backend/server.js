@@ -516,8 +516,8 @@ app.post("/api/play/aviator", auth, async (req, res) => {
         const { betAmount, cashOutMultiplier } = req.body;
         const userId = req.user.id;
 
-        if (!betAmount || betAmount <= 0) return res.json({ success: false, message: "Invalid bet" });
-        if (aviatorState.timer < 5 || aviatorState.isFlying) return res.json({ success: false, message: "Round already started" });
+        if (!betAmount || betAmount < 10) return res.json({ success: false, message: "Minimum bet is 10 INR" });
+        if (aviatorState.isFlying) return res.json({ success: false, message: "Round already started" });
 
         const user = await User.findById(userId);
         if (user.coins < betAmount) return res.json({ success: false, message: "Insufficient coins" });

@@ -288,6 +288,7 @@
                 <div class="control-card">
                     <h4><i class="fas fa-paper-plane"></i> Aviator Control</h4>
                     <div id="aviator-timer" style="font-size: 20px; font-weight: 800; text-align:center; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 15px;">...</div>
+                    <div id="aviator-pot" style="font-size: 14px; font-weight: 700; color: var(--primary); text-align:center; margin-bottom: 15px;">LIVE POT: ₹0.00</div>
                     <label style="font-size: 11px; color: var(--text-dim);">SET NEXT CRASH MULTIPLIER</label>
                     <div style="display: flex; gap: 10px; margin-top: 8px; margin-bottom: 15px;">
                         <input type="number" id="forceAviatorMult" value="1.5" step="0.1" class="input-dark">
@@ -423,6 +424,9 @@
                         const timerText = avi.isFlying ? "FLYING" : `BETTING: ${avi.timer}s`;
                         document.getElementById('aviator-timer').innerText = timerText;
                         document.getElementById('aviator-timer').style.color = avi.isFlying ? "#ef4444" : "#10b981";
+
+                        const pot = (s.liveBets.aviator || []).reduce((a, b) => a + b.betAmount, 0);
+                        document.getElementById('aviator-pot').innerText = `LIVE POT: ₹${pot.toFixed(2)}`;
                     }
 
                     if (s.colorState) document.getElementById('color-timer').innerText = `Next Round: ${s.colorState.timer}s`;
