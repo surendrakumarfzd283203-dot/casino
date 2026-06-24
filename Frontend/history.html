@@ -112,7 +112,7 @@
                             </div>
                             <div>
                                 <div style="font-weight: 800; font-size: 14px;">${t.game_name || t.type.toUpperCase()}</div>
-                                <div style="font-size: 11px; opacity: 0.6; margin-top: 2px;">${t.details || ''}</div>
+                                <div style="font-size: 11px; opacity: 0.6; margin-top: 2px;">${t.details || ''}${t.rejection_reason ? ' | Reason: ' + t.rejection_reason : ''}</div>
                                 <div style="font-size: 10px; color: #444; margin-top: 4px;">${new Date(t.created_at).toLocaleString()}</div>
                             </div>
                         </div>

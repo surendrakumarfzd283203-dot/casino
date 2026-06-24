@@ -275,15 +275,15 @@
         <!-- Dashboard Section -->
         <div id="section-dashboard">
             <h2 style="margin-top: 0; margin-bottom: 30px;">Live Operations</h2>
-
             <div class="stat-grid">
                 <div class="stat-card users"><h4>Users (Total)</h4><div class="value" id="stat-totalUsers">0</div></div>
                 <div class="stat-card users"><h4>Online (Real)</h4><div class="value" id="stat-onlineUsers" style="color: #10b981;">0</div></div>
                 <div class="stat-card coins"><h4>Total Coins</h4><div class="value" id="stat-totalCoins">0</div></div>
                 <div class="stat-card profit"><h4>Admin Profit</h4><div class="value" id="stat-adminWallet">0</div></div>
             </div>
-
+            <!-- Game Controls ... -->
             <div class="control-panel">
+                <!-- ... existing controls ... -->
                 <!-- Aviator Control -->
                 <div class="control-card">
                     <h4><i class="fas fa-paper-plane"></i> Aviator Control</h4>
@@ -395,6 +395,19 @@
 
         <div id="section-deposits" style="display:none;"><h2>Deposit History</h2><div class="table-container"><table id="deposits-table"></table></div></div>
         <div id="section-withdrawals" style="display:none;"><h2>Withdrawal History</h2><div class="table-container"><table id="withdrawals-table"></table></div></div>
+
+        <!-- User History Modal -->
+        <div id="history-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:40px; overflow-y:auto;">
+            <div style="background:var(--bg-card); border-radius:20px; padding:30px; border:1px solid var(--glass-border); max-width:900px; margin:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3 id="history-user-name" style="margin:0">User History</h3>
+                    <button class="action-btn btn-block" onclick="document.getElementById('history-modal').style.display='none'">Close</button>
+                </div>
+                <div class="table-container">
+                    <table id="user-history-table"></table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -542,12 +555,18 @@
             document.querySelectorAll('.admin-main > div').forEach(d => d.style.display = 'none');
             document.getElementById('section-' + id).style.display = 'block';
             document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-            if(event) event.currentTarget.classList.add('active');
+            // Find current link and mark active
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(l => {
+                if (l.innerText.toLowerCase().includes(id.toLowerCase())) l.classList.add('active');
+            });
 
             if(window.innerWidth < 1024) toggleSidebar();
 
             if(id === 'requests') fetchPendingRequests();
             if(id === 'users') fetchUsers();
+            if(id === 'deposits') fetchDeposits();
+            if(id === 'withdrawals') fetchWithdrawals();
         }
 
         async function fetchUsers() {
@@ -567,36 +586,64 @@
                         </td>
                         <td><span class="badge ${u.status === 'blocked' ? 'badge-danger' : 'badge-success'}">${u.status}</span></td>
                         <td>
-                            ${u.status === 'blocked' ?
-                                `<button class="action-btn btn-unblock" onclick="toggleBlock('${u.id}', 'unblock')">Unblock</button>` :
-                                `<button class="action-btn btn-block" onclick="toggleBlock('${u.id}', 'block')">Block</button>`
-                            }
+                            <div style="display:flex; gap:5px;">
+                                <button class="action-btn btn-edit" onclick="showUserHistory('${u.id}', '${u.name}')">History</button>
+                                ${u.status === 'blocked' ?
+                                    `<button class="action-btn btn-unblock" onclick="toggleBlock('${u.id}', 'unblock')">Unblock</button>` :
+                                    `<button class="action-btn btn-block" onclick="toggleBlock('${u.id}', 'block')">Block</button>`
+                                }
+                            </div>
                         </td>
                     </tr>`).join('')}</tbody>`;
         }
 
-        async function updateCoins(userId) {
-            const coins = document.getElementById(`coins-${userId}`).value;
-            const res = await fetch(`${API_URL}/api/admin/update-coins`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ userId, coins })
-            });
+        async function showUserHistory(userId, userName) {
+            const res = await fetch(`${API_URL}/api/admin/user-history/${userId}`, { headers: { authorization: token } });
             const data = await res.json();
-            alert(data.message);
-            fetchUsers();
-            fetchStats();
+            if (data.success) {
+                document.getElementById('history-user-name').innerText = `History for ${userName}`;
+                const table = document.getElementById('user-history-table');
+                table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Status</th><th>Details</th></tr></thead>
+                    <tbody>${data.history.map(h => `
+                        <tr>
+                            <td>${new Date(h.created_at).toLocaleString()}</td>
+                            <td>${h.type.toUpperCase()}</td>
+                            <td style="color:${h.amount >= 0 ? '#10b981' : '#ef4444'}">₹${Math.abs(h.amount)}</td>
+                            <td><span class="badge ${h.status === 'completed' ? 'badge-success' : (h.status === 'pending' ? '' : 'badge-danger')}">${h.status}</span></td>
+                            <td><small>${h.details}${h.rejection_reason ? ' | Reason: ' + h.rejection_reason : ''}</small></td>
+                        </tr>`).join('')}</tbody>`;
+                document.getElementById('history-modal').style.display = 'block';
+            }
         }
 
-        async function toggleBlock(userId, action) {
-            const res = await fetch(`${API_URL}/api/admin/${action}-user`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ userId })
-            });
-            const data = await res.json();
-            alert(data.message);
-            fetchUsers();
+        async function fetchDeposits() {
+            const res = await fetch(`${API_URL}/api/admin/deposits`, { headers: { authorization: token } });
+            const deposits = await res.json();
+            const table = document.getElementById('deposits-table');
+            table.innerHTML = `<thead><tr><th>User</th><th>Amount</th><th>Status</th><th>Details</th><th>Date</th></tr></thead>
+                <tbody>${deposits.map(d => `
+                    <tr>
+                        <td><b>${d.name}</b></td>
+                        <td style="color:#10b981">₹${d.amount}</td>
+                        <td><span class="badge ${d.status === 'completed' ? 'badge-success' : 'badge-danger'}">${d.status}</span></td>
+                        <td>${d.details}${d.rejection_reason ? ' | Reason: ' + d.rejection_reason : ''}</td>
+                        <td>${new Date(d.created_at).toLocaleString()}</td>
+                    </tr>`).join('')}</tbody>`;
+        }
+
+        async function fetchWithdrawals() {
+            const res = await fetch(`${API_URL}/api/admin/withdrawals`, { headers: { authorization: token } });
+            const withdrawals = await res.json();
+            const table = document.getElementById('withdrawals-table');
+            table.innerHTML = `<thead><tr><th>User</th><th>Amount</th><th>Commission</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>${withdrawals.map(w => `
+                    <tr>
+                        <td><b>${w.name}</b></td>
+                        <td style="color:#ef4444">₹${Math.abs(w.amount)}</td>
+                        <td>₹${w.commission}</td>
+                        <td><span class="badge ${w.status === 'completed' ? 'badge-success' : 'badge-danger'}">${w.status}</span></td>
+                        <td>${new Date(w.created_at).toLocaleString()}</td>
+                    </tr>`).join('')}</tbody>`;
         }
 
         async function fetchPendingRequests() {
@@ -606,13 +653,13 @@
                 const body = document.getElementById('requests-body');
                 body.innerHTML = data.requests.map(r => `
                     <tr>
-                        <td><b>${r.user_id.name}</b><br><small>${r.user_id.email}</small></td>
+                        <td><b>${r.user_id ? r.user_id.name : 'Unknown'}</b><br><small>${r.user_id ? r.user_id.email : ''}</small></td>
                         <td><span class="badge ${r.type === 'deposit' ? 'badge-success' : 'badge-danger'}">${r.type}</span></td>
-                        <td><b>₹${r.amount}</b></td>
+                        <td><b>₹${Math.abs(r.amount)}</b></td>
                         <td><span style="font-size:11px">${r.details}</span></td>
                         <td style="white-space:nowrap">
                             <button class="action-btn btn-unblock" onclick="handleRequest('${r._id}', 'approve')"><i class="fas fa-check"></i></button>
-                            <button class="action-btn btn-block" onclick="handleRequest('${r._id}', 'times')"><i class="fas fa-xmark"></i></button>
+                            <button class="action-btn btn-block" onclick="handleRequest('${r._id}', 'reject')"><i class="fas fa-xmark"></i></button>
                         </td>
                     </tr>
                 `).join('');
@@ -620,10 +667,16 @@
         }
 
         async function handleRequest(requestId, action) {
+            let reason = null;
+            if (action === 'reject') {
+                reason = prompt("Please enter a reason for rejection:");
+                if (reason === null) return; // Cancelled
+            }
+
             const res = await fetch(`${API_URL}/api/admin/${action}-request`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ requestId })
+                body: JSON.stringify({ requestId, reason })
             });
             const data = await res.json();
             alert(data.message);

@@ -810,7 +810,7 @@ app.post("/api/admin/delete-user", adminAuth, async (req, res) => {
 
 app.get("/api/admin/deposits", adminAuth, async (req, res) => {
     try {
-        const deposits = await DepositRequest.find({})
+        const deposits = await Transaction.find({ type: "deposit", status: { $ne: "pending" } })
             .populate("user_id", "name email")
             .sort({ created_at: -1 });
 
@@ -822,7 +822,25 @@ app.get("/api/admin/deposits", adminAuth, async (req, res) => {
         }));
         res.json(formatted);
     } catch (error) {
-        res.status(500).json({ success: false, message: "Unable to load deposit requests" });
+        res.status(500).json({ success: false, message: "Unable to load deposit history" });
+    }
+});
+
+app.get("/api/admin/withdrawals", adminAuth, async (req, res) => {
+    try {
+        const withdrawals = await Transaction.find({ type: "withdraw", status: { $ne: "pending" } })
+            .populate("user_id", "name email")
+            .sort({ created_at: -1 });
+
+        const formatted = withdrawals.map(w => ({
+            ...w.toObject(),
+            id: w._id,
+            name: w.user_id ? w.user_id.name : "Deleted User",
+            email: w.user_id ? w.user_id.email : ""
+        }));
+        res.json(formatted);
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Unable to load withdrawal history" });
     }
 });
 
@@ -868,7 +886,7 @@ app.post("/api/admin/approve-request", adminAuth, async (req, res) => {
 
 app.post("/api/admin/reject-request", adminAuth, async (req, res) => {
     try {
-        const { requestId } = req.body;
+        const { requestId, reason } = req.body;
         const txn = await Transaction.findById(requestId);
         if (!txn || txn.status !== 'pending') return res.json({ success: false, message: "Invalid request" });
 
@@ -878,8 +896,27 @@ app.post("/api/admin/reject-request", adminAuth, async (req, res) => {
         }
 
         txn.status = 'rejected';
+        txn.rejection_reason = reason || "Request rejected by admin";
         await txn.save();
         res.json({ success: true, message: "Request rejected" });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.get("/api/admin/user-history/:userId", adminAuth, async (req, res) => {
+    try {
+        const history = await Transaction.find({ user_id: req.params.userId }).sort({ created_at: -1 });
+        res.json({ success: true, history });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.get("/api/user/history", auth, async (req, res) => {
+    try {
+        const history = await Transaction.find({ user_id: req.user.id }).sort({ created_at: -1 });
+        res.json({ success: true, history });
     } catch (error) {
         res.status(500).json({ success: false });
     }

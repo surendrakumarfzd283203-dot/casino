@@ -8,6 +8,7 @@ const TransactionSchema = new mongoose.Schema({
     status: { type: String, default: 'completed' }, // 'pending', 'completed', 'rejected'
     commission: { type: Number, default: 0 },
     details: { type: String },
+    rejection_reason: { type: String, default: null },
     created_at: { type: Date, default: Date.now }
 });
 
