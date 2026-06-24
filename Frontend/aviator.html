@@ -548,9 +548,11 @@
             let totalWin = 0;
 
             // Process fake users to simulate cashouts
+            // We keep the win status even after flight ends to show as history
             const processedFake = (fake || []).map(f => {
                 const cashOutAt = parseFloat(f.cashOutAt);
-                if (isFlying && currentMult >= cashOutAt) {
+                // Mark as cashed out if the current round's multiplier reached their target
+                if (currentMult >= cashOutAt) {
                     return { ...f, cashedOut: true, multiplier: cashOutAt, winAmount: f.betAmount * cashOutAt };
                 }
                 return f;
