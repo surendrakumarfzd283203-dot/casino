@@ -526,6 +526,7 @@
                 updateButtonsWaiting(data.timer);
                 document.getElementById("multiplier").innerText = "1.00x";
                 document.getElementById("multiplier").style.color = "white";
+                currentMult = 1.0; // Reset multiplier for new round UI
                 drawGame(0); // Show plane at start position
             }
             renderHistory(data.history);

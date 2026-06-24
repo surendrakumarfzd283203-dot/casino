@@ -505,11 +505,13 @@ async function startAviatorFlight() {
 }
 
 app.get("/api/game/aviator/state", auth, (req, res) => {
+    // Send a dynamic number of fake users to make the bet count fluctuate
+    const dynamicCount = Math.floor(Math.random() * 120) + 80; // 80 to 200
     res.json({
         success: true,
         ...aviatorState,
         activeBets: activeBets.aviator,
-        fakeUsers: aviatorFakeUsers.slice(0, 50) // Send a subset to avoid huge payload
+        fakeUsers: aviatorFakeUsers.slice(0, dynamicCount)
     });
 });
 
