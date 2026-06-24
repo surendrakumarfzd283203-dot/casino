@@ -448,13 +448,21 @@ let aviatorState = {
     timer: 20, // 20 seconds betting time
     isFlying: false,
     crashMultiplier: 2.0,
-    history: []
+    history: [],
+    currentFakeCount: 50
 };
 
 setInterval(() => {
     if (aviatorState.timer > 0) {
         aviatorState.timer--;
-        if (aviatorState.timer === 19) updateAviatorFakeUsers();
+        if (aviatorState.timer === 19) {
+            updateAviatorFakeUsers();
+            aviatorState.currentFakeCount = Math.floor(Math.random() * 120) + 80;
+        }
+        // Fluctuate a bit during betting phase
+        if (!aviatorState.isFlying && aviatorState.timer < 18) {
+             aviatorState.currentFakeCount += Math.floor(Math.random() * 3);
+        }
     } else {
         if (!aviatorState.isFlying) {
             startAviatorFlight();
@@ -505,13 +513,11 @@ async function startAviatorFlight() {
 }
 
 app.get("/api/game/aviator/state", auth, (req, res) => {
-    // Send a dynamic number of fake users to make the bet count fluctuate
-    const dynamicCount = Math.floor(Math.random() * 120) + 80; // 80 to 200
     res.json({
         success: true,
         ...aviatorState,
         activeBets: activeBets.aviator,
-        fakeUsers: aviatorFakeUsers.slice(0, dynamicCount)
+        fakeUsers: aviatorFakeUsers.slice(0, aviatorState.currentFakeCount)
     });
 });
 
