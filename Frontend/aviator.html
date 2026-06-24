@@ -323,12 +323,15 @@
         .bet-row {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr 1fr;
-            padding: 8px 15px;
+            padding: 10px 15px;
             font-size: 11px;
             align-items: center;
-            border-bottom: 1px solid #222;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            background: rgba(0,0,0,0.2);
+            margin-bottom: 2px;
+            border-radius: 8px;
         }
-        .bet-row.won { background: rgba(40, 167, 69, 0.05); }
+        .bet-row.won { background: rgba(40, 167, 69, 0.1); }
 
         .user-info { display: flex; align-items: center; gap: 8px; }
         .user-info img { width: 22px; height: 22px; border-radius: 50%; }
@@ -518,7 +521,7 @@
             } else {
                 if (isFlying) endFlight();
                 isFlying = false;
-                banner.innerText = "WAITING FOR NEXT ROUND";
+                banner.innerText = `WAITING FOR NEXT ROUND IN ${data.timer}s`;
                 banner.style.background = "#f5a623";
                 updateButtonsWaiting(data.timer);
                 document.getElementById("multiplier").innerText = "1.00x";
@@ -559,14 +562,18 @@
                 const isWin = b.cashedOut;
                 if (isWin) totalWin += b.winAmount;
 
+                const maskedName = b.name.length > 2 ?
+                    `${b.name[0]}***${b.name[b.name.length-1]}` :
+                    `${b.name}***`;
+
                 html += `<div class="bet-row ${isWin ? 'won' : ''}">
                     <div class="user-info">
                         <img src="https://i.pravatar.cc/50?u=${b.name}" alt="avatar">
-                        <span>${b.name.substring(0,1)}***${b.name.substring(b.name.length-1)}</span>
+                        <span style="color:#eee; font-weight:700;">${maskedName}</span>
                     </div>
-                    <div style="font-weight:700">${b.betAmount.toFixed(2)}</div>
+                    <div style="font-weight:700; color:#aaa;">${b.betAmount.toFixed(2)}</div>
                     <div>${isWin ? `<div class="result-multiplier res-blue">${b.multiplier}x</div>` : ''}</div>
-                    <div style="font-weight:900; color:${isWin?'#28a745':''}">${isWin ? b.winAmount.toFixed(2) : ''}</div>
+                    <div style="font-weight:900; color:${isWin?'#28a745':'#666'}">${isWin ? b.winAmount.toFixed(2) : '-'}</div>
                 </div>`;
             });
             container.innerHTML = html;

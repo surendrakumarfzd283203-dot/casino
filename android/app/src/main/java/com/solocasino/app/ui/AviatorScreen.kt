@@ -151,8 +151,9 @@ fun GameArea(isFlying: Boolean, multiplier: Float) {
         }
 
         if (!isFlying) {
+            val timerValue = 20 - ((System.currentTimeMillis() - startTime.value) / 1000).toInt().coerceIn(0, 20)
             Text(
-                text = "WAITING FOR NEXT ROUND",
+                text = "WAITING FOR NEXT ROUND IN ${timerValue}s",
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFF5A623))
