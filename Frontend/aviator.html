@@ -365,9 +365,9 @@
             <canvas id="gameCanvas"></canvas>
             <div id="multiplier">1.00x</div>
             <div class="player-avatars" id="playerAvatars">
-                <img src="https://i.pravatar.cc/50?u=1" class="avatar-img">
-                <img src="https://i.pravatar.cc/50?u=2" class="avatar-img">
-                <img src="https://i.pravatar.cc/50?u=3" class="avatar-img">
+                <img src="https://i.pravatar.cc/50?u=1" class="avatar-img" alt="player 1">
+                <img src="https://i.pravatar.cc/50?u=2" class="avatar-img" alt="player 2">
+                <img src="https://i.pravatar.cc/50?u=3" class="avatar-img" alt="player 3">
                 <span id="fakeUsers">232</span>
             </div>
         </div>
@@ -384,7 +384,7 @@
                 <div class="amount-input-box">
                     <div class="input-stepper">
                         <button onclick="changeAmt(1, -1)">-</button>
-                        <input type="number" id="amt1" value="10.00" min="10">
+                        <input type="number" id="amt1" value="10.00" min="10" aria-label="Bet Amount 1">
                         <button onclick="changeAmt(1, 1)">+</button>
                     </div>
                     <div class="quick-amounts">
@@ -411,7 +411,7 @@
                 <div class="amount-input-box">
                     <div class="input-stepper">
                         <button onclick="changeAmt(2, -1)">-</button>
-                        <input type="number" id="amt2" value="10.00" min="10">
+                        <input type="number" id="amt2" value="10.00" min="10" aria-label="Bet Amount 2">
                         <button onclick="changeAmt(2, 1)">+</button>
                     </div>
                     <div class="quick-amounts">
