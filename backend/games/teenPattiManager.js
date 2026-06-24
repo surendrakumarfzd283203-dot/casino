@@ -113,7 +113,7 @@ class TeenPattiTable {
 
         this.state = 'PLAYING';
         this.currentTurn = activeUids[0];
-        this.timer = 25;
+        this.timer = 9;
     }
 
     async handleMove(userId, move, amount, targetId = null) {
@@ -214,7 +214,7 @@ class TeenPattiTable {
 
         const currentIdx = activeUids.indexOf(this.currentTurn);
         this.currentTurn = activeUids[(currentIdx + 1) % activeUids.length];
-        this.timer = 25;
+        this.timer = 9;
 
         // Bot Logic
         if (this.players[this.currentTurn].isBot) {

@@ -625,7 +625,7 @@ app.post("/api/teenpatti/sideshow-response", auth, (req, res) => {
 
 
 app.get("/api/teenpatti/tables", auth, (req, res) => {
-    res.json({ success: true, tables: teenPattiManager.getTables() });
+    res.json({ success: true, tables: teenPattiManager.getTables(req.user.id) });
 });
 
 app.post("/api/teenpatti/bet", auth, async (req, res) => {
