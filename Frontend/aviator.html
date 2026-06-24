@@ -483,6 +483,7 @@
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
         const planeImg = new Image();
         planeImg.src = 'image/aviator.png';
         planeImg.onerror = () => { console.error("Plane image failed to load at", planeImg.src); };
@@ -620,11 +621,16 @@
 
             // Draw Plane
             if (planeImg.complete) {
-                const pW = 80;
-                const pH = 40;
+                const pW = 140; // Increased width
+                const pH = 70;  // Increased height
                 ctx.save();
                 ctx.translate(endX, endY);
                 ctx.rotate(-Math.atan2(y, x * 0.5) * 0.5); // Slight upward rotation
+
+                // Add a red glow to the plane
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = "var(--primary-red)";
+
                 ctx.drawImage(planeImg, -pW/2, -pH/2, pW, pH);
                 ctx.restore();
             }
