@@ -25,14 +25,17 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
         /* Header Styling */
         .header {
+            position: sticky;
+            top: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -94,7 +97,8 @@
 
         /* Game Area */
         .game-area {
-            flex: 1.8;
+            flex-shrink: 0;
+            height: 300px;
             position: relative;
             background: #000;
             margin: 8px;
@@ -103,6 +107,7 @@
             display: flex;
             flex-direction: column;
         }
+        @media (min-width: 768px) { .game-area { height: 400px; } }
 
         .sunburst {
             position: absolute;
@@ -312,9 +317,66 @@
             .big-bet-btn .value { font-size: 14px; }
         }
 
+        .auto-cashout-row {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #282828;
+            align-items: center;
+        }
+        .auto-cashout-row.show { display: grid; }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider { background-color: var(--win-green); }
+        input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+        .auto-input-box {
+            display: flex;
+            align-items: center;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 2px 8px;
+        }
+        .auto-input-box input {
+            background: none;
+            border: none;
+            color: #fff;
+            width: 40px;
+            text-align: center;
+            font-weight: 800;
+            outline: none;
+        }
+
         /* Stats Section */
         .stats-section {
-            flex: 1.5;
+            flex-shrink: 0;
+            min-height: 400px;
             background: #1b1c1d;
             border-radius: 20px 20px 0 0;
             display: flex;
@@ -426,8 +488,8 @@
         <!-- Panel 1 -->
         <div class="bet-card">
             <div class="tab-row">
-                <div class="tab active">Bet</div>
-                <div class="tab">Auto</div>
+                <div class="tab active" onclick="switchBetTab(1, 'bet')">Bet</div>
+                <div class="tab" onclick="switchBetTab(1, 'auto')">Auto</div>
             </div>
             <div class="bet-controls">
                 <div class="amount-input-box">
@@ -448,13 +510,26 @@
                     <span class="value" id="sub1">10.00 INR</span>
                 </button>
             </div>
+            <div id="autoRow1" class="auto-cashout-row">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #888;">Auto Cash Out</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoEnabled1">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="auto-input-box">
+                    <input type="number" id="autoVal1" value="2.00" step="0.1" min="1.1" aria-label="Auto Cash Out Value 1">
+                    <span style="color: #555; font-size: 10px; font-weight: 800;">X</span>
+                </div>
+            </div>
         </div>
 
         <!-- Panel 2 -->
         <div class="bet-card">
             <div class="tab-row">
-                <div class="tab active">Bet</div>
-                <div class="tab">Auto</div>
+                <div class="tab active" onclick="switchBetTab(2, 'bet')">Bet</div>
+                <div class="tab" onclick="switchBetTab(2, 'auto')">Auto</div>
             </div>
             <div class="bet-controls">
                 <div class="amount-input-box">
@@ -475,14 +550,27 @@
                     <span class="value" id="sub2">10.00 INR</span>
                 </button>
             </div>
+            <div id="autoRow2" class="auto-cashout-row">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #888;">Auto Cash Out</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoEnabled2">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="auto-input-box">
+                    <input type="number" id="autoVal2" value="2.00" step="0.1" min="1.1" aria-label="Auto Cash Out Value 2">
+                    <span style="color: #555; font-size: 10px; font-weight: 800;">X</span>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="stats-section">
         <div class="stats-tabs">
-            <div class="stats-tab active">All Bets</div>
-            <div class="stats-tab">Previous</div>
-            <div class="stats-tab">Top</div>
+            <div class="stats-tab active" onclick="switchStatsTab('all')">All Bets</div>
+            <div class="stats-tab" onclick="switchStatsTab('prev')">Previous</div>
+            <div class="stats-tab" onclick="switchStatsTab('top')">Top</div>
         </div>
         <div class="stats-summary">
              <div style="font-size: 11px; color: #888; font-weight: 800;">
@@ -532,6 +620,31 @@
         let startTime = null;
         let animFrame = null;
 
+        let currentStatsTab = 'all';
+        let previousBets = [];
+        let lastRoundId = null;
+        let topBets = [
+            { name: "Winner1", betAmount: 100, multiplier: 45.20, winAmount: 4520.00, cashedOut: true },
+            { name: "SuperFly", betAmount: 50, multiplier: 88.10, winAmount: 4405.00, cashedOut: true },
+            { name: "AviatorPro", betAmount: 200, multiplier: 15.50, winAmount: 3100.00, cashedOut: true },
+            { name: "Richie", betAmount: 500, multiplier: 5.20, winAmount: 2600.00, cashedOut: true }
+        ];
+
+        function switchBetTab(p, t) {
+            const card = document.querySelectorAll('.bet-card')[p-1];
+            card.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            card.querySelector(`.tab:nth-child(${t === 'bet' ? 1 : 2})`).classList.add('active');
+            document.getElementById(`autoRow${p}`).classList.toggle('show', t === 'auto');
+        }
+
+        function switchStatsTab(t) {
+            currentStatsTab = t;
+            document.querySelectorAll('.stats-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.innerText.toLowerCase().includes(t));
+            });
+            renderBets([], []); // Re-render current view
+        }
+
         const sndFly = document.getElementById("sndFly");
         const sndWin = document.getElementById("sndWin");
         const sndCrash = document.getElementById("sndCrash");
@@ -565,6 +678,14 @@
         function syncUI(data) {
             const banner = document.querySelector(".fun-mode-banner");
 
+            // Save previous round bets when round ID changes
+            if (data.roundId !== lastRoundId) {
+                if (lastRoundId !== null && (window.lastBets && window.lastBets.length > 0)) {
+                    previousBets = [...window.lastBets];
+                }
+                lastRoundId = data.roundId;
+            }
+
             // Persistence: Restore user active bets from state
             if (currentUser && data.activeBets) {
                 const myBets = data.activeBets.filter(b => b.userId === currentUser._id || b.userId === currentUser.id);
@@ -583,6 +704,15 @@
                 banner.innerText = "";
                 banner.style.background = "transparent";
                 updateButtonsFlying();
+
+                // Auto Cash Out Logic
+                for (let i = 1; i <= 2; i++) {
+                    if (activeBets[i].placed && document.getElementById(`autoEnabled${i}`).checked) {
+                        const target = parseFloat(document.getElementById(`autoVal${i}`).value);
+                        if (currentMult >= target) handleBtn(i); // Trigger cashout
+                    }
+                }
+
             } else {
                 if (isFlying) endFlight();
                 isFlying = false;
@@ -614,21 +744,25 @@
 
             let html = "";
             let totalWin = 0;
+            let displayList = [];
 
-            // Process fake users to simulate cashouts
-            // We keep the win status even after flight ends to show as history
-            const processedFake = (fake || []).map(f => {
-                const cashOutAt = parseFloat(f.cashOutAt);
-                // Mark as cashed out if the current round's multiplier reached their target
-                if (currentMult >= cashOutAt) {
-                    return { ...f, cashedOut: true, multiplier: cashOutAt, winAmount: f.betAmount * cashOutAt };
-                }
-                return f;
-            });
+            if (currentStatsTab === 'all') {
+                const processedFake = (fake || []).map(f => {
+                    const cashOutAt = parseFloat(f.cashOutAt);
+                    if (currentMult >= cashOutAt) {
+                        return { ...f, cashedOut: true, multiplier: cashOutAt, winAmount: f.betAmount * cashOutAt };
+                    }
+                    return f;
+                });
+                displayList = [...(real || []), ...processedFake].sort((a,b) => b.betAmount - a.betAmount);
+                window.lastBets = displayList; // Store for 'previous' tab
+            } else if (currentStatsTab === 'prev') {
+                displayList = previousBets;
+            } else if (currentStatsTab === 'top') {
+                displayList = topBets;
+            }
 
-            const all = [...real, ...processedFake].sort((a,b) => b.betAmount - a.betAmount);
-
-            all.forEach(b => {
+            displayList.forEach(b => {
                 const isWin = b.cashedOut;
                 if (isWin) totalWin += b.winAmount;
 
@@ -642,20 +776,18 @@
                         <span style="color:#eee; font-weight:700;">${maskedName}</span>
                     </div>
                     <div style="font-weight:700; color:#aaa;">${b.betAmount.toFixed(2)}</div>
-                    <div>${isWin ? `<div class="result-multiplier res-blue">${b.multiplier}x</div>` : ''}</div>
+                    <div>${isWin ? `<div class="res-blue-badge">${b.multiplier.toFixed(2)}x</div>` : ''}</div>
                     <div style="font-weight:900; color:${isWin?'#28a745':'#666'}">${isWin ? b.winAmount.toFixed(2) : '-'}</div>
                 </div>`;
             });
             container.innerHTML = html;
             document.getElementById("totalWin").innerText = totalWin.toFixed(2);
 
-            const currentCount = all.length;
+            const currentCount = displayList.length;
             document.getElementById("betCount").innerText = currentCount;
-
-            // Dynamically calculate max bets so it's always a bit higher than current, and update progress
             let max = parseInt(document.getElementById("maxBets").innerText);
             if (currentCount >= max) {
-                max = currentCount + Math.floor(Math.random() * 20) + 10;
+                max = currentCount + 20;
                 document.getElementById("maxBets").innerText = max;
             }
             const progress = (currentCount / max) * 100;
@@ -802,8 +934,9 @@
 
         async function handleBtn(i) {
             const btn = document.getElementById(`btn${i}`);
-            const amount = parseFloat(document.getElementById(`amt${i}`).value);
+            const amount = parseFloat(document.getElementById(`amt1`).value); // Default to panel amount
             const label = btn.querySelector('.label').innerText;
+            const autoCashOut = parseFloat(document.getElementById(`autoVal${i}`).value);
 
             if (label === "BET") {
                 const res = await fetch(`${API_URL}/api/play/aviator`, {
