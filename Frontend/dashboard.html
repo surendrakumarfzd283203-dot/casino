@@ -3,309 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard | BlockBet Casino</title>
+    <title>Dashboard | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --neon-green: #00ff6a;
-            --dark-bg: #0b0e11;
-            --card-bg: #1e2329;
-            --text-gray: #929aa5;
-            --gold: #f0b90b;
+            --casino-gold: #f1c40f;
+            --casino-red: #e74c3c;
+            --casino-dark: #0a0b0d;
+            --card-bg: rgba(25, 27, 31, 0.98);
+            --neon-blue: #00d2ff;
+            --neon-purple: #9d50bb;
         }
 
         body {
-            background-color: var(--dark-bg);
+            background-color: var(--casino-dark);
             background-image:
-                radial-gradient(circle at top right, rgba(0, 255, 106, 0.05), transparent 400px),
-                radial-gradient(circle at bottom left, rgba(0, 255, 106, 0.03), transparent 400px);
+                radial-gradient(circle at 10% 20%, rgba(231, 76, 60, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(241, 196, 15, 0.08) 0%, transparent 40%),
+                url('https://www.transparenttextures.com/patterns/dark-matter.png');
             color: white;
             margin: 0;
-            padding-bottom: 80px;
+            padding-bottom: 90px;
             font-family: 'Inter', -apple-system, sans-serif;
             overflow-x: hidden;
         }
 
-        /* Top Bar */
-        .top-bar {
-            background: rgba(11, 14, 17, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 12px 16px;
+        /* Premium Header */
+        header {
+            background: rgba(10, 11, 13, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             position: sticky;
             top: 0;
             z-index: 1000;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        .logo-box { font-weight: 900; font-size: 20px; color: white; display: flex; align-items: center; gap: 8px; }
-        .logo-box span { color: var(--neon-green); }
-
-        .top-actions { display: flex; gap: 15px; align-items: center; }
-        .balance-pill {
-            background: rgba(0, 255, 106, 0.1);
-            border: 1px solid rgba(0, 255, 106, 0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: 800;
-            color: var(--neon-green);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .logo {
+            font-weight: 950;
+            font-size: 22px;
+            background: linear-gradient(to right, #f1c40f, #fff, #f39c12);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            text-transform: uppercase;
         }
 
-        /* Banner Section */
-        .promo-slider {
+        /* Hero Balance Section */
+        .hero-banner {
+            padding: 25px;
+            background: linear-gradient(145deg, #1a1b20 0%, #050507 100%);
             margin: 15px;
-            height: 160px;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-            background: linear-gradient(45deg, #004d26, #000);
-            border: 1px solid rgba(0, 255, 106, 0.1);
-        }
-        .promo-content {
-            padding: 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            height: 100%;
-            background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-        }
-        .promo-content h2 { margin: 0; font-size: 20px; color: var(--neon-green); font-weight: 900; line-height: 1.2; }
-        .promo-content p { margin: 8px 0 0; font-size: 12px; color: #aaa; font-weight: 600; }
-        .promo-img {
-            position: absolute;
-            right: -10px;
-            bottom: -10px;
-            height: 120%;
-            opacity: 0.8;
+            gap: 20px;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
 
-        /* Categories */
-        .category-row {
-            display: flex;
-            gap: 10px;
-            padding: 0 15px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            scrollbar-width: none;
+        .user-welcome h2 { margin: 0; font-size: 16px; color: #888; font-weight: 500; }
+        .user-welcome span { color: #fff; font-weight: 900; font-size: 24px; }
+
+        .balance-display {
+            background: rgba(255,255,255,0.02);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(241, 196, 15, 0.1);
+            text-align: center;
+            position: relative;
         }
-        .category-row::-webkit-scrollbar { display: none; }
-        .cat-item {
-            background: var(--card-bg);
-            padding: 10px 20px;
-            border-radius: 12px;
+        .balance-label { font-size: 11px; color: var(--casino-gold); font-weight: 800; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 5px; }
+        .balance-amount { font-size: 40px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 12px; color: #fff; }
+        .balance-amount i { color: var(--casino-gold); font-size: 28px; }
+
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-action {
+            height: 55px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            min-width: fit-content;
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--text-gray);
-            border: 1px solid rgba(255,255,255,0.05);
+            justify-content: center;
+            gap: 10px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 15px;
+            transition: 0.3s;
+            text-transform: uppercase;
         }
-        .cat-item.active { background: rgba(0, 255, 106, 0.1); color: var(--neon-green); border-color: rgba(0, 255, 106, 0.2); }
-        .cat-item i { font-size: 16px; }
+        .btn-withdraw { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-deposit { background: linear-gradient(to right, #f1c40f, #f39c12); color: #000; border: none; box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3); }
+        .btn-action:active { transform: scale(0.96); }
 
-        /* Game Sections */
-        .section-group { margin-bottom: 25px; }
-        .section-head {
+        /* Game Section */
+        .section-header {
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            margin-bottom: 12px;
+            margin-top: 10px;
         }
-        .section-head h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
-        .section-head a { font-size: 12px; color: var(--neon-green); text-decoration: none; font-weight: 700; }
+        .section-title { font-size: 14px; font-weight: 900; text-transform: uppercase; color: #aaa; letter-spacing: 1.5px; }
 
-        .game-grid-v2 {
+        .games-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            padding: 0 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
         }
 
-        .game-tile {
-            position: relative;
-            border-radius: 12px;
+        .game-card {
+            background: #15161a;
+            border-radius: 24px;
             overflow: hidden;
-            aspect-ratio: 0.75;
-            background: #2b3139;
-            transition: transform 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+            transition: 0.3s;
         }
-        .game-tile:active { transform: scale(0.96); }
-        .game-tile img { width: 100%; height: 100%; object-fit: cover; }
 
-        .tile-info {
+        .game-img {
+            height: 65%;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .game-img::after {
+            content: '';
             position: absolute;
-            bottom: 0; left: 0; width: 100%;
-            padding: 8px;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
+            bottom: 0; left: 0; width: 100%; height: 50%;
+            background: linear-gradient(to top, #15161a, transparent);
         }
 
-        /* Bottom Navbar */
+        .game-info {
+            padding: 12px 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .game-info h3 { margin: 0; font-size: 16px; font-weight: 900; color: #fff; }
+        .game-info p { margin: 3px 0 0; font-size: 10px; color: #666; font-weight: 600; text-transform: uppercase; }
+
+        .play-badge {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--casino-gold);
+            border: 1px solid rgba(241,196,15,0.3);
+        }
+
+        /* Real Casino Game Backgrounds */
+        .img-aviator { background-image: url('https://images.unsplash.com/photo-1559135197-8a45ea74d367?q=80&w=500'); background-color: #000; }
+        .img-color { background-image: url('https://images.unsplash.com/photo-1518133835878-5a93cc3f89e5?q=80&w=500'); }
+        .img-lucky { background-image: url('https://images.unsplash.com/photo-1606167668584-78701c57f13d?q=80&w=500'); }
+        .img-spin { background-image: url('https://images.unsplash.com/photo-1633513364239-2e066a503046?q=80&w=500'); }
+        .img-rummy { background-image: url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=500'); }
+        .img-teenpatti { background-image: url('https://images.unsplash.com/photo-1541272224411-396cf0b6156e?q=80&w=500'); }
+        .img-bigsmall { background-image: url('https://images.unsplash.com/photo-1593466144596-7bf57993eb94?q=80&w=500'); }
+
+        /* Floating Bonus */
+        .bonus-float {
+            margin: 15px;
+            background: linear-gradient(45deg, #12c2e9, #c471ed, #f64f59);
+            padding: 1px;
+            border-radius: 20px;
+            animation: borderGlow 3s linear infinite;
+        }
+        .bonus-inner {
+            background: #0a0b0d;
+            border-radius: 19px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        @keyframes borderGlow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+
+        /* Bottom Nav */
         .bottom-nav {
             position: fixed;
             bottom: 0; left: 0; width: 100%;
-            background: #181a20;
+            background: rgba(10, 11, 13, 0.98);
+            backdrop-filter: blur(20px);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0 25px;
-            border-top: 1px solid #2b3139;
+            padding: 12px 0 25px; /* Extra padding for modern mobile home bar */
+            border-top: 1px solid rgba(255,255,255,0.05);
             z-index: 2000;
         }
-        .nav-link {
+        .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
-            color: var(--text-gray);
+            gap: 5px;
+            color: #555;
             text-decoration: none;
-            font-size: 10px;
-            font-weight: 600;
-        }
-        .nav-link.active { color: var(--neon-green); }
-        .nav-link i { font-size: 22px; }
-
-        /* Wallet Section in Banner */
-        .wallet-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 15px;
-        }
-        .btn-mini {
-            flex: 1;
-            padding: 8px;
-            border-radius: 8px;
-            border: none;
+            font-size: 9px;
             font-weight: 800;
-            font-size: 12px;
-            cursor: pointer;
+            transition: 0.3s;
         }
-        .btn-deposit { background: var(--neon-green); color: #000; }
-        .btn-withdraw { background: rgba(255,255,255,0.1); color: #fff; }
+        .nav-item i { font-size: 22px; }
+        .nav-item.active { color: var(--casino-gold); }
+        .nav-item.active i { transform: translateY(-3px); color: var(--casino-gold); text-shadow: 0 0 10px rgba(241,196,15,0.5); }
 
     </style>
 </head>
 <body>
+    <header>
+        <div class="logo">Solo Casino</div>
+        <div style="display:flex; gap:18px; color:#aaa; font-size: 18px;">
+            <i class="fas fa-bell"></i>
+            <i class="fas fa-headset"></i>
+        </div>
+    </header>
 
-    <div class="top-bar">
-        <div class="logo-box">BLOCK<span>BET</span></div>
-        <div class="top-actions">
-            <div class="balance-pill">
-                <i class="fas fa-coins"></i> <span id="coins">0.00</span>
-            </div>
-            <i class="fas fa-bell" style="font-size: 18px; color: var(--text-gray);"></i>
+    <div class="hero-banner">
+        <div class="user-welcome">
+            <h2>Welcome back,</h2>
+            <span id="userName">Loading...</span>
+        </div>
+
+        <div class="balance-display">
+            <div class="balance-label">Main Wallet</div>
+            <div class="balance-amount"><i class="fas fa-coins"></i> <span id="coins">0.00</span></div>
+            <div style="font-size:9px; color:#555; font-weight:800; letter-spacing: 1px;">SECURE CRYPTO-BACKED WALLET</div>
+        </div>
+
+        <div class="action-row">
+            <a href="wallet.html" class="btn-action btn-deposit"><i class="fas fa-plus-circle"></i> Deposit</a>
+            <a href="wallet.html" class="btn-action btn-withdraw"><i class="fas fa-arrow-alt-circle-down"></i> Withdraw</a>
         </div>
     </div>
 
-    <div class="promo-slider">
-        <div class="promo-content">
-            <h2>VIP TRANSFERS<br>NOW LIVE</h2>
-            <p>Get exclusive rewards & higher limits</p>
-            <div class="wallet-actions">
-                <button onclick="location.href='wallet.html'" class="btn-mini btn-deposit">DEPOSIT</button>
-                <button onclick="location.href='wallet.html'" class="btn-mini btn-withdraw">WITHDRAW</button>
+    <div class="bonus-float">
+        <div class="bonus-inner">
+            <div>
+                <h4 style="margin:0; font-size:15px;">Daily Fortune</h4>
+                <p style="margin:2px 0 0; font-size:11px; color:#888;">Claim your ₹120.00 today!</p>
             </div>
-        </div>
-        <img src="https://img.freepik.com/free-vector/golden-crown-with-diamonds_1284-18181.jpg" class="promo-img" alt="Crown">
-    </div>
-
-    <div class="category-row">
-        <div class="cat-item active"><i class="fas fa-gamepad"></i> Casino</div>
-        <div class="cat-item"><i class="fas fa-basketball"></i> Sports</div>
-        <div class="cat-item"><i class="fas fa-ticket-alt"></i> Lottery</div>
-        <div class="cat-item"><i class="fas fa-user-friends"></i> Referral</div>
-    </div>
-
-    <div class="section-group">
-        <div class="section-head">
-            <h3>Crash Games</h3>
-            <a href="#">View All</a>
-        </div>
-        <div class="game-grid-v2">
-            <div class="game-tile" onclick="location.href='aviator.html'">
-                <img src="https://img.freepik.com/free-vector/airplane-flying-red-sky_1308-30693.jpg" alt="Aviator">
-                <div class="tile-info">AVIATOR</div>
-            </div>
-            <div class="game-tile" onclick="location.href='colorgame.html'">
-                <img src="https://img.freepik.com/free-vector/gradient-dynamic-blue-lines-background_23-2148995756.jpg" alt="Color Game">
-                <div class="tile-info">WIN GO</div>
-            </div>
-            <div class="game-tile" onclick="location.href='bigsmall.html'">
-                <img src="https://img.freepik.com/free-photo/casino-dice-table_23-2148281350.jpg" alt="Big Small">
-                <div class="tile-info">DICE</div>
-            </div>
+            <button onclick="claimBonus()" class="btn-claim" id="bonusBtn" style="background:var(--casino-gold); border:none; padding:8px 15px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer;">CLAIM</button>
         </div>
     </div>
 
-    <div class="section-group">
-        <div class="section-head">
-            <h3>Popular Slots</h3>
-            <a href="#">View All</a>
+    <div class="section-header">
+        <span class="section-title">Hottest Games</span>
+        <span style="font-size:10px; color:var(--casino-gold); font-weight:800;">VIEW ALL <i class="fas fa-chevron-right"></i></span>
+    </div>
+
+    <div class="games-grid">
+        <!-- Aviator -->
+        <div class="game-card" onclick="location.href='aviator.html'">
+            <div class="game-img img-aviator"></div>
+            <div class="play-badge">POPULAR</div>
+            <div class="game-info">
+                <h3>Aviator</h3>
+                <p>Multiplayer • High Risk</p>
+            </div>
         </div>
-        <div class="game-grid-v2">
-            <div class="game-tile" onclick="location.href='luckydraw.html'">
-                <img src="https://img.freepik.com/free-vector/lucky-seven-slot-machine-with-golden-coins_23-2148006263.jpg" alt="Lucky">
-                <div class="tile-info">777 SLOTS</div>
+
+        <!-- Color Game -->
+        <div class="game-card" onclick="location.href='colorgame.html'">
+            <div class="game-img img-color"></div>
+            <div class="play-badge">18X PAY</div>
+            <div class="game-info">
+                <h3>Color Game</h3>
+                <p>Win Go • prediction</p>
             </div>
-            <div class="game-tile" onclick="location.href='spin.html'">
-                <img src="https://img.freepik.com/free-vector/fortune-wheel-concept-flat-design_23-2148644310.jpg" alt="Spin">
-                <div class="tile-info">WHEEL</div>
+        </div>
+
+        <!-- Teen Patti -->
+        <div class="game-card" onclick="location.href='teenpatti.html'">
+            <div class="game-img img-teenpatti"></div>
+            <div class="play-badge">LIVE</div>
+            <div class="game-info">
+                <h3>Teen Patti</h3>
+                <p>Card • Indian Poker</p>
             </div>
-            <div class="game-tile" onclick="location.href='rummy.html'">
-                <img src="https://img.freepik.com/free-photo/set-playing-cards-table_1232-1596.jpg" alt="Rummy">
-                <div class="tile-info">RUMMY</div>
+        </div>
+
+        <!-- Rummy -->
+        <div class="game-card" onclick="location.href='rummy.html'">
+            <div class="game-img img-rummy"></div>
+            <div class="play-badge">SKILL</div>
+            <div class="game-info">
+                <h3>Rummy</h3>
+                <p>Card • Strategy</p>
+            </div>
+        </div>
+
+        <!-- Lucky Draw -->
+        <div class="game-card" onclick="location.href='luckydraw.html'">
+            <div class="game-img img-lucky"></div>
+            <div class="play-badge">JACKPOT</div>
+            <div class="game-info">
+                <h3>Lucky Draw</h3>
+                <p>Draw • 777 Slots</p>
+            </div>
+        </div>
+
+        <!-- Spin & Win -->
+        <div class="game-card" onclick="location.href='spin.html'">
+            <div class="game-img img-spin"></div>
+            <div class="play-badge">EASY</div>
+            <div class="game-info">
+                <h3>Spin & Win</h3>
+                <p>Wheel • Instant</p>
+            </div>
+        </div>
+
+        <!-- Big Small -->
+        <div class="game-card" onclick="location.href='bigsmall.html'">
+            <div class="game-img img-bigsmall"></div>
+            <div class="play-badge">DICE</div>
+            <div class="game-info">
+                <h3>Big Small</h3>
+                <p>Dice • Fast Action</p>
             </div>
         </div>
     </div>
 
-    <div class="section-group" style="padding-bottom: 20px;">
-        <div class="section-head">
-            <h3>Live Casino</h3>
-            <a href="#">View All</a>
-        </div>
-        <div class="game-grid-v2">
-            <div class="game-tile" onclick="location.href='teenpatti.html'">
-                <img src="https://img.freepik.com/free-vector/poker-background-with-aces-chips_1284-18182.jpg" alt="Teen Patti">
-                <div class="tile-info">TEEN PATTI</div>
-            </div>
-            <div class="game-tile">
-                <img src="https://img.freepik.com/free-photo/blackjack-card-game_23-2148281345.jpg" alt="Blackjack">
-                <div class="tile-info">BLACKJACK</div>
-            </div>
-            <div class="game-tile">
-                <img src="https://img.freepik.com/free-photo/roulette-table-casino_23-2148281335.jpg" alt="Roulette">
-                <div class="tile-info">ROULETTE</div>
-            </div>
-        </div>
+    <div style="padding: 40px 20px; text-align: center;">
+        <p style="font-size: 10px; color: #444; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Solo Casino Entertainment Group</p>
+        <p style="font-size: 9px; color: #333;">Licensed under Curacao Gaming Authority</p>
     </div>
 
     <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-link active">
+        <a href="dashboard.html" class="nav-item active">
             <i class="fas fa-th-large"></i>
-            <span>Lobby</span>
+            <span>HOME</span>
         </a>
-        <a href="wallet.html" class="nav-link">
+        <a href="wallet.html" class="nav-item">
             <i class="fas fa-wallet"></i>
-            <span>Wallet</span>
+            <span>WALLET</span>
         </a>
-        <a href="leaderboard.html" class="nav-link">
+        <a href="leaderboard.html" class="nav-item">
             <i class="fas fa-crown"></i>
             <span>VIP</span>
         </a>
-        <a href="profile.html" class="nav-link">
-            <i class="fas fa-user"></i>
-            <span>Profile</span>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user-circle"></i>
+            <span>PROFILE</span>
+        </a>
+        <a href="#" onclick="logout()" class="nav-item">
+            <i class="fas fa-power-off"></i>
+            <span>EXIT</span>
         </a>
     </nav>
 
@@ -319,15 +374,47 @@
                 const res = await fetch(`${API_URL}/api/profile`, {
                     headers: { "authorization": token }
                 });
+
                 if (res.status === 401) {
                     localStorage.removeItem("token");
                     return location.href = "login.html";
                 }
+
+                const data = await res.json();
+                if (!data.success) {
+                    localStorage.removeItem("token");
+                    return location.href = "login.html";
+                }
+                document.getElementById("userName").innerText = data.user.name;
+                document.getElementById("coins").innerText = data.user.coins.toLocaleString(undefined, {minimumFractionDigits: 2});
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function claimBonus() {
+            const btn = document.getElementById("bonusBtn");
+            btn.innerText = "...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/api/daily-bonus`, {
+                    method: "POST",
+                    headers: { authorization: token }
+                });
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById("coins").innerText = data.user.coins.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    alert(data.message || "Bonus Claimed!");
+                    fetchProfile();
+                } else {
+                    alert(data.message || "Already claimed today");
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.error(err);
+            } finally {
+                btn.innerText = "CLAIM";
+                btn.disabled = false;
+            }
         }
 
         fetchProfile();
