@@ -279,7 +279,11 @@ module.exports = {
         for (let uid in t.players) {
             const p = t.players[uid];
             const showHand = (uid === requestingUserId) || (t.state === 'SHOW');
-            filteredPlayers[uid] = { ...p, hand: showHand ? p.hand : ["?", "?", "?"] };
+            // Consistent card objects even when hidden to avoid "undefined" in frontend
+            filteredPlayers[uid] = {
+                ...p,
+                hand: showHand ? p.hand : [{rank:'?', suit:'?'}, {rank:'?', suit:'?'}, {rank:'?', suit:'?'}]
+            };
         }
         return {
             id: t.id, state: t.state, timer: t.timer, pot: t.pot,
