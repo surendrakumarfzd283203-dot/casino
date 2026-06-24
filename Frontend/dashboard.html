@@ -2,111 +2,360 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard | Solo Casino</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --casino-gold: #f1c40f;
+            --casino-red: #e74c3c;
+            --casino-dark: #0a0b0d;
+            --card-bg: rgba(25, 27, 31, 0.95);
+            --neon-blue: #00d2ff;
+            --neon-purple: #9d50bb;
+        }
+
+        body {
+            background-color: var(--casino-dark);
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(231, 76, 60, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(241, 196, 15, 0.05) 0%, transparent 40%),
+                url('https://www.transparenttextures.com/patterns/dark-matter.png');
+            color: white;
+            margin: 0;
+            padding-bottom: 80px; /* Space for bottom nav */
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Premium Header */
+        header {
+            background: rgba(10, 11, 13, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-weight: 900;
+            font-size: 24px;
+            background: linear-gradient(45deg, var(--casino-gold), #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        /* Balance Banner */
+        .hero-banner {
+            padding: 20px;
+            background: linear-gradient(135deg, #1e1f26 0%, #0a0b0d 100%);
+            margin: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-banner::after {
+            content: 'SOLO';
+            position: absolute;
+            right: -20px;
+            bottom: -10px;
+            font-size: 80px;
+            font-weight: 900;
+            opacity: 0.03;
+            font-style: italic;
+        }
+
+        .user-welcome h2 { margin: 0; font-size: 18px; color: #aaa; font-weight: 400; }
+        .user-welcome span { color: #fff; font-weight: 800; font-size: 22px; }
+
+        .balance-display {
+            background: rgba(255,255,255,0.03);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+        }
+
+        .balance-label { font-size: 12px; color: var(--casino-gold); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
+        .balance-amount { font-size: 36px; font-weight: 900; margin: 5px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .balance-amount i { font-size: 24px; color: var(--casino-gold); }
+
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-action {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s;
+        }
+        .btn-action:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+        .btn-deposit { background: var(--casino-gold); color: #000; border: none; }
+
+        /* Bonus Card */
+        .bonus-card {
+            margin: 0 15px 25px;
+            background: linear-gradient(45deg, #2c3e50, #000000);
+            padding: 15px 20px;
+            border-radius: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(241, 196, 15, 0.2);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .bonus-info h4 { margin: 0; font-size: 16px; color: #fff; }
+        .bonus-info p { margin: 5px 0 0; font-size: 12px; color: var(--casino-gold); font-weight: 700; }
+        .btn-claim {
+            background: linear-gradient(to bottom, #f1c40f, #f39c12);
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #b78700;
+        }
+        .btn-claim:active { transform: translateY(2px); box-shadow: none; }
+
+        /* Game Grid */
+        .section-title { padding: 0 20px; margin-bottom: 15px; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+
+        .games-scroll {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 0 15px;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.03);
+            position: relative;
+            transition: 0.3s;
+            aspect-ratio: 0.9;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 15px;
+        }
+
+        .game-card:active { transform: scale(0.98); }
+
+        .game-card i, .game-card .emoji {
+            font-size: 40px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            opacity: 0.8;
+            transition: 0.3s;
+        }
+
+        .game-card h3 { margin: 0; font-size: 16px; font-weight: 900; color: #fff; z-index: 2; }
+        .game-card p { margin: 5px 0 0; font-size: 10px; color: #888; z-index: 2; line-height: 1.3; }
+
+        /* Individual Game Themes */
+        .card-aviator { background: linear-gradient(to bottom right, #e74c3c22, #0a0b0d); border-bottom: 3px solid #e74c3c; }
+        .card-aviator i { color: #e74c3c; text-shadow: 0 0 15px rgba(231, 76, 60, 0.5); }
+
+        .card-color { background: linear-gradient(to bottom right, #2ecc7122, #0a0b0d); border-bottom: 3px solid #2ecc71; }
+        .card-color i { color: #2ecc71; text-shadow: 0 0 15px rgba(46, 204, 113, 0.5); }
+
+        .card-lucky { background: linear-gradient(to bottom right, #f1c40f22, #0a0b0d); border-bottom: 3px solid #f1c40f; }
+        .card-lucky i { color: #f1c40f; text-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
+
+        .card-spin { background: linear-gradient(to bottom right, #3498db22, #0a0b0d); border-bottom: 3px solid #3498db; }
+        .card-spin i { color: #3498db; text-shadow: 0 0 15px rgba(52, 152, 219, 0.5); }
+
+        .card-rummy { background: linear-gradient(to bottom right, #9b59b622, #0a0b0d); border-bottom: 3px solid #9b59b6; }
+        .card-teenpatti { background: linear-gradient(to bottom right, #e67e2222, #0a0b0d); border-bottom: 3px solid #e67e22; }
+        .card-bigsmall { background: linear-gradient(to bottom right, #34495e22, #0a0b0d); border-bottom: 3px solid #34495e; }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: rgba(15, 16, 20, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            z-index: 2000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #555;
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+        .nav-item i { font-size: 20px; }
+        .nav-item.active { color: var(--casino-gold); }
+
+        /* Ticker */
+        .winner-ticker {
+            background: rgba(255,255,255,0.02);
+            padding: 8px 15px;
+            margin-bottom: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            border-top: 1px solid rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .ticker-track {
+            display: inline-block;
+            animation: scrollTicker 30s linear infinite;
+        }
+        @keyframes scrollTicker {
+            from { transform: translateX(100%); }
+            to { transform: translateX(-100%); }
+        }
+        .ticker-item { display: inline-block; margin-right: 30px; font-size: 11px; font-weight: 600; color: #888; }
+        .ticker-item b { color: var(--casino-gold); }
+
+    </style>
 </head>
 <body>
     <header>
-        <h1>SOLO CASINO</h1>
-        <nav>
-            <a href="dashboard.html" class="active"><i class="fas fa-home"></i> Home</a>
-            <a href="wallet.html"><i class="fas fa-wallet"></i> Wallet</a>
-            <a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a>
-            <a href="profile.html"><i class="fas fa-user-circle"></i> Profile</a>
-            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </nav>
+        <div class="logo">Solo Casino</div>
+        <div style="display:flex; gap:15px; color:#888;">
+            <i class="fas fa-bell"></i>
+            <i class="fas fa-headset"></i>
+        </div>
     </header>
 
-    <div class="container">
-        <div class="animate" style="margin-bottom: 40px;">
-            <h2 style="text-align: left; margin-bottom: 5px;">Welcome back, <span id="userName" style="color: var(--primary);">Player</span>!</h2>
-            <p style="color: var(--text-dim);">Select a game and start winning coins today.</p>
-        </div>
-
-        <div class="wallet-grid animate" style="margin-bottom: 40px;">
-            <div class="balance-card">
-                <h3>Current Balance</h3>
-                <div class="amount" id="coins">0.00</div>
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <a href="wallet.html" class="button-secondary" style="background: rgba(0,0,0,0.2); color: #fff; border: none; text-decoration: none; padding: 10px 20px; border-radius: 10px;">Deposit</a>
-                    <a href="wallet.html" class="button-secondary" style="background: rgba(255,255,255,0.9); color: #000; border: none; text-decoration: none; padding: 10px 20px; border-radius: 10px;">Withdraw</a>
-                    <a href="history.html" class="button-secondary" style="background: rgba(255,255,255,0.1); color: #fff; border: none; text-decoration: none; padding: 10px 20px; border-radius: 10px;">History</a>
-                </div>
-            </div>
-
-            <div class="card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-around; padding: 20px;">
-                <div style="text-align: left;">
-                    <h3 style="margin: 0;">Daily Bonus</h3>
-                    <p style="margin: 5px 0 0 0;">Claim your free 120 coins</p>
-                </div>
-                <button onclick="claimBonus()" class="button-primary" id="bonusBtn">Claim Now</button>
-            </div>
-        </div>
-
-        <h3 style="margin-bottom: 20px;">Popular Games</h3>
-        <div class="games-grid">
-            <div class="card animate" onclick="location.href='aviator.html'">
-                <i class="fas fa-plane-departure" style="color: #ff3d00;"></i>
-                <h3>Aviator</h3>
-                <p>High risk, high reward. Cash out before the plane crashes!</p>
-                <span class="button-primary">Play Now</span>
-            </div>
-
-            <div class="card animate" onclick="location.href='colorgame.html'" style="animation-delay: 0.1s;">
-                <i class="fas fa-palette" style="color: #4caf50;"></i>
-                <h3>Color Game</h3>
-                <p>Predict colors and numbers. 18x payout on specific numbers!</p>
-                <span class="button-primary">Play Now</span>
-            </div>
-
-            <div class="card animate" onclick="location.href='luckydraw.html'" style="animation-delay: 0.2s;">
-                <i class="fas fa-star" style="color: #ff9800;"></i>
-                <h3>Lucky Draw</h3>
-                <p>Draw 3 digits. Hit 777 for the ultimate Jackpot win.</p>
-                <span class="button-primary">Play Now</span>
-            </div>
-
-            <div class="card animate" onclick="location.href='spin.html'" style="animation-delay: 0.3s;">
-                <i class="fas fa-sync" style="color: #2196f3;"></i>
-                <h3>Spin & Win</h3>
-                <p>Spin the magic wheel and multiply your coins instantly.</p>
-                <span class="button-primary">Play Now</span>
-            </div>
-
-            <div class="card animate" onclick="location.href='rummy.html'" style="animation-delay: 0.4s;">
-                <div style="font-size: 40px; margin-bottom: 10px;">🎴</div>
-                <h3>Rummy</h3>
-                <p>Multiplayer Rummy. Show your skills and clear the table.</p>
-                <span class="button-primary">Play Now</span>
-            </div>
-
-            <div class="card animate" onclick="location.href='teenpatti.html'" style="animation-delay: 0.5s;">
-                <div style="font-size: 40px; margin-bottom: 10px;">🃏</div>
-                <h3>Teen Patti</h3>
-                <p>Classic 3-card poker. Beat the dealer with your best hand.</p>
-                <span class="button-primary">Play Now</span>
-            </div>
-
-            <div class="card animate" onclick="location.href='bigsmall.html'" style="animation-delay: 0.6s;">
-                <i class="fas fa-dice" style="color: #2196f3;"></i>
-                <h3>Big Small</h3>
-                <p>Predict the sum of three dice. Simple and fast paced.</p>
-                <span class="button-primary">Play Now</span>
-            </div>
-        </div>
-
-        <div class="card animate" style="margin-top: 40px; text-align: left; background: rgba(244, 67, 54, 0.05); border-color: rgba(244, 67, 54, 0.2);">
-            <h4 style="color: var(--accent-red); margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> Responsible Gaming Warning</h4>
-            <p style="font-size: 13px; color: var(--text-dim);">
-                Casino games involve financial risk. Please play responsibly. This is a simulation game for entertainment purposes.
-                Users must be 18+ to participate. Any real money transactions are at the user's own risk.
-                Always deposit only what you can afford to lose.
-            </p>
+    <div class="winner-ticker">
+        <div class="ticker-track">
+            <span class="ticker-item">User <b>Ravi***</b> just won <b>₹4,500</b> in Aviator!</span>
+            <span class="ticker-item">Player <b>Soni***</b> hit <b>777</b> in Lucky Draw!</span>
+            <span class="ticker-item">User <b>Arun***</b> won <b>₹1,200</b> in Color Game!</span>
+            <span class="ticker-item">User <b>Deep***</b> just won <b>₹8,900</b> in Teen Patti!</span>
         </div>
     </div>
+
+    <div class="hero-banner">
+        <div class="user-welcome">
+            <h2>Welcome back,</h2>
+            <span id="userName">Loading...</span>
+        </div>
+
+        <div class="balance-display">
+            <div class="balance-label">Total Balance</div>
+            <div class="balance-amount"><i class="fas fa-coins"></i> <span id="coins">0.00</span></div>
+            <div style="font-size:10px; color:#666; font-weight:700;">LIVE COINS READY TO PLAY</div>
+        </div>
+
+        <div class="action-row">
+            <a href="wallet.html" class="btn-action btn-deposit">DEPOSIT</a>
+            <a href="wallet.html" class="btn-action">WITHDRAW</a>
+        </div>
+    </div>
+
+    <div class="bonus-card">
+        <div class="bonus-info">
+            <h4>Daily Check-in</h4>
+            <p>Get ₹120 Free Bonus!</p>
+        </div>
+        <button onclick="claimBonus()" class="btn-claim" id="bonusBtn">CLAIM</button>
+    </div>
+
+    <div class="section-title">Exclusive Games</div>
+    <div class="games-scroll">
+        <div class="game-card card-aviator" onclick="location.href='aviator.html'">
+            <i class="fas fa-plane-departure"></i>
+            <h3>Aviator</h3>
+            <p>High risk, high reward. Cash out early!</p>
+        </div>
+
+        <div class="game-card card-color" onclick="location.href='colorgame.html'">
+            <i class="fas fa-palette"></i>
+            <h3>Color Game</h3>
+            <p>Predict colors & win up to 18x!</p>
+        </div>
+
+        <div class="game-card card-lucky" onclick="location.href='luckydraw.html'">
+            <i class="fas fa-star"></i>
+            <h3>Lucky Draw</h3>
+            <p>Spin for the Jackpot. Hit 777!</p>
+        </div>
+
+        <div class="game-card card-spin" onclick="location.href='spin.html'">
+            <i class="fas fa-sync"></i>
+            <h3>Spin & Win</h3>
+            <p>Multiply your coins instantly.</p>
+        </div>
+
+        <div class="game-card card-rummy" onclick="location.href='rummy.html'">
+            <div class="emoji" style="top:20px; left:20px;">🎴</div>
+            <h3>Rummy</h3>
+            <p>Classic Skill-based card game.</p>
+        </div>
+
+        <div class="game-card card-teenpatti" onclick="location.href='teenpatti.html'">
+            <div class="emoji" style="top:20px; left:20px;">🃏</div>
+            <h3>Teen Patti</h3>
+            <p>Royal Indian Poker experience.</p>
+        </div>
+
+        <div class="game-card card-bigsmall" onclick="location.href='bigsmall.html'">
+            <i class="fas fa-dice"></i>
+            <h3>Big Small</h3>
+            <p>Simple dice prediction game.</p>
+        </div>
+    </div>
+
+    <div style="padding: 30px 20px; opacity: 0.3; text-align: center; font-size: 10px; font-weight: 800; letter-spacing: 2px;">
+        SOLO CASINO ENTERTAINMENT © 2024
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>HOME</span>
+        </a>
+        <a href="wallet.html" class="nav-item">
+            <i class="fas fa-wallet"></i>
+            <span>WALLET</span>
+        </a>
+        <a href="leaderboard.html" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>WINNERS</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user-circle"></i>
+            <span>ACCOUNT</span>
+        </a>
+        <a href="#" onclick="logout()" class="nav-item">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>EXIT</span>
+        </a>
+    </nav>
 
     <script src="js/config.js"></script>
     <script>
@@ -115,33 +364,30 @@
 
         async function fetchProfile() {
             try {
-                console.log("Fetching profile...");
                 const res = await fetch(`${API_URL}/api/profile`, {
                     headers: { "authorization": token }
                 });
 
                 if (res.status === 401) {
-                    console.log("Unauthorized, redirecting to login");
                     localStorage.removeItem("token");
                     return location.href = "login.html";
                 }
 
                 const data = await res.json();
                 if (!data.success) {
-                    console.log("Data success false:", data.message);
                     localStorage.removeItem("token");
                     return location.href = "login.html";
                 }
                 document.getElementById("userName").innerText = data.user.name;
-                document.getElementById("coins").innerText = data.user.coins.toLocaleString();
+                document.getElementById("coins").innerText = data.user.coins.toLocaleString(undefined, {minimumFractionDigits: 2});
             } catch (err) {
-                console.error("Fetch profile error:", err);
+                console.error(err);
             }
         }
 
         async function claimBonus() {
             const btn = document.getElementById("bonusBtn");
-            btn.innerText = "Claiming...";
+            btn.innerText = "...";
             btn.disabled = true;
 
             try {
@@ -159,7 +405,7 @@
             } catch (err) {
                 console.error(err);
             } finally {
-                btn.innerText = "Claim Now";
+                btn.innerText = "CLAIM";
                 btn.disabled = false;
             }
         }
