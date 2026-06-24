@@ -8,14 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --table-green: radial-gradient(circle, #166534 0%, #064e3b 100%);
             --gold: #ffc107;
             --bg-dark: #020617;
             --poker-border: #422006;
         }
 
         body {
-            background: var(--bg-dark);
+            background: #064e3b url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000') no-repeat center center;
+            background-size: cover;
             color: white;
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -56,9 +56,6 @@
             transition: 0.3s;
         }
         .table-card:hover { border-color: var(--gold); transform: translateY(-5px); }
-        .table-card h3 { margin: 0; font-size: 14px; color: #94a3b8; }
-        .table-card .boot { font-size: 24px; font-weight: 900; color: white; margin: 10px 0; }
-        .table-card .status { font-size: 10px; color: #4ade80; font-weight: 800; }
 
         /* GAME HEADER */
         .header {
@@ -80,30 +77,29 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png');
         }
 
         .poker-table {
-            width: 92%;
-            height: 60%;
-            background: var(--table-green);
-            border: 12px solid var(--poker-border);
-            border-radius: 200px;
+            width: 90%;
+            height: 55%;
+            background: #4a2c1e url('https://www.transparenttextures.com/patterns/dark-wood.png');
+            border: 10px solid #2a1810;
+            border-radius: 180px;
             box-shadow: 0 50px 100px rgba(0,0,0,0.8), inset 0 0 80px rgba(0,0,0,0.6);
             position: relative;
-            transform: rotateX(25deg);
+            transform: rotateX(20deg);
         }
 
         .dealer-box {
             position: absolute;
-            top: 2%;
+            top: 5%;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
             text-align: center;
         }
         .dealer-img {
-            width: 120px;
+            width: 150px;
             filter: drop-shadow(0 10px 20px black);
             animation: breathe 4s ease-in-out infinite;
         }
@@ -119,12 +115,12 @@
         }
         .seat-me { bottom: 2%; left: 50%; transform: translateX(-50%); }
         .seat-2 { left: 2%; bottom: 25%; }
-        .seat-3 { left: 8%; top: 10%; }
-        .seat-4 { right: 8%; top: 10%; }
+        .seat-3 { left: 10%; top: 12%; }
+        .seat-4 { right: 10%; top: 12%; }
         .seat-5 { right: 2%; bottom: 25%; }
 
         .avatar-wrap {
-            width: 55px; height: 55px;
+            width: 60px; height: 60px;
             margin: 0 auto;
             position: relative;
         }
@@ -134,24 +130,23 @@
             background: #1e293b;
             border: 2px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
+            overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            transition: 0.3s;
         }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .active-turn .avatar { border-color: #3b82f6; box-shadow: 0 0 25px #3b82f6; animation: glow 1.5s infinite; }
         @keyframes glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
-        .status-badge {
-            position: absolute;
-            top: -5px; right: -5px;
-            background: #ef4444;
-            color: white;
-            font-size: 8px;
+        .status-tag {
+            background: rgba(0,0,0,0.8);
+            color: var(--gold);
+            font-size: 10px;
             font-weight: 900;
-            padding: 2px 5px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            z-index: 10;
+            padding: 2px 6px;
+            border-radius: 10px;
+            position: absolute;
+            top: -10px; left: 50%; transform: translateX(-50%);
+            white-space: nowrap;
         }
 
         .name-tag {
@@ -161,22 +156,8 @@
             padding: 3px 6px;
             border-radius: 10px;
             margin-top: 3px;
-            color: var(--gold);
-            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .action-text {
-            position: absolute;
-            top: -20px; left: 50%;
-            transform: translateX(-50%);
-            font-size: 9px;
-            font-weight: 900;
-            color: #4ade80;
-            white-space: nowrap;
-            text-shadow: 0 2px 4px black;
         }
 
         /* CARDS */
@@ -184,14 +165,14 @@
             display: flex;
             justify-content: center;
             margin-top: 5px;
-            height: 40px;
+            height: 45px;
         }
         .card {
-            width: 26px; height: 38px;
+            width: 30px; height: 44px;
             background: white;
             border-radius: 4px;
             color: black;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 950;
             display: flex;
             flex-direction: column;
@@ -199,21 +180,28 @@
             justify-content: center;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
             border: 1px solid #ddd;
-            margin: 0 -5px; /* Overlap */
+            margin: 0 -8px; /* Overlap */
             position: relative;
+            transition: 0.3s;
         }
-        .card:nth-child(1) { transform: rotate(-10deg) translateX(2px); z-index: 1; }
-        .card:nth-child(2) { z-index: 2; }
-        .card:nth-child(3) { transform: rotate(10deg) translateX(-2px); z-index: 3; }
+        .card:nth-child(1) { transform: rotate(-10deg); }
+        .card:nth-child(3) { transform: rotate(10deg); }
 
         .card.back {
-            background: #be123c;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.05) 5px, rgba(255,255,255,0.05) 10px);
-            border: 2px solid white;
+            background: #be123c url('https://www.transparenttextures.com/patterns/poker-qr.png');
+            border: 1.5px solid white;
             color: transparent;
         }
 
-        /* POT & CENTER */
+        .trail-badge {
+            background: #ef4444; color: white;
+            font-size: 8px; font-weight: 950;
+            padding: 1px 4px; border-radius: 3px;
+            position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        /* POT */
         .pot-box {
             position: absolute;
             top: 45%; left: 50%;
@@ -222,187 +210,196 @@
             color: var(--gold);
             z-index: 10;
         }
-        .pot-amount { font-size: 24px; font-weight: 950; text-shadow: 0 2px 10px black; }
+        .pot-amount { font-size: 20px; font-weight: 950; text-shadow: 0 2px 10px black; }
 
         /* CONTROLS */
-        .game-controls {
-            background: #0f172a;
-            padding: 15px;
-            display: grid;
-            grid-template-columns: 70px 1fr 1fr 1fr;
-            gap: 10px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+        .controls-wrapper {
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 2px solid #334155;
+            padding: 10px;
             z-index: 1000;
         }
+
+        .gifts-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .gift-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            font-size: 20px;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .gift-btn:active { transform: scale(0.9); }
+
+        .game-controls {
+            display: grid;
+            grid-template-columns: 60px 1fr 1.5fr 1.2fr;
+            gap: 8px;
+            align-items: center;
+        }
         .timer-circle {
-            width: 55px; height: 55px;
+            width: 50px; height: 50px;
             border: 4px solid #ef4444;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 20px; font-weight: 900;
+            font-size: 18px; font-weight: 900;
             background: rgba(0,0,0,0.3);
         }
+        .chaal-control {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .chaal-stepper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 2px 5px;
+        }
+        .step-btn {
+            background: none; border: none; color: white; font-weight: 950; font-size: 16px; cursor: pointer;
+        }
         .btn-action {
-            height: 55px;
+            height: 44px;
             border: none;
             border-radius: 12px;
             font-weight: 900;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             text-transform: uppercase;
             box-shadow: 0 4px 0 rgba(0,0,0,0.3);
             transition: 0.1s;
+            padding: 0 10px;
         }
         .btn-action:active { transform: translateY(3px); box-shadow: none; }
         .btn-pack { background: #be123c; color: white; }
         .btn-see { background: #1d4ed8; color: white; }
         .btn-chaal { background: #15803d; color: white; }
         .btn-side { background: #a21caf; color: white; }
+        .btn-show { background: #f59e0b; color: white; }
 
-        /* SIDE SHOW REQUEST POPUP */
-        #sideshowPopup {
-            position: fixed;
-            top: 40%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95);
-            border: 2px solid var(--gold);
-            padding: 25px;
-            border-radius: 20px;
-            z-index: 6000;
-            text-align: center;
-            display: none;
-            box-shadow: 0 0 50px black;
-        }
-
-        /* RESULT OVERLAY */
-        #resultOverlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 7000;
-            display: none;
-            flex-direction: column;
+        .game-controls {
+            display: flex;
+            gap: 10px;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* RESULT */
+        #resultOverlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 7000;
+            display: none;
+            flex-direction: column; align-items: center; justify-content: center;
         }
         .res-card {
             background: #1e293b;
-            padding: 40px;
-            border-radius: 30px;
+            padding: 40px; border-radius: 30px;
             border: 3px solid var(--gold);
             text-align: center;
-            animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } }
 
-        /* Mobile Adjustments */
+        /* Responsive */
         @media (max-width: 600px) {
-            .poker-table { height: 45%; width: 98%; border-radius: 80px; border-width: 8px; }
+            .poker-table { height: 40%; width: 98%; border-radius: 100px; }
             .player-seat { width: 75px; }
             .avatar-wrap { width: 45px; height: 45px; }
-            .avatar { font-size: 18px; }
-            .dealer-img { width: 90px; }
-            .name-tag { font-size: 8px; padding: 2px 4px; }
-            .cards-hand { height: 35px; }
-            .card { width: 22px; height: 32px; font-size: 10px; margin: 0 -4px; }
-            .game-controls { grid-template-columns: 1fr 1fr; padding: 10px; gap: 8px; }
-            .timer-circle { grid-column: span 2; margin: 0 auto 5px; width: 45px; height: 45px; font-size: 16px; }
-            .btn-action { height: 45px; font-size: 12px; border-radius: 10px; }
-            .pot-amount { font-size: 18px; }
+            .game-controls { flex-direction: column; gap: 5px; }
+            .timer-circle { margin-bottom: 5px; }
+            .btn-action { height: 40px; font-size: 11px; padding: 0 8px; }
         }
 
     </style>
 </head>
 <body>
 
-    <!-- Lobby / Table Selection -->
     <div id="lobby">
         <div class="lobby-title">Teen Patti Royale</div>
         <div class="table-list">
             <div class="table-card" onclick="join(1)">
                 <h3>Public T1</h3>
-                <div class="boot">₹5</div>
-                <div class="status">PLAYING...</div>
+                <div style="font-size: 20px; font-weight: 900;">₹5</div>
             </div>
             <div class="table-card" onclick="join(2)">
                 <h3>Public T2</h3>
-                <div class="boot">₹10</div>
-                <div class="status">PLAYING...</div>
+                <div style="font-size: 20px; font-weight: 900;">₹10</div>
             </div>
             <div class="table-card" onclick="join(3)">
-                <h3>Public T3</h3>
-                <div class="boot">₹50</div>
-                <div class="status">WAITING...</div>
-            </div>
-            <div class="table-card" onclick="join(4)">
                 <h3>High Roller</h3>
-                <div class="boot">₹100</div>
-                <div class="status">PLAYING...</div>
-            </div>
-            <div class="table-card" onclick="join(5)">
-                <h3>Private</h3>
-                <div class="boot">₹500</div>
-                <div class="status">ID: 5502</div>
+                <div style="font-size: 20px; font-weight: 900;">₹100</div>
             </div>
         </div>
     </div>
 
-    <!-- Header -->
     <div class="header">
         <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 24px;"><i class="fas fa-arrow-left"></i></button>
         <div style="text-align: center;">
-            <div style="font-size: 10px; color: var(--gold); font-weight: 800;">CURRENT TABLE</div>
-            <div id="tableName" style="font-size: 18px; font-weight: 900;">T#1</div>
+            <div id="tableName" style="font-size: 16px; font-weight: 900;">T#1</div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 10px; color: #aaa;">BALANCE</div>
-            <div style="font-size: 18px; color: #22c55e; font-weight: 900;">₹<span id="balance">0</span></div>
+            <div style="font-size: 16px; color: #22c55e; font-weight: 900;">₹<span id="balance">0</span></div>
         </div>
     </div>
 
-    <!-- Table Area -->
     <div class="table-area">
         <div class="dealer-box">
-            <!-- Professional Smart Dealer Girl -->
             <img src="https://i.ibb.co/L5pZ0vX/dealer-girl.png" class="dealer-img" alt="dealer">
         </div>
-
         <div class="poker-table"></div>
-
         <div class="pot-box">
-            <div style="font-size: 10px; font-weight: 900; opacity: 0.6;">TOTAL POT</div>
+            <div style="font-size: 10px; font-weight: 900; opacity: 0.6;">POT</div>
             <div class="pot-amount">₹<span id="potVal">0</span></div>
-            <i class="fas fa-coins" style="color: gold; font-size: 18px; margin-top: 5px;"></i>
         </div>
-
-        <!-- Seats (Populated by JS) -->
         <div id="seatsContainer"></div>
     </div>
 
-    <!-- Controls -->
-    <div class="game-controls">
-        <div class="timer-circle" id="timer">0</div>
-        <button class="btn-action btn-pack" onclick="handleMove('PACK')">Pack</button>
-        <button class="btn-action btn-see" id="seeBtn" onclick="handleMove('SEE')">See</button>
-        <button class="btn-action btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">Chaal</button>
-        <button class="btn-action btn-side" id="sideBtn" onclick="handleMove('SIDESHOW')" style="display: none;">Side Show</button>
-    </div>
-
-    <!-- Side Show Response Popup -->
-    <div id="sideshowPopup">
-        <h3 id="ssMsg">Rohan wants a Side Show!</h3>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn-action btn-chaal" style="flex:1" onclick="ssResponse(true)">Accept</button>
-            <button class="btn-action btn-pack" style="flex:1" onclick="ssResponse(false)">Deny</button>
+    <div class="controls-wrapper">
+        <div class="gifts-row">
+            <button class="gift-btn" onclick="sendEmoji('🌹')">🌹</button>
+            <button class="gift-btn" onclick="sendEmoji('🥤')">🥤</button>
+            <button class="gift-btn" onclick="sendEmoji('❤️')">❤️</button>
+            <button class="gift-btn" onclick="sendEmoji('😂')">😂</button>
+            <button class="gift-btn" onclick="sendEmoji('🔥')">🔥</button>
+        </div>
+        <div class="game-controls">
+            <div class="timer-circle" id="timer">0</div>
+            <div class="control-group">
+                <button class="btn-action btn-pack" onclick="handleMove('PACK')">Pack</button>
+                <button class="btn-action btn-see" id="seeBtn" onclick="handleMove('SEE')">See</button>
+                <button class="btn-action btn-side" id="sideBtn" onclick="handleMove('SIDESHOW')" style="display: none;">Side Show</button>
+                <button class="btn-action btn-show" id="showBtn" onclick="handleMove('SHOW')" style="display: none;">Show</button>
+            </div>
+            <div class="chaal-control">
+                <div class="chaal-stepper">
+                    <button class="step-btn" onclick="adjustBet(-1)">-</button>
+                    <span id="nextBetDisplay" style="font-size: 10px; font-weight: 800;">₹0</span>
+                    <button class="step-btn" onclick="adjustBet(1)">+</button>
+                </div>
+                <button class="btn-action btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">Chaal</button>
+            </div>
         </div>
     </div>
 
-    <!-- Result Overlay -->
     <div id="resultOverlay">
         <div class="res-card">
-            <h1 id="resTitle" style="font-size: 48px; margin: 0;">YOU WIN!</h1>
-            <div id="resAmount" style="font-size: 32px; color: var(--gold); font-weight: 900; margin: 15px 0;">₹500</div>
-            <button class="button-primary" onclick="closeRes()">NEXT ROUND</button>
+            <h1 id="resTitle">YOU WIN!</h1>
+            <div id="resHand" class="cards-hand" style="margin: 20px 0; height: 60px;"></div>
+            <div id="resAmount" style="font-size: 32px; color: var(--gold); font-weight: 950; margin: 15px 0;">₹0</div>
+            <button class="btn-action btn-chaal" style="width: 200px;" onclick="closeRes()">CONTINUE</button>
         </div>
     </div>
 
@@ -413,11 +410,11 @@
         let currentTable = null;
         let isFetching = false;
         let lastState = "";
+        let nextBet = 0;
 
         async function join(id) {
             currentTable = id;
-            document.getElementById("tableName").innerText = "T#" + id;
-
+            document.getElementById("tableName").innerText = "TABLE #" + id;
             const res = await fetch(`${API_URL}/api/teenpatti/join`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
@@ -426,13 +423,9 @@
             const data = await res.json();
             if (data.success) {
                 document.getElementById("lobby").style.display = "none";
-                startPolling();
+                setInterval(fetchState, 1500);
+                fetchBalance();
             } else { alert(data.message); }
-        }
-
-        function startPolling() {
-            setInterval(fetchState, 1500);
-            fetchBalance();
         }
 
         async function fetchState() {
@@ -457,16 +450,14 @@
             container.innerHTML = "";
 
             const uids = Object.keys(table.players);
-            // Arrange seats: Me at bottom, others around
             const myIndex = uids.indexOf(myId);
             const totalPlayers = uids.length;
 
             uids.forEach((uid, idx) => {
                 const p = table.players[uid];
-                let seatPos = 1; // Default
+                let seatPos = 1;
                 if (uid === myId) seatPos = "me";
                 else {
-                    // Logic to assign seat-2 to seat-5 based on index relative to me
                     const relativeIdx = (idx - myIndex + totalPlayers) % totalPlayers;
                     seatPos = relativeIdx + 1;
                     if (seatPos > 5) seatPos = 5;
@@ -475,44 +466,50 @@
                 const seatDiv = document.createElement("div");
                 seatDiv.className = `player-seat seat-${seatPos} ${table.currentTurn === uid ? 'active-turn' : ''}`;
 
-                const statusBadge = p.status === 'PACKED' ? '<div class="status-badge">PACKED</div>' : '';
-                const actionText = p.lastAction ? `<div class="action-text">${p.lastAction}</div>` : '';
-                const avatarIcon = p.isBot ? 'fa-robot' : 'fa-user';
+                const statusTag = p.status === 'PACKED' ? '<div class="status-tag">PACKED</div>' :
+                                  (!p.blind && table.state === 'PLAYING' ? `<div class="status-tag">${p.handRank || 'SEEN'}</div>` :
+                                  (p.blind && table.state === 'PLAYING' ? '<div class="status-tag">BLIND</div>' : ''));
+
+                const avatarIcon = p.isBot ? `https://i.pravatar.cc/100?u=${p.name}` : `https://i.pravatar.cc/100?u=${uid}`;
 
                 seatDiv.innerHTML = `
-                    ${actionText}
                     <div class="avatar-wrap">
-                        <div class="avatar"><i class="fas ${avatarIcon}"></i></div>
-                        ${statusBadge}
+                        <div class="avatar"><img src="${avatarIcon}"></div>
+                        ${statusTag}
                     </div>
-                    <div class="name-tag">${p.name} ${p.blind && table.state === 'PLAYING' ? '(B)' : ''}</div>
+                    <div class="name-tag">${p.name}</div>
                     <div class="cards-hand">${renderHandHtml(p.hand, p.blind && table.state !== 'SHOW')}</div>
                 `;
                 container.appendChild(seatDiv);
 
-                // If it's my turn
                 if (uid === myId && table.state === 'PLAYING' && table.currentTurn === myId) {
                     document.querySelector(".game-controls").style.opacity = "1";
                     document.querySelector(".game-controls").style.pointerEvents = "auto";
 
                     document.getElementById("seeBtn").style.display = p.blind ? "block" : "none";
-                    document.getElementById("chaalBtn").innerText = p.blind ? `Blind ₹${table.lastBet}` : `Chaal ₹${table.lastBet*2}`;
 
-                    // Side Show button logic
-                    const canSideShow = !p.blind && !table.sideShowRequester;
-                    document.getElementById("sideBtn").style.display = canSideShow ? "block" : "none";
+                    const activePlayers = uids.filter(id => table.players[id].status === 'ACTIVE');
+                    const activePlayersCount = activePlayers.length;
+
+                    // Show button only if 2 players left
+                    document.getElementById("showBtn").style.display = (activePlayersCount === 2) ? "block" : "none";
+
+                    // Side Show button if > 2 players and I have seen and previous player has seen
+                    const myIdxActive = activePlayers.indexOf(myId);
+                    const prevPlayerId = activePlayers[(myIdxActive - 1 + activePlayers.length) % activePlayers.length];
+                    const prevPlayerSeen = table.players[prevPlayerId] && !table.players[prevPlayerId].blind;
+
+                    document.getElementById("sideBtn").style.display = (activePlayersCount > 2 && !p.blind && prevPlayerSeen) ? "block" : "none";
+
+                    if (nextBet === 0 || nextBet < table.lastBet) nextBet = table.lastBet;
+                    document.getElementById("nextBetDisplay").innerText = `₹${nextBet}`;
+
+                    const betToPay = p.blind ? nextBet : nextBet * 2;
+                    document.getElementById("chaalBtn").innerText = p.blind ? `BLIND ₹${betToPay}` : `CHAAL ₹${betToPay}`;
+                    document.getElementById("showBtn").innerText = `SHOW ₹${betToPay}`;
                 } else if (uid === myId) {
                     document.querySelector(".game-controls").style.opacity = "0.5";
                     document.querySelector(".game-controls").style.pointerEvents = "none";
-                }
-
-                // Handle Side Show Request to me
-                if (table.sideShowTarget === myId) {
-                    const reqName = table.players[table.sideShowRequester].name;
-                    document.getElementById("ssMsg").innerText = `${reqName} requested a Side Show!`;
-                    document.getElementById("sideshowPopup").style.display = "block";
-                } else {
-                    document.getElementById("sideshowPopup").style.display = "none";
                 }
             });
 
@@ -525,12 +522,12 @@
             return hand.map(c => {
                 const rank = c.rank || '?';
                 const suit = c.suit || '?';
-                const color = ['♥','♦'].includes(suit) ? '#ef4444' : '#1e293b';
+                const color = (suit === '♥' || suit === '♦') ? '#ef4444' : '#000';
 
                 return `
                     <div class="card ${isHidden ? 'back' : ''}" style="color: ${color}">
-                        <span style="font-size:9px">${isHidden ? '' : rank}</span>
-                        <span style="font-size:14px">${isHidden ? '' : suit}</span>
+                        <div style="font-size:12px; font-weight:900; line-height:1">${isHidden ? '' : rank}</div>
+                        <div style="font-size:18px; line-height:1">${isHidden ? '' : suit}</div>
                     </div>
                 `;
             }).join('');
@@ -540,21 +537,16 @@
             const res = await fetch(`${API_URL}/api/teenpatti/move`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ tableId: currentTable, move })
+                body: JSON.stringify({ tableId: currentTable, move, amount: nextBet })
             });
-            const data = await res.json();
-            if(!data.success) alert(data.message);
             fetchState();
             fetchBalance();
         }
 
-        async function ssResponse(accepted) {
-            await fetch(`${API_URL}/api/teenpatti/sideshow-response`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ tableId: currentTable, accepted })
-            });
-            document.getElementById("sideshowPopup").style.display = "none";
+        function adjustBet(val) {
+            const step = 5;
+            nextBet = Math.max(nextBet + (val * step), 5);
+            document.getElementById("nextBetDisplay").innerText = `₹${nextBet}`;
             fetchState();
         }
 
@@ -562,19 +554,20 @@
             const me = table.players[myId];
             if (!me) return;
             const overlay = document.getElementById("resultOverlay");
-            const title = document.getElementById("resTitle");
-            const amt = document.getElementById("resAmount");
-
             overlay.style.display = "flex";
+
+            const winner = Object.values(table.players).find(p => p.result === 'WIN');
+            if (winner) {
+                document.getElementById("resHand").innerHTML = renderHandHtml(winner.hand, false);
+            }
+
             if (me.result === 'WIN') {
-                title.innerText = "YOU WIN!";
-                title.style.color = "#4ade80";
-                amt.innerText = "₹" + me.winAmount;
+                document.getElementById("resTitle").innerText = "YOU WIN!";
+                document.getElementById("resAmount").innerText = "₹" + me.winAmount;
                 new Audio('sound/win.mp3').play().catch(e=>{});
             } else {
-                title.innerText = "YOU LOSE";
-                title.style.color = "#ef4444";
-                amt.innerText = "Better luck next round!";
+                document.getElementById("resTitle").innerText = "YOU LOSE";
+                document.getElementById("resAmount").innerText = "Better luck next time!";
                 new Audio('sound/lose.mp3').play().catch(e=>{});
             }
             fetchBalance();
@@ -589,6 +582,11 @@
                 document.getElementById("balance").innerText = data.user.coins.toFixed(2);
                 myId = data.user.id;
             }
+        }
+
+        function sendEmoji(e) {
+            // Simulated for now
+            console.log("Emoji sent:", e);
         }
     </script>
 </body>

