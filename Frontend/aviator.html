@@ -437,9 +437,9 @@
         </div>
         <div style="padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
              <div style="font-size: 10px; color: #888; font-weight: 800;">
-                <span id="betCount">486</span>/505 Bets
+                <span id="betCount">0</span>/<span id="maxBets">500</span> Bets
                 <div style="width: 100px; height: 3px; background: #222; border-radius: 2px; margin-top: 4px;">
-                    <div style="width: 70%; height: 100%; background: #28a745; border-radius: 2px;"></div>
+                    <div id="betProgress" style="width: 0%; height: 100%; background: #28a745; border-radius: 2px;"></div>
                 </div>
              </div>
              <div style="text-align: right;">
@@ -580,7 +580,18 @@
             });
             container.innerHTML = html;
             document.getElementById("totalWin").innerText = totalWin.toFixed(2);
-            document.getElementById("betCount").innerText = all.length;
+
+            const currentCount = all.length;
+            document.getElementById("betCount").innerText = currentCount;
+
+            // Dynamically calculate max bets so it's always a bit higher than current, and update progress
+            let max = parseInt(document.getElementById("maxBets").innerText);
+            if (currentCount >= max) {
+                max = currentCount + Math.floor(Math.random() * 20) + 10;
+                document.getElementById("maxBets").innerText = max;
+            }
+            const progress = (currentCount / max) * 100;
+            document.getElementById("betProgress").style.width = Math.min(100, progress) + "%";
         }
 
         function startFlight() {
