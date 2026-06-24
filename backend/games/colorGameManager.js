@@ -6,7 +6,7 @@ const { checkReferralReward } = require("../utils/referral");
 class ColorGameManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 30; // Updated to 30 seconds
+        this.timer = 39; // 30 seconds betting + 9 seconds waiting
         this.bets = []; // { userId, type, value, amount, name }
         this.history = [];
         this.forcedResult = null; // { number: x }
@@ -130,14 +130,14 @@ class ColorGameManager {
         if (this.history.length > 500) this.history.pop(); // Keep more history
 
         this.roundId = Date.now();
-        this.timer = 30;
+        this.timer = 39;
         this.bets = [];
         this.forcedResult = null;
         this.isResolving = false;
     }
 
     placeBet(userId, name, type, value, amount) {
-        if (this.timer < 3) return { success: false, message: "Round closing" };
+        if (this.timer <= 9) return { success: false, message: "Round closing" };
         this.bets.push({ userId, name, type, value, amount: Number(amount) });
         return { success: true };
     }

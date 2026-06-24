@@ -243,16 +243,23 @@
         }
 
         function updateUI(data) {
-            const secs = data.timer;
-            document.getElementById("timer").innerText = `00:${secs.toString().padStart(2, '0')}`;
-            if(secs < 5) {
-                document.getElementById("timer").style.color = "#ef4444";
-                document.getElementById("confirmBtn").disabled = true;
-                document.getElementById("confirmBtn").innerText = "WAITING...";
+            const totalSecs = data.timer;
+            const timerEl = document.getElementById("timer");
+            const btn = document.getElementById("confirmBtn");
+
+            if (totalSecs > 9) {
+                // Betting phase (30s)
+                const bettingSecs = totalSecs - 9;
+                timerEl.innerText = `00:${bettingSecs.toString().padStart(2, '0')}`;
+                timerEl.style.color = "var(--gold)";
+                btn.disabled = false;
+                btn.innerText = "PLACE BET";
             } else {
-                document.getElementById("timer").style.color = "var(--gold)";
-                document.getElementById("confirmBtn").disabled = false;
-                document.getElementById("confirmBtn").innerText = "PLACE BET";
+                // Admin phase (9s)
+                timerEl.innerText = `00:${totalSecs.toString().padStart(2, '0')}`;
+                timerEl.style.color = "#ef4444";
+                btn.disabled = true;
+                btn.innerText = "WAITING...";
             }
 
             if (data.history && data.history.length > 0) {
