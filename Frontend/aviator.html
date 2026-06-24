@@ -15,12 +15,13 @@
             --accent-blue: #34b4ff;
             --multiplier-purple: #913ef8;
             --multiplier-pink: #c017b2;
+            --font-main: 'Inter', sans-serif;
         }
 
         body {
             background-color: #000;
             color: white;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-main);
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -30,11 +31,12 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Header Styling */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 12px;
+            padding: 8px 12px;
             background: #1b1c1d;
             border-bottom: 1px solid #222;
             z-index: 100;
@@ -44,33 +46,36 @@
             font-weight: 900;
             font-style: italic;
             color: var(--primary-red);
-            font-size: 18px;
+            font-size: 20px;
             letter-spacing: -1px;
+            text-transform: uppercase;
         }
 
         .balance-container {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .balance-box {
             color: #28a745;
             font-weight: 900;
-            font-size: 15px;
+            font-size: 16px;
         }
 
-        .menu-btn {
+        .menu-icons {
+            display: flex;
+            gap: 15px;
             color: #ccc;
-            font-size: 20px;
-            cursor: pointer;
+            font-size: 18px;
         }
 
+        /* History Bar */
         .history-bar {
             background: #141516;
             display: flex;
             gap: 6px;
-            padding: 6px 12px;
+            padding: 8px 12px;
             overflow-x: auto;
             border-bottom: 1px solid #222;
             scrollbar-width: none;
@@ -79,20 +84,21 @@
 
         .hist-item {
             background: #212429;
-            padding: 2px 10px;
-            border-radius: 10px;
-            font-size: 10px;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 11px;
             font-weight: 800;
-            min-width: 40px;
+            min-width: 45px;
             text-align: center;
         }
 
+        /* Game Area */
         .game-area {
             flex: 1;
             position: relative;
             background: #000;
-            margin: 5px;
-            border-radius: 12px;
+            margin: 8px;
+            border-radius: 15px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -101,7 +107,7 @@
         .sunburst {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 0% 100%, #1a1a1a 0%, #000000 70%);
+            background: radial-gradient(circle at 0% 100%, #1a1a1a 0%, #000000 80%);
             z-index: 1;
         }
 
@@ -109,7 +115,7 @@
             content: '';
             position: absolute;
             top: -50%; left: -50%; width: 200%; height: 200%;
-            background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg 10deg, transparent 10deg 20deg);
+            background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.02) 0deg 10deg, transparent 10deg 20deg);
             z-index: 1;
         }
 
@@ -119,10 +125,10 @@
             background: #f5a623;
             color: #000;
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 900;
-            padding: 2px 0;
-            border-radius: 12px 12px 0 0;
+            padding: 4px 0;
+            text-transform: uppercase;
         }
 
         .canvas-container {
@@ -140,66 +146,76 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 60px;
-            font-weight: 900;
+            font-size: 80px;
+            font-weight: 950;
             z-index: 10;
-            text-shadow: 0 0 30px rgba(0,0,0,0.5);
+            text-shadow: 0 0 40px rgba(0,0,0,0.8);
+            color: white;
+            letter-spacing: -2px;
         }
 
-        .player-avatars {
+        .player-count-capsule {
             position: absolute;
             bottom: 40px;
             right: 20px;
             z-index: 10;
-            background: rgba(0,0,0,0.6);
-            padding: 4px 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 12px;
             border-radius: 20px;
             display: flex;
             align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            font-weight: bold;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 800;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .avatar-stack {
+            display: flex;
+            align-items: center;
         }
         .avatar-img {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            border: 1px solid #fff;
-            margin-left: -8px;
+            border: 1.5px solid #333;
+            margin-left: -10px;
+            object-fit: cover;
         }
         .avatar-img:first-child { margin-left: 0; }
 
         /* Betting Section */
         .betting-section {
-            padding: 10px;
+            padding: 12px;
             background: #000;
             display: grid;
             grid-template-columns: 1fr;
-            gap: 10px;
+            gap: 12px;
         }
-        @media (min-width: 600px) { .betting-section { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 768px) { .betting-section { grid-template-columns: 1fr 1fr; } }
 
         .bet-card {
             background: #1b1c1d;
-            padding: 10px;
-            border-radius: 15px;
-            border: 1px solid #222;
+            padding: 12px;
+            border-radius: 18px;
+            border: 1px solid #282828;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         .tab-row {
             display: flex;
             background: #141516;
-            padding: 2px;
-            border-radius: 20px;
-            margin-bottom: 10px;
+            padding: 3px;
+            border-radius: 25px;
+            margin-bottom: 12px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
         }
         .tab {
-            flex: 1;
-            text-align: center;
-            padding: 5px;
-            font-size: 11px;
+            padding: 4px 20px;
+            font-size: 12px;
             font-weight: 800;
-            border-radius: 18px;
+            border-radius: 20px;
             color: #888;
             cursor: pointer;
         }
@@ -211,13 +227,14 @@
         .bet-controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
+            align-items: center;
         }
 
         .amount-input-box {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
 
         .input-stepper {
@@ -225,18 +242,19 @@
             align-items: center;
             background: #000;
             border: 1px solid #333;
-            border-radius: 20px;
-            padding: 4px;
+            border-radius: 25px;
+            padding: 5px;
         }
         .input-stepper button {
-            background: #1b1c1d;
+            background: #333;
             border: none;
             color: #fff;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 900;
+            cursor: pointer;
         }
         .input-stepper input {
             flex: 1;
@@ -244,106 +262,125 @@
             border: none;
             color: #fff;
             text-align: center;
-            font-size: 15px;
-            font-weight: 800;
-            width: 50px;
+            font-size: 18px;
+            font-weight: 900;
+            width: 60px;
+            outline: none;
         }
 
         .quick-amounts {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
         }
         .quick-amounts button {
             background: #141516;
             border: 1px solid #333;
             color: #fff;
-            font-size: 10px;
-            padding: 4px;
+            font-size: 11px;
+            padding: 6px 0;
             border-radius: 10px;
-            font-weight: 700;
+            font-weight: 800;
+            cursor: pointer;
         }
 
         .big-bet-btn {
+            height: 85px;
             border: none;
-            border-radius: 12px;
+            border-radius: 18px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: 0.1s;
+            transition: transform 0.1s, filter 0.2s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
         }
-        .big-bet-btn:active { transform: scale(0.98); }
+        .big-bet-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.3); }
 
-        .btn-green { background: #28a745; color: #fff; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2); }
-        .btn-red { background: #d10214; color: #fff; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2); }
-        .btn-orange { background: #f5a623; color: #000; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2); }
+        .btn-green { background: linear-gradient(to bottom, #28a745, #1e7e34); color: #fff; }
+        .btn-red { background: linear-gradient(to bottom, #d10214, #a0010f); color: #fff; }
+        .btn-orange { background: linear-gradient(to bottom, #f5a623, #d4840b); color: #000; }
 
-        .big-bet-btn .label { font-size: 16px; font-weight: 900; }
-        .big-bet-btn .value { font-size: 14px; font-weight: 900; }
+        .big-bet-btn .label { font-size: 18px; font-weight: 900; text-transform: uppercase; }
+        .big-bet-btn .value { font-size: 14px; font-weight: 800; margin-top: 2px; }
 
-        /* Bets Table Section */
+        /* Stats Section */
         .stats-section {
             flex: 1;
             background: #1b1c1d;
-            border-radius: 20px 20px 0 0;
+            border-radius: 25px 25px 0 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            border-top: 1px solid #333;
         }
 
         .stats-tabs {
             display: flex;
-            padding: 10px;
-            gap: 15px;
-            border-bottom: 1px solid #222;
+            padding: 12px 15px;
+            gap: 20px;
+            background: #141516;
         }
         .stats-tab {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 800;
             color: #888;
             cursor: pointer;
+            text-transform: uppercase;
         }
-        .stats-tab.active { color: #fff; }
+        .stats-tab.active { color: #fff; border-bottom: 2px solid var(--primary-red); padding-bottom: 2px; }
+
+        .stats-summary {
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1b1c1d;
+        }
 
         .bets-list-header {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr 1fr;
-            padding: 8px 15px;
-            font-size: 10px;
-            color: #666;
-            font-weight: 800;
+            padding: 10px 15px;
+            font-size: 11px;
+            color: #555;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 1px solid #222;
         }
 
         .bets-list {
             flex: 1;
             overflow-y: auto;
+            padding: 5px;
         }
+
         .bet-row {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr 1fr;
-            padding: 10px 15px;
-            font-size: 11px;
+            padding: 12px 10px;
+            font-size: 12px;
             align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-            background: rgba(0,0,0,0.2);
-            margin-bottom: 2px;
-            border-radius: 8px;
+            background: rgba(0,0,0,0.25);
+            margin-bottom: 4px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.02);
         }
-        .bet-row.won { background: rgba(40, 167, 69, 0.1); }
+        .bet-row.won { background: rgba(40, 167, 69, 0.12); border: 1px solid rgba(40, 167, 69, 0.2); }
 
-        .user-info { display: flex; align-items: center; gap: 8px; }
-        .user-info img { width: 22px; height: 22px; border-radius: 50%; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-info img { width: 24px; height: 22px; border-radius: 50%; }
 
-        .result-multiplier {
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 800;
-            text-align: center;
+        .res-blue-badge {
+            background: #212429;
+            color: var(--accent-blue);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 900;
+            border: 1px solid rgba(52, 180, 255, 0.2);
         }
-        .res-blue { background: #212429; color: var(--accent-blue); border: 1px solid rgba(52, 180, 255, 0.2); }
 
     </style>
 </head>
@@ -352,22 +389,27 @@
         <div class="logo">Aviator</div>
         <div class="balance-container">
             <div class="balance-box"><span id="balance">0.00</span> INR</div>
-            <i class="fas fa-bars menu-btn"></i>
+            <div class="menu-icons">
+                <i class="fas fa-comment-dots"></i>
+                <i class="fas fa-bars"></i>
+            </div>
         </div>
     </div>
 
     <div class="history-bar" id="historyBar"></div>
 
     <div class="game-area">
-        <div class="fun-mode-banner">FUN MODE</div>
+        <div class="fun-mode-banner">Fun Mode</div>
         <div class="sunburst"></div>
         <div class="canvas-container">
             <canvas id="gameCanvas"></canvas>
             <div id="multiplier">1.00x</div>
-            <div class="player-avatars" id="playerAvatars">
-                <img src="https://i.pravatar.cc/50?u=1" class="avatar-img" alt="player 1">
-                <img src="https://i.pravatar.cc/50?u=2" class="avatar-img" alt="player 2">
-                <img src="https://i.pravatar.cc/50?u=3" class="avatar-img" alt="player 3">
+            <div class="player-count-capsule">
+                <div class="avatar-stack">
+                    <img src="https://i.pravatar.cc/50?u=a1" class="avatar-img" alt="p1">
+                    <img src="https://i.pravatar.cc/50?u=a2" class="avatar-img" alt="p2">
+                    <img src="https://i.pravatar.cc/50?u=a3" class="avatar-img" alt="p3">
+                </div>
                 <span id="fakeUsers">232</span>
             </div>
         </div>
@@ -384,7 +426,7 @@
                 <div class="amount-input-box">
                     <div class="input-stepper">
                         <button onclick="changeAmt(1, -1)">-</button>
-                        <input type="number" id="amt1" value="10.00" min="10" aria-label="Bet Amount 1">
+                        <input type="number" id="amt1" value="10.00" min="10" aria-label="Amount 1">
                         <button onclick="changeAmt(1, 1)">+</button>
                     </div>
                     <div class="quick-amounts">
@@ -411,7 +453,7 @@
                 <div class="amount-input-box">
                     <div class="input-stepper">
                         <button onclick="changeAmt(2, -1)">-</button>
-                        <input type="number" id="amt2" value="10.00" min="10" aria-label="Bet Amount 2">
+                        <input type="number" id="amt2" value="10.00" min="10" aria-label="Amount 2">
                         <button onclick="changeAmt(2, 1)">+</button>
                     </div>
                     <div class="quick-amounts">
@@ -435,16 +477,16 @@
             <div class="stats-tab">Previous</div>
             <div class="stats-tab">Top</div>
         </div>
-        <div style="padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
-             <div style="font-size: 10px; color: #888; font-weight: 800;">
+        <div class="stats-summary">
+             <div style="font-size: 11px; color: #888; font-weight: 800;">
                 <span id="betCount">0</span>/<span id="maxBets">500</span> Bets
-                <div style="width: 100px; height: 3px; background: #222; border-radius: 2px; margin-top: 4px;">
+                <div style="width: 120px; height: 4px; background: #222; border-radius: 2px; margin-top: 6px;">
                     <div id="betProgress" style="width: 0%; height: 100%; background: #28a745; border-radius: 2px;"></div>
                 </div>
              </div>
              <div style="text-align: right;">
-                <div style="font-size: 14px; font-weight: 900;" id="totalWin">0.00</div>
-                <div style="font-size: 9px; color: #666; font-weight: 800;">Total win INR</div>
+                <div style="font-size: 16px; font-weight: 950; color: white;" id="totalWin">0.00</div>
+                <div style="font-size: 10px; color: #666; font-weight: 900; text-transform: uppercase;">Total win INR</div>
              </div>
         </div>
         <div class="bets-list-header">
@@ -453,12 +495,11 @@
             <span>X</span>
             <span>Win INR</span>
         </div>
-        <div class="bets-list" id="allBets">
-            <!-- Bets list -->
-        </div>
-        <div style="padding: 10px; text-align: center; border-top: 1px solid #222;">
-            <div style="display: flex; justify-content: space-between; font-size: 9px; color: #555; font-weight: 800; text-transform: uppercase;">
-                <span><i class="fas fa-shield-halved"></i> Provably Fair Game</span>
+        <div class="bets-list" id="allBets"></div>
+
+        <div style="padding: 10px; text-align: center; border-top: 1px solid #222; background: #141516;">
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #555; font-weight: 900; text-transform: uppercase;">
+                <span><i class="fas fa-shield-halved"></i> Provably Fair</span>
                 <span>Powered by SPRIBE</span>
             </div>
         </div>
