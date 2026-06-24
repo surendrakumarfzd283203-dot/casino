@@ -56,6 +56,16 @@
 
     <script src="js/config.js"></script>
     <script>
+        // Auto-fill referral from URL
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref) {
+                document.getElementById('referral').value = ref;
+                document.getElementById('referral').readOnly = true;
+            }
+        };
+
         async function register() {
             const name = document.getElementById("name").value;
             const email = document.getElementById("email").value;

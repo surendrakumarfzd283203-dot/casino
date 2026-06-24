@@ -116,9 +116,26 @@
             text-align: center;
         }
         .mult-item b { color: var(--gold); font-size: 16px; display: block; }
+
+        #resPopup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px 50px;
+            border-radius: 30px;
+            font-weight: 900;
+            font-size: 32px;
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 100px rgba(0,0,0,1);
+            animation: zoomIn 0.3s;
+        }
+        @keyframes zoomIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } }
     </style>
 </head>
 <body>
+    <div id="resPopup"></div>
     <div class="header">
         <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 24px;"><i class="fas fa-arrow-left"></i></button>
         <div class="balance-box">₹ <span id="balance">0.00</span></div>
@@ -155,6 +172,8 @@
     <script>
         const token = localStorage.getItem("token");
         let isSpinning = false;
+        let lastRoundId = null;
+        let currentBet = 0;
 
         async function fetchState() {
             try {
@@ -166,15 +185,23 @@
                     if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
                     else document.getElementById("timer").style.color = "var(--gold)";
 
+                    if (data.history && data.history.length > 0) {
+                        const last = data.history[0];
+                        if (last.roundId !== lastRoundId) {
+                            lastRoundId = last.roundId;
+                            if (currentBet > 0) {
+                                checkWin(last);
+                                currentBet = 0;
+                            }
+                        }
+                    }
+
                     if (data.timer < 4) {
                         startSpin(data.history[0]?.index || 0);
                         document.getElementById("spinBtn").disabled = true;
                         document.getElementById("spinBtn").innerText = "SPINNING...";
-                    } else if (data.timer > 15) {
-                        isSpinning = false;
-                        document.getElementById("spinBtn").disabled = false;
-                        document.getElementById("spinBtn").innerText = "SPIN NOW";
                     } else {
+                        isSpinning = false;
                         document.getElementById("spinBtn").disabled = false;
                         document.getElementById("spinBtn").innerText = "SPIN NOW";
                     }
@@ -186,11 +213,29 @@
             if (isSpinning) return;
             isSpinning = true;
             document.getElementById("sndSpin").play().catch(e=>{});
-            const deg = 3600 + (index * 30);
+            // Index 0 is yellow (10x), others... adjust conic-gradient if needed
+            const deg = 3600 - (index * 30);
             document.getElementById("wheel").style.transform = `rotate(${deg}deg)`;
+        }
+
+        function checkWin(last) {
+            const msg = document.getElementById("resPopup");
+            msg.style.display = "block";
+
+            const winAmount = last.winAmount || 0;
+            if (winAmount > 0) {
+                msg.innerHTML = `<div>WIN!</div><div style="font-size:24px;">₹${winAmount.toFixed(2)}</div>`;
+                msg.style.background = "rgba(34, 197, 94, 0.95)";
+                new Audio('sound/win.mp3').play().catch(e=>{});
+            } else {
+                msg.innerHTML = `<div>LOSE</div>`;
+                msg.style.background = "rgba(239, 68, 68, 0.95)";
+                new Audio('sound/lose.mp3').play().catch(e=>{});
+            }
             setTimeout(() => {
+                msg.style.display = "none";
                 fetchBalance();
-            }, 3000);
+            }, 5000);
         }
 
         async function placeBet() {
@@ -201,8 +246,10 @@
                 body: JSON.stringify({ amount })
             });
             const data = await res.json();
-            if (data.success) { alert("Bet Placed!"); fetchBalance(); }
-            else alert(data.message);
+            if (data.success) {
+                currentBet = amount;
+                fetchBalance();
+            } else alert(data.message);
         }
 
         async function fetchBalance() {

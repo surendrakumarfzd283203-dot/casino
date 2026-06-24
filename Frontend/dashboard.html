@@ -621,9 +621,14 @@
         function shareWhatsApp() {
             const refCode = document.getElementById("referralCode").innerText;
             if (refCode === "LOADING..." || refCode === "N/A") return;
-            const link = `${window.location.origin}/register.html?ref=${refCode}`;
-            const text = `Join Solo Casino and earn coins! Use my referral code: ${refCode} or click here: ${link}`;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`);
+
+            // Construct absolute registration link
+            const baseUrl = window.location.origin;
+            const link = `${baseUrl}/register.html?ref=${refCode}`;
+
+            const text = `🎰 Join *Solo Casino* and earn 120 INR instantly! \n\n🚀 Use my Referral Code: *${refCode}*\n\n🔗 Register here: ${link}`;
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         function filterGames(category, el) {

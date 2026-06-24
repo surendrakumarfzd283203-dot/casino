@@ -1021,8 +1021,21 @@ app.get("/api/health", (req, res) => {
 });
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
     console.log(`🚀 Server Running On Port ${PORT}`);
+
+    // Ensure all users have referral codes
+    try {
+        const usersWithoutRef = await User.find({ referral_code: { $exists: false } });
+        if (usersWithoutRef.length > 0) {
+            console.log(`Assigning referral codes to ${usersWithoutRef.length} users...`);
+            for (let user of usersWithoutRef) {
+                user.referral_code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                await user.save();
+            }
+            console.log("Referral codes assigned.");
+        }
+    } catch (e) { console.error("Referral sync error:", e); }
 });
 
 server.on("error", (err) => {

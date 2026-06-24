@@ -374,10 +374,12 @@
             if (me && me.result === 'WIN') {
                 document.getElementById("resultTitle").innerText = "YOU WIN!";
                 document.getElementById("resultBody").innerText = `Won ₹ ${me.winAmount}`;
+                new Audio('sound/win.mp3').play().catch(e=>{});
             } else {
                 const winner = Object.values(table.players).find(p => p.result === 'WIN');
                 document.getElementById("resultTitle").innerText = "YOU LOSE";
                 document.getElementById("resultBody").innerText = winner ? `${winner.name} won the pot!` : "Better luck next time!";
+                new Audio('sound/lose.mp3').play().catch(e=>{});
             }
             fetchBalance();
         }

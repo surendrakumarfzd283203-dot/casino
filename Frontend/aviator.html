@@ -473,9 +473,42 @@
             border: 1px solid rgba(52, 180, 255, 0.2);
         }
 
+        /* Result Overlay */
+        .result-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            pointer-events: none;
+            text-align: center;
+            display: none;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .result-overlay.show { display: block; }
+        .result-card {
+            background: rgba(0,0,0,0.85);
+            padding: 20px 40px;
+            border-radius: 20px;
+            border: 2px solid;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+        .result-card.win { border-color: var(--win-green); color: var(--win-green); }
+        .result-card.lose { border-color: var(--primary-red); color: var(--primary-red); }
+        .result-title { font-size: 24px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
+        .result-value { font-size: 36px; font-weight: 950; }
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
+    <div class="result-overlay" id="resultOverlay">
+        <div class="result-card" id="resultCard">
+            <div class="result-title" id="resultTitle">WIN</div>
+            <div class="result-value" id="resultValue">₹0.00</div>
+        </div>
+    </div>
     <div class="header">
         <div class="logo">Aviator</div>
         <div class="balance-container">
@@ -911,6 +944,22 @@
             }
         }
 
+        function showResult(type, value) {
+            const overlay = document.getElementById("resultOverlay");
+            const card = document.getElementById("resultCard");
+            const title = document.getElementById("resultTitle");
+            const valEl = document.getElementById("resultValue");
+
+            card.className = "result-card " + type;
+            title.innerText = type === 'win' ? 'WIN' : 'LOSE';
+            valEl.innerText = type === 'win' ? '₹' + value : 'BET LOST';
+
+            overlay.classList.add("show");
+            setTimeout(() => {
+                overlay.classList.remove("show");
+            }, 3000);
+        }
+
         function endFlight() {
             isFlying = false;
             isCrashed = true;
@@ -922,6 +971,7 @@
             // Play lose sound if user had active bets
             if (activeBets[1].placed || activeBets[2].placed) {
                 new Audio('sound/lose.mp3').play().catch(e=>{});
+                showResult('lose', 0);
             }
 
             activeBets[1].placed = false;
@@ -1007,6 +1057,7 @@
                 activeBets[i].placed = false;
                 sndWin.play().catch(e=>{});
                 updateButtonsFlying();
+                showResult('win', winAmt);
 
                 const res = await fetch(`${API_URL}/api/game/aviator/cashout`, {
                     method: "POST",

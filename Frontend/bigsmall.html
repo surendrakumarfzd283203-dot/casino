@@ -346,10 +346,21 @@
             const resBox = document.getElementById("resultBox");
             resBox.style.display = "block";
             const isWin = last.result === selectedValue;
-            resBox.innerText = isWin ? "YOU WIN!" : "YOU LOSE";
-            resBox.style.background = isWin ? "rgba(40, 167, 69, 0.95)" : "rgba(209, 2, 20, 0.95)";
-            if(isWin) document.getElementById("sndWin").play().catch(e=>{});
-            setTimeout(() => resBox.style.display = "none", 4000);
+
+            const betAmount = parseFloat(document.getElementById("betAmount").value);
+            let mult = selectedValue === 'TRIPLE' ? 24 : 1.95;
+            let winAmount = (betAmount * mult).toFixed(2);
+
+            if (isWin) {
+                resBox.innerHTML = `<div>WIN!</div><div style="font-size: 24px;">₹${winAmount}</div>`;
+                resBox.style.background = "rgba(40, 167, 69, 0.95)";
+                new Audio('sound/win.mp3').play().catch(e=>{});
+            } else {
+                resBox.innerHTML = `<div>LOSE</div>`;
+                resBox.style.background = "rgba(209, 2, 20, 0.95)";
+                new Audio('sound/lose.mp3').play().catch(e=>{});
+            }
+            setTimeout(() => resBox.style.display = "none", 5000);
         }
 
         function renderHistory(history) {
