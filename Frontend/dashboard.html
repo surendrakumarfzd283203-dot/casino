@@ -24,7 +24,7 @@
                 url('https://www.transparenttextures.com/patterns/dark-matter.png');
             color: white;
             margin: 0;
-            padding-bottom: 90px;
+            padding-bottom: 100px;
             font-family: 'Inter', -apple-system, sans-serif;
             overflow-x: hidden;
         }
@@ -127,6 +127,41 @@
         .btn-deposit { background: linear-gradient(to right, #f1c40f, #f39c12); color: #000; border: none; box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3); }
         .btn-action:active { transform: scale(0.96); }
 
+        /* Referral System Styling */
+        .referral-card {
+            margin: 15px;
+            background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+            border: 1px solid rgba(157, 80, 187, 0.2);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .referral-title { font-size: 14px; color: #00d2ff; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .referral-desc { font-size: 11px; color: #bbb; margin-bottom: 15px; }
+        .referral-box {
+            display: flex;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px 2px 2px 15px;
+        }
+        .referral-code-text { font-weight: 900; font-size: 16px; color: var(--casino-gold); letter-spacing: 1px; }
+        .btn-copy-ref {
+            background: var(--casino-gold);
+            color: #000;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-copy-ref:active { transform: scale(0.95); }
+
         /* Game Section */
         .section-header {
             padding: 10px 20px;
@@ -185,6 +220,7 @@
             display: flex;
             flex-direction: column;
             transition: 0.3s;
+            cursor: pointer;
         }
 
         .game-img {
@@ -226,34 +262,34 @@
 
         /* Real Casino Game Backgrounds */
         .img-aviator {
-            background-image: url('image/aviator2.jpg');
+            background-image: url('image/aviator.png');
             background-color: #0d0e12;
             background-size: 80% !important;
             background-repeat: no-repeat;
             background-position: center !important;
         }
         .img-color {
-            background-image: url('./images/color game.jpg');
+            background-image: url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=500');
             background-size: cover;
         }
         .img-lucky {
-            background-image: url('./images/lucky draw.webp');
+            background-image: url('https://images.unsplash.com/photo-1606167668584-78701c57f13d?q=80&w=500');
             background-size: cover;
         }
         .img-spin {
-            background-image: url('./images/spin.png');
+            background-image: url('https://images.unsplash.com/photo-1633513364239-2e066a503046?q=80&w=500');
             background-size: cover;
         }
         .img-rummy {
-            background-image: url('./images/rummy.png');
+            background-image: url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=500');
             background-size: cover;
         }
         .img-teenpatti {
-            background-image: url('./images/teen patti.png');
+            background-image: url('https://images.unsplash.com/photo-1541272224411-396cf0b6156e?q=80&w=500');
             background-size: cover;
         }
         .img-bigsmall {
-            background-image: url('./images/big small.webp');
+            background-image: url('https://images.unsplash.com/photo-1593466144596-7bf57993eb94?q=80&w=500');
             background-size: cover;
         }
 
@@ -289,7 +325,7 @@
             backdrop-filter: blur(20px);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0 25px; /* Extra padding for modern mobile home bar */
+            padding: 12px 0 25px;
             border-top: 1px solid rgba(255,255,255,0.05);
             z-index: 2000;
         }
@@ -307,6 +343,22 @@
         .nav-item i { font-size: 22px; }
         .nav-item.active { color: var(--casino-gold); }
         .nav-item.active i { transform: translateY(-3px); color: var(--casino-gold); text-shadow: 0 0 10px rgba(241,196,15,0.5); }
+
+        /* Footer Disclaimer Styling */
+        .disclaimer-container {
+            padding: 30px 20px;
+            text-align: center;
+            background: rgba(0,0,0,0.4);
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.03);
+        }
+        .disclaimer-text {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto 15px;
+        }
 
     </style>
 </head>
@@ -334,6 +386,16 @@
         <div class="action-row">
             <a href="wallet.html" class="btn-action btn-deposit"><i class="fas fa-plus-circle"></i> Deposit</a>
             <a href="wallet.html" class="btn-action btn-withdraw"><i class="fas fa-arrow-alt-circle-down"></i> Withdraw</a>
+        </div>
+    </div>
+
+    <!-- Referral Card Component -->
+    <div class="referral-card">
+        <div class="referral-title"><i class="fas fa-gift"></i> Refer & Earn Coins</div>
+        <div class="referral-desc">Share your unique referral code with friends and earn rewards when they join and play!</div>
+        <div class="referral-box">
+            <span class="referral-code-text" id="referralCode">LOADING...</span>
+            <button class="btn-copy-ref" onclick="copyReferral()"><i class="fas fa-copy"></i> COPY</button>
         </div>
     </div>
 
@@ -380,7 +442,7 @@
 
         <!-- Color Game -->
         <div class="game-card" onclick="location.href='colorgame.html'">
-            <div class="game-img img-money color"></div>
+            <div class="game-img img-color"></div>
             <div class="play-badge">18X PAY</div>
             <div class="game-info">
                 <h3>Color Game</h3>
@@ -439,9 +501,13 @@
         </div>
     </div>
 
-    <div style="padding: 40px 20px; text-align: center;">
-        <p style="font-size: 10px; color: #444; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Solo Casino Entertainment Group</p>
-        <p style="font-size: 9px; color: #333;">Licensed under Curacao Gaming Authority</p>
+    <!-- Terms & Conditions & Responsible Gaming Container -->
+    <div class="disclaimer-container">
+        <p class="disclaimer-text">
+            <strong>Terms & Conditions:</strong> Participation in the games is subject to personal risk. Users are solely responsible for their financial decisions and outcomes. The platform operates as an entertainment service and carries no liability for financial losses. Only users aged 18 or above are authorized to participate.
+        </p>
+        <p style="font-size: 10px; color: #444; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin: 0;">Solo Casino Entertainment Group</p>
+        <p style="font-size: 9px; color: #333; margin: 5px 0 0;">Licensed under Curacao Gaming Authority</p>
     </div>
 
     <nav class="bottom-nav">
@@ -472,6 +538,17 @@
         const token = localStorage.getItem("token");
         if(!token){ location.href = "login.html"; }
 
+        // Fast Load Caching Mechanism for Instant Loading
+        if (localStorage.getItem("cached_name")) {
+            document.getElementById("userName").innerText = localStorage.getItem("cached_name");
+        }
+        if (localStorage.getItem("cached_coins")) {
+            document.getElementById("coins").innerText = parseFloat(localStorage.getItem("cached_coins")).toLocaleString(undefined, {minimumFractionDigits: 2});
+        }
+        if (localStorage.getItem("cached_ref")) {
+            document.getElementById("referralCode").innerText = localStorage.getItem("cached_ref");
+        }
+
         async function fetchProfile() {
             try {
                 const res = await fetch(`${API_URL}/api/profile`, {
@@ -488,11 +565,30 @@
                     localStorage.removeItem("token");
                     return location.href = "login.html";
                 }
+
+                // Update UI instantly
                 document.getElementById("userName").innerText = data.user.name;
                 document.getElementById("coins").innerText = data.user.coins.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById("referralCode").innerText = data.user.referral_code || "N/A";
+
+                // Save to local cache for subsequent lightning fast loads
+                localStorage.setItem("cached_name", data.user.name);
+                localStorage.setItem("cached_coins", data.user.coins);
+                localStorage.setItem("cached_ref", data.user.referral_code || "N/A");
             } catch (err) {
                 console.error(err);
             }
+        }
+
+        function copyReferral() {
+            const refCode = document.getElementById("referralCode").innerText;
+            if (refCode === "LOADING..." || refCode === "N/A") return;
+
+            navigator.clipboard.writeText(refCode).then(() => {
+                alert("Referral Code copied successfully: " + refCode);
+            }).catch(err => {
+                console.error("Could not copy text: ", err);
+            });
         }
 
         async function claimBonus() {
@@ -542,6 +638,9 @@
 
         function logout(){
             localStorage.removeItem("token");
+            localStorage.removeItem("cached_name");
+            localStorage.removeItem("cached_coins");
+            localStorage.removeItem("cached_ref");
             location.href = "login.html";
         }
     </script>

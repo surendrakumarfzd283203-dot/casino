@@ -185,7 +185,7 @@ app.post("/api/admin/login", async (req, res) => {
 
 app.get("/api/profile", auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select("name email coins avatar");
+        const user = await User.findById(req.user.id).select("name email coins avatar referral_code");
         if (!user) {
             return res.json({ success: false, message: "User Not Found" });
         }
