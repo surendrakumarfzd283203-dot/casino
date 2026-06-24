@@ -174,8 +174,16 @@
     </div>
 
     <div class="timer-panel">
-        <div style="font-size: 11px; opacity: 0.6; font-weight: 800; text-transform: uppercase;">Next Draw In</div>
-        <div id="timer">00:20</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+            <div style="text-align: left;">
+                <div style="font-size: 11px; opacity: 0.6; font-weight: 800; text-transform: uppercase;">Next Draw In</div>
+                <div id="timer">00:20</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 11px; opacity: 0.6; font-weight: 800; text-transform: uppercase;">Last Result</div>
+                <div id="lastResultDisplay" style="font-size: 48px; font-weight: 950; color: var(--gold); text-shadow: 0 0 10px rgba(255,255,255,0.2);">-</div>
+            </div>
+        </div>
     </div>
 
     <div class="section-label">Size (1.95x)</div>
@@ -264,6 +272,10 @@
 
             if (data.history && data.history.length > 0) {
                 const last = data.history[0];
+                const resDisp = document.getElementById("lastResultDisplay");
+                resDisp.innerText = last.number;
+                resDisp.style.color = `var(--${last.color.toLowerCase()})`;
+
                 if (last.roundId !== lastRoundId) {
                     if (lastRoundId !== null && currentBets.length > 0) {
                         checkWin(last);
@@ -339,10 +351,10 @@
             const msg = document.getElementById("resPopup");
             msg.style.display = "block";
             if (count > 0) {
-                msg.innerText = `WINNER! (${count} Bets)`;
+                msg.innerHTML = `<div style="font-size: 20px; opacity:0.8;">RESULT: ${last.number}</div><div>WINNER!</div>`;
                 msg.style.background = "rgba(34, 197, 94, 0.95)";
             } else {
-                msg.innerText = "LOST";
+                msg.innerHTML = `<div style="font-size: 20px; opacity:0.8;">RESULT: ${last.number}</div><div>LOST</div>`;
                 msg.style.background = "rgba(239, 68, 68, 0.95)";
             }
             setTimeout(() => msg.style.display = "none", 4000);
