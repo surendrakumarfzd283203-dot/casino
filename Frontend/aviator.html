@@ -94,7 +94,7 @@
 
         /* Game Area */
         .game-area {
-            flex: 1;
+            flex: 1.8;
             position: relative;
             background: #000;
             margin: 8px;
@@ -185,7 +185,7 @@
 
         /* Betting Section */
         .betting-section {
-            padding: 12px;
+            padding: 8px 12px;
             background: #000;
             display: grid;
             grid-template-columns: 1fr;
@@ -285,7 +285,7 @@
         }
 
         .big-bet-btn {
-            height: 85px;
+            height: 70px;
             border: none;
             border-radius: 18px;
             display: flex;
@@ -307,7 +307,7 @@
 
         /* Stats Section */
         .stats-section {
-            flex: 1;
+            flex: 1.2;
             background: #1b1c1d;
             border-radius: 25px 25px 0 0;
             display: flex;
@@ -516,6 +516,10 @@
         if (!token) location.href = "login.html";
 
         let isFlying = false;
+        let isCrashed = false;
+        let crashStartTime = 0;
+        let lastElapsed = 0;
+        let currentUser = null;
         let activeBets = { 1: { placed: false, amount: 0 }, 2: { placed: false, amount: 0 } };
         let currentMult = 1.0;
         let startTime = null;
@@ -554,6 +558,19 @@
         function syncUI(data) {
             const banner = document.querySelector(".fun-mode-banner");
 
+            // Persistence: Restore user active bets from state
+            if (currentUser && data.activeBets) {
+                const myBets = data.activeBets.filter(b => b.userId === currentUser._id || b.userId === currentUser.id);
+                if (myBets.length > 0) {
+                    activeBets[1].placed = !myBets[0].cashedOut;
+                    activeBets[1].amount = myBets[0].betAmount;
+                    if (myBets.length > 1) {
+                        activeBets[2].placed = !myBets[1].cashedOut;
+                        activeBets[2].amount = myBets[1].betAmount;
+                    }
+                }
+            }
+
             if (data.isFlying) {
                 if (!isFlying) startFlight();
                 banner.innerText = "";
@@ -565,10 +582,12 @@
                 banner.innerText = `WAITING FOR NEXT ROUND IN ${data.timer}s`;
                 banner.style.background = "#f5a623";
                 updateButtonsWaiting(data.timer);
-                document.getElementById("multiplier").innerText = "1.00x";
-                document.getElementById("multiplier").style.color = "white";
-                currentMult = 1.0; // Reset multiplier for new round UI
-                drawGame(0); // Show plane at start position
+                if (!isCrashed) {
+                    document.getElementById("multiplier").innerText = "1.00x";
+                    document.getElementById("multiplier").style.color = "white";
+                    currentMult = 1.0;
+                    drawGame(0);
+                }
             }
             renderHistory(data.history);
             renderBets(data.activeBets, data.fakeUsers);
@@ -638,41 +657,51 @@
 
         function startFlight() {
             isFlying = true;
+            isCrashed = false;
             startTime = Date.now();
             sndFly.play().catch(e=>{});
             animate();
         }
 
         function animate() {
-            if (!isFlying) return;
-            const elapsed = (Date.now() - startTime) / 1000;
-            currentMult = Math.pow(1.1, elapsed);
-            document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
+            if (!isFlying && !isCrashed) return;
 
-            drawGame(elapsed);
+            if (isFlying) {
+                lastElapsed = (Date.now() - startTime) / 1000;
+                currentMult = Math.pow(1.1, lastElapsed);
+                document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
+                drawGame(lastElapsed);
+            } else if (isCrashed) {
+                const crashElapsed = (Date.now() - crashStartTime) / 1000;
+                if (crashElapsed > 2) {
+                    isCrashed = false;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    return;
+                }
+                drawGame(lastElapsed, crashElapsed);
+            }
+
             animFrame = requestAnimationFrame(animate);
         }
 
-        function drawGame(elapsed) {
+        function drawGame(elapsed, crashElapsed = 0) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const margin = 40;
             const graphWidth = canvas.width - margin * 2;
             const graphHeight = canvas.height - margin * 2;
 
-            // Draw curved path
             const x = Math.min(elapsed * 50, graphWidth);
             const y = Math.min(Math.pow(elapsed, 1.4) * 15, graphHeight);
 
             const startX = margin;
             const startY = canvas.height - margin;
-            const endX = margin + x;
-            const endY = canvas.height - margin - y;
+            let endX = margin + x;
+            let endY = canvas.height - margin - y;
 
             // Draw Area under curve
             ctx.beginPath();
             ctx.moveTo(startX, startY);
-            // Simple quadratic curve for visual effect
             ctx.quadraticCurveTo(startX + x * 0.5, startY, endX, endY);
             ctx.lineTo(endX, startY);
             ctx.closePath();
@@ -691,18 +720,25 @@
             ctx.lineWidth = 4;
             ctx.stroke();
 
+            if (crashElapsed > 0) {
+                endX += crashElapsed * 600;
+                endY -= crashElapsed * 300;
+                ctx.fillStyle = "var(--primary-red)";
+                ctx.font = "bold 30px Inter";
+                ctx.textAlign = "center";
+                ctx.fillText("FLEW AWAY!", canvas.width/2, canvas.height/2 + 80);
+            }
+
             // Draw Plane
             if (planeImg.complete) {
-                const pW = 160; // Slightly larger
-                const pH = 80;
+                const pW = 200;
+                const pH = 100;
                 ctx.save();
                 ctx.translate(endX, endY);
-                // When not flying, keep it level, otherwise rotate
                 const rotation = elapsed > 0 ? -Math.atan2(y, x * 0.5) * 0.5 : 0;
                 ctx.rotate(rotation);
 
-                // Glow effect
-                ctx.shadowBlur = isFlying ? 25 : 10;
+                ctx.shadowBlur = isFlying ? 25 : 15;
                 ctx.shadowColor = "var(--primary-red)";
 
                 ctx.drawImage(planeImg, -pW/2, -pH/2, pW, pH);
@@ -712,15 +748,11 @@
 
         function endFlight() {
             isFlying = false;
-            cancelAnimationFrame(animFrame);
+            isCrashed = true;
+            crashStartTime = Date.now();
             sndFly.pause(); sndFly.currentTime = 0;
             sndCrash.play().catch(e=>{});
             document.getElementById("multiplier").style.color = "var(--primary-red)";
-
-            // Keep drawing the last position for a moment
-            setTimeout(() => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }, 1000);
 
             activeBets[1].placed = false;
             activeBets[2].placed = false;
@@ -811,7 +843,10 @@
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
-            if (data.success) document.getElementById("balance").innerText = data.user.coins.toFixed(2);
+            if (data.success) {
+                currentUser = data.user;
+                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
+            }
         }
 
         function changeAmt(i, v) {
