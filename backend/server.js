@@ -611,8 +611,14 @@ app.post("/api/teenpatti/join", auth, async (req, res) => {
 });
 
 app.post("/api/teenpatti/move", auth, async (req, res) => {
-    const { tableId, move, amount } = req.body;
-    const result = await teenPattiManager.makeMove(req.user.id, move, amount, tableId);
+    const { tableId, move, amount, targetId } = req.body;
+    const result = await teenPattiManager.makeMove(req.user.id, move, amount, tableId, targetId);
+    res.json(result);
+});
+
+app.post("/api/teenpatti/sideshow-response", auth, (req, res) => {
+    const { tableId, accepted } = req.body;
+    const result = teenPattiManager.respondSideShow(tableId, req.user.id, accepted);
     res.json(result);
 });
 

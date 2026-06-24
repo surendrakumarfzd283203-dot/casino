@@ -8,269 +8,391 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --table-green: radial-gradient(circle, #2e7d32 0%, #1b5e20 100%);
+            --table-green: radial-gradient(circle, #166534 0%, #064e3b 100%);
             --gold: #ffc107;
-            --bg-dark: #0f172a;
+            --bg-dark: #020617;
+            --poker-border: #422006;
         }
 
         body {
             background: var(--bg-dark);
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             margin: 0;
             height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png');
         }
 
+        /* LOBBY / TABLE SELECTION */
+        #lobby {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .lobby-title { font-size: 32px; font-weight: 950; color: var(--gold); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
+        .table-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .table-card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .table-card:hover { border-color: var(--gold); transform: translateY(-5px); }
+        .table-card h3 { margin: 0; font-size: 14px; color: #94a3b8; }
+        .table-card .boot { font-size: 24px; font-weight: 900; color: white; margin: 10px 0; }
+        .table-card .status { font-size: 10px; color: #4ade80; font-weight: 800; }
+
+        /* GAME HEADER */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.8);
-            border-bottom: 2px solid #334155;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.6);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             z-index: 1000;
         }
 
+        /* TABLE AREA */
         .table-area {
             flex: 1;
             position: relative;
+            perspective: 1200px;
             display: flex;
             justify-content: center;
             align-items: center;
-            perspective: 1500px;
-            padding-bottom: 100px;
+            overflow: hidden;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png');
         }
 
         .poker-table {
-            width: 95%;
-            height: 70%;
+            width: 92%;
+            height: 60%;
             background: var(--table-green);
-            border: 15px solid #5d4037;
+            border: 12px solid var(--poker-border);
             border-radius: 200px;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.9), inset 0 0 100px rgba(0,0,0,0.6);
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8), inset 0 0 80px rgba(0,0,0,0.6);
             position: relative;
-            transform: rotateX(20deg);
+            transform: rotateX(25deg);
         }
 
         .dealer-box {
             position: absolute;
-            top: -60px;
+            top: 5%;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
+            text-align: center;
         }
-        .dealer-img { width: 160px; filter: drop-shadow(0 10px 20px black); }
+        .dealer-img {
+            width: 140px;
+            filter: drop-shadow(0 10px 20px black);
+            animation: breathe 4s ease-in-out infinite;
+        }
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
+        /* PLAYER SEATS */
         .player-seat {
             position: absolute;
             width: 100px;
             text-align: center;
             z-index: 100;
-            transition: all 0.3s;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .seat-me { bottom: -10px; left: 50%; transform: translateX(-50%); }
-        .seat-2 { bottom: 80px; left: 5%; }
-        .seat-3 { top: 80px; left: 10%; }
-        .seat-4 { top: 80px; right: 10%; }
-        .seat-5 { bottom: 80px; right: 5%; }
+        .seat-me { bottom: 5%; left: 50%; transform: translateX(-50%); }
+        .seat-2 { left: 5%; bottom: 25%; }
+        .seat-3 { left: 15%; top: 15%; }
+        .seat-4 { right: 15%; top: 15%; }
+        .seat-5 { right: 5%; bottom: 25%; }
 
-        .avatar {
-            width: 70px; height: 70px;
-            border-radius: 50%;
-            border: 4px solid var(--gold);
-            background: #222;
+        .avatar-wrap {
+            width: 65px; height: 65px;
             margin: 0 auto;
             position: relative;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
         }
-        .avatar.active-turn { border-color: #34b4ff; box-shadow: 0 0 25px #34b4ff; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .avatar {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 3px solid var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+        .active-turn .avatar { border-color: #3b82f6; box-shadow: 0 0 25px #3b82f6; animation: glow 1.5s infinite; }
+        @keyframes glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        .status-badge {
+            position: absolute;
+            top: -5px; right: -5px;
+            background: #ef4444;
+            color: white;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 3px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
 
         .name-tag {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 800;
-            background: rgba(0,0,0,0.9);
-            border-radius: 6px;
+            background: rgba(0,0,0,0.8);
             padding: 4px 8px;
-            margin-top: 6px;
+            border-radius: 10px;
+            margin-top: 5px;
             color: var(--gold);
-            border: 1px solid #444;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
+        .action-text {
+            position: absolute;
+            top: -25px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 900;
+            color: #4ade80;
+            white-space: nowrap;
+            text-shadow: 0 2px 4px black;
+        }
+
+        /* CARDS */
         .cards-hand {
             display: flex;
-            gap: 4px;
+            gap: -15px; /* Overlap cards */
             justify-content: center;
             margin-top: 8px;
             height: 50px;
         }
         .card {
-            width: 35px; height: 50px;
+            width: 32px; height: 48px;
             background: white;
             border-radius: 5px;
             color: black;
-            font-size: 14px;
-            font-weight: 900;
+            font-size: 13px;
+            font-weight: 950;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
-            border: 1px solid #ccc;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            border: 1px solid #ddd;
+            transition: 0.4s transform;
         }
+        .card:nth-child(1) { transform: rotate(-10deg) translateX(5px); }
+        .card:nth-child(3) { transform: rotate(10deg) translateX(-5px); }
+
         .card.back {
-            background: #d10214;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);
+            background: #be123c;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.05) 5px, rgba(255,255,255,0.05) 10px);
             border: 2px solid white;
             color: transparent;
         }
 
+        /* POT & CENTER */
         .pot-box {
             position: absolute;
             top: 45%; left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
             color: var(--gold);
-            font-weight: 900;
-            text-shadow: 2px 2px 5px black;
-            font-size: 20px;
+            z-index: 10;
         }
+        .pot-amount { font-size: 24px; font-weight: 950; text-shadow: 0 2px 10px black; }
 
-        .controls {
-            background: #1e293b;
-            padding: 15px 20px;
+        /* CONTROLS */
+        .game-controls {
+            background: #0f172a;
+            padding: 15px;
             display: grid;
-            grid-template-columns: 80px 1fr 1fr;
-            gap: 15px;
-            align-items: center;
-            border-top: 2px solid #334155;
-            position: relative;
+            grid-template-columns: 70px 1fr 1fr 1fr;
+            gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
             z-index: 1000;
         }
-
-        .action-btn {
-            height: 60px;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 900;
-            cursor: pointer;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
-            transition: 0.1s;
-        }
-        .action-btn:active { transform: translateY(3px); box-shadow: none; }
-        .btn-chaal { background: #3b82f6; color: white; }
-        .btn-pack { background: #ef4444; color: white; }
-        .btn-see { background: #10b981; color: white; }
-
-        .timer-box {
-            width: 60px; height: 60px;
+        .timer-circle {
+            width: 55px; height: 55px;
             border: 4px solid #ef4444;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 900; margin: 0 auto;
+            font-size: 20px; font-weight: 900;
             background: rgba(0,0,0,0.3);
         }
-
-        .table-switcher {
-            position: absolute;
-            top: 70px;
-            left: 20px;
-            display: flex;
-            gap: 8px;
-            z-index: 100;
-        }
-        .table-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid var(--gold);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 6px;
+        .btn-action {
+            height: 55px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 14px;
             cursor: pointer;
-            font-size: 11px;
-            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+            transition: 0.1s;
         }
-        .table-btn.active { background: var(--gold); color: black; }
+        .btn-action:active { transform: translateY(3px); box-shadow: none; }
+        .btn-pack { background: #be123c; color: white; }
+        .btn-see { background: #1d4ed8; color: white; }
+        .btn-chaal { background: #15803d; color: white; }
+        .btn-side { background: #a21caf; color: white; }
 
-        .result-overlay {
-            position: absolute;
-            top: 50%; left: 50%;
+        /* SIDE SHOW REQUEST POPUP */
+        #sideshowPopup {
+            position: fixed;
+            top: 40%; left: 50%;
             transform: translate(-50%, -50%);
-            padding: 30px 50px;
             background: rgba(0,0,0,0.95);
-            border: 3px solid var(--gold);
-            border-radius: 30px;
-            z-index: 2000;
-            display: none;
+            border: 2px solid var(--gold);
+            padding: 25px;
+            border-radius: 20px;
+            z-index: 6000;
             text-align: center;
-            box-shadow: 0 0 100px rgba(0,0,0,1);
+            display: none;
+            box-shadow: 0 0 50px black;
         }
+
+        /* RESULT OVERLAY */
+        #resultOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 7000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .res-card {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 30px;
+            border: 3px solid var(--gold);
+            text-align: center;
+            animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .poker-table { height: 50%; width: 95%; border-radius: 100px; }
+            .player-seat { width: 80px; }
+            .avatar-wrap { width: 50px; height: 50px; }
+            .avatar { font-size: 20px; }
+            .dealer-img { width: 100px; }
+            .game-controls { grid-template-columns: 1fr 1fr; }
+            .timer-circle { grid-column: span 2; margin: 0 auto 5px; }
+        }
+
     </style>
 </head>
 <body>
+
+    <!-- Lobby / Table Selection -->
+    <div id="lobby">
+        <div class="lobby-title">Teen Patti Royale</div>
+        <div class="table-list">
+            <div class="table-card" onclick="join(1)">
+                <h3>Public T1</h3>
+                <div class="boot">₹5</div>
+                <div class="status">PLAYING...</div>
+            </div>
+            <div class="table-card" onclick="join(2)">
+                <h3>Public T2</h3>
+                <div class="boot">₹10</div>
+                <div class="status">PLAYING...</div>
+            </div>
+            <div class="table-card" onclick="join(3)">
+                <h3>Public T3</h3>
+                <div class="boot">₹50</div>
+                <div class="status">WAITING...</div>
+            </div>
+            <div class="table-card" onclick="join(4)">
+                <h3>High Roller</h3>
+                <div class="boot">₹100</div>
+                <div class="status">PLAYING...</div>
+            </div>
+            <div class="table-card" onclick="join(5)">
+                <h3>Private</h3>
+                <div class="boot">₹500</div>
+                <div class="status">ID: 5502</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
     <div class="header">
         <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 24px;"><i class="fas fa-arrow-left"></i></button>
         <div style="text-align: center;">
-            <div style="font-size: 12px; color: var(--gold); font-weight: bold;">POT</div>
-            <div style="font-size: 24px; font-weight: 900;">₹ <span id="potVal">0</span></div>
+            <div style="font-size: 10px; color: var(--gold); font-weight: 800;">CURRENT TABLE</div>
+            <div id="tableName" style="font-size: 18px; font-weight: 900;">T#1</div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 12px; color: #aaa;">BALANCE</div>
-            <div style="font-size: 18px; color: var(--accent-green); font-weight: 900;">₹ <span id="balance">0</span></div>
+            <div style="font-size: 10px; color: #aaa;">BALANCE</div>
+            <div style="font-size: 18px; color: #22c55e; font-weight: 900;">₹<span id="balance">0</span></div>
         </div>
     </div>
 
-    <div class="table-switcher" id="tableSwitcher">
-        <button class="table-btn active" onclick="switchTable(1)">T1</button>
-        <button class="table-btn" onclick="switchTable(2)">T2</button>
-        <button class="table-btn" onclick="switchTable(3)">T3</button>
-        <button class="table-btn" onclick="switchTable(4)">T4</button>
-        <button class="table-btn" onclick="switchTable(5)">T5</button>
-    </div>
-
+    <!-- Table Area -->
     <div class="table-area">
         <div class="dealer-box">
-            <img src="https://i.ibb.co/L5pZ0vX/dealer-girl.png" class="dealer-img" alt="dealer">
+            <!-- Modern Smart Dealer Girl -->
+            <img src="https://i.ibb.co/vYc950G/dealer-smart.png" class="dealer-img" alt="dealer">
         </div>
 
         <div class="poker-table"></div>
 
         <div class="pot-box">
-            <i class="fas fa-coins" style="color: gold;"></i><br>
-            <span id="centerPot">0</span>
+            <div style="font-size: 10px; font-weight: 900; opacity: 0.6;">TOTAL POT</div>
+            <div class="pot-amount">₹<span id="potVal">0</span></div>
+            <i class="fas fa-coins" style="color: gold; font-size: 18px; margin-top: 5px;"></i>
         </div>
 
-        <!-- Result -->
-        <div class="result-overlay" id="resultOverlay">
-            <h1 id="resultTitle" style="color: var(--gold); margin: 0; font-size: 40px;">YOU WIN!</h1>
-            <p id="resultBody" style="font-size: 24px; margin: 20px 0;"></p>
-            <button class="button-primary" style="width: 100%;" onclick="closeResult()">PLAY AGAIN</button>
-        </div>
-
-        <!-- My Seat -->
-        <div class="player-seat seat-me">
-            <div class="avatar" id="avatar-me"><i class="fas fa-user"></i></div>
-            <div class="name-tag">YOU</div>
-            <div class="cards-hand" id="cards-me"></div>
-        </div>
-
-        <div id="otherSeats"></div>
+        <!-- Seats (Populated by JS) -->
+        <div id="seatsContainer"></div>
     </div>
 
-    <div class="controls" id="gameControls">
-        <div class="timer-box" id="timer">0</div>
+    <!-- Controls -->
+    <div class="game-controls">
+        <div class="timer-circle" id="timer">0</div>
+        <button class="btn-action btn-pack" onclick="handleMove('PACK')">Pack</button>
+        <button class="btn-action btn-see" id="seeBtn" onclick="handleMove('SEE')">See</button>
+        <button class="btn-action btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">Chaal</button>
+        <button class="btn-action btn-side" id="sideBtn" onclick="handleMove('SIDESHOW')" style="display: none;">Side Show</button>
+    </div>
 
-        <div id="actionArea" style="display: contents;">
-             <button class="action-btn btn-pack" onclick="handleMove('PACK')">PACK</button>
-             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <button class="action-btn btn-see" id="seeBtn" onclick="handleMove('SEE')">SEE</button>
-                <button class="action-btn btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">CHAAL</button>
-             </div>
+    <!-- Side Show Response Popup -->
+    <div id="sideshowPopup">
+        <h3 id="ssMsg">Rohan wants a Side Show!</h3>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn-action btn-chaal" style="flex:1" onclick="ssResponse(true)">Accept</button>
+            <button class="btn-action btn-pack" style="flex:1" onclick="ssResponse(false)">Deny</button>
+        </div>
+    </div>
+
+    <!-- Result Overlay -->
+    <div id="resultOverlay">
+        <div class="res-card">
+            <h1 id="resTitle" style="font-size: 48px; margin: 0;">YOU WIN!</h1>
+            <div id="resAmount" style="font-size: 32px; color: var(--gold); font-weight: 900; margin: 15px 0;">₹500</div>
+            <button class="button-primary" onclick="closeRes()">NEXT ROUND</button>
         </div>
     </div>
 
@@ -278,10 +400,34 @@
     <script>
         const token = localStorage.getItem("token");
         let myId = "";
-        let currentTable = 1;
+        let currentTable = null;
+        let isFetching = false;
         let lastState = "";
 
+        async function join(id) {
+            currentTable = id;
+            document.getElementById("tableName").innerText = "T#" + id;
+
+            const res = await fetch(`${API_URL}/api/teenpatti/join`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById("lobby").style.display = "none";
+                startPolling();
+            } else { alert(data.message); }
+        }
+
+        function startPolling() {
+            setInterval(fetchState, 1500);
+            fetchBalance();
+        }
+
         async function fetchState() {
+            if(isFetching || !currentTable) return;
+            isFetching = true;
             try {
                 const res = await fetch(`${API_URL}/api/teenpatti/tables`, { headers: { authorization: token } });
                 const data = await res.json();
@@ -290,54 +436,88 @@
                     if (table) updateUI(table);
                 }
             } catch (e) {}
+            finally { isFetching = false; }
         }
 
         function updateUI(table) {
             document.getElementById("timer").innerText = table.timer;
             document.getElementById("potVal").innerText = table.pot;
-            document.getElementById("centerPot").innerText = table.pot;
 
-            const me = table.players[myId];
-            if (me) {
-                // User ONLY sees their own cards if seen or if state is SHOW
-                renderHand("cards-me", me.hand, me.blind && table.state !== 'SHOW');
-                document.getElementById("seeBtn").style.display = (me.blind && table.state === 'PLAYING' && me.status === 'ACTIVE') ? "block" : "none";
-                document.getElementById("chaalBtn").innerHTML = me.blind ? `BLIND (₹${table.lastBet})` : `CHAAL (₹${table.lastBet*2})`;
+            const container = document.getElementById("seatsContainer");
+            container.innerHTML = "";
 
-                if (table.currentTurn === myId) {
-                    document.getElementById("avatar-me").classList.add("active-turn");
-                    document.getElementById("actionArea").style.opacity = "1";
-                    document.getElementById("actionArea").style.pointerEvents = "auto";
-                } else {
-                    document.getElementById("avatar-me").classList.remove("active-turn");
-                    document.getElementById("actionArea").style.opacity = "0.5";
-                    document.getElementById("actionArea").style.pointerEvents = "none";
-                }
-            }
+            const uids = Object.keys(table.players);
+            // Arrange seats: Me at bottom, others around
+            const myIndex = uids.indexOf(myId);
+            const totalPlayers = uids.length;
 
-            // Other Players
-            const otherDiv = document.getElementById("otherSeats");
-            otherDiv.innerHTML = "";
-            let seatIdx = 2;
-            Object.keys(table.players).forEach(uid => {
-                if (uid === myId) return;
+            uids.forEach((uid, idx) => {
                 const p = table.players[uid];
-                const seat = document.createElement("div");
-                seat.className = `player-seat seat-${seatIdx++}`;
-                // OTHER players cards are ALWAYS hidden unless state is SHOW
-                const isHidden = table.state !== 'SHOW';
-                seat.innerHTML = `
-                    <div class="avatar ${table.currentTurn === uid ? 'active-turn' : ''}">
-                        <i class="fas ${p.isBot ? 'fa-robot' : 'fa-user'}"></i>
+                let seatPos = 1; // Default
+                if (uid === myId) seatPos = "me";
+                else {
+                    // Logic to assign seat-2 to seat-5 based on index relative to me
+                    const relativeIdx = (idx - myIndex + totalPlayers) % totalPlayers;
+                    seatPos = relativeIdx + 1;
+                    if (seatPos > 5) seatPos = 5;
+                }
+
+                const seatDiv = document.createElement("div");
+                seatDiv.className = `player-seat seat-${seatPos} ${table.currentTurn === uid ? 'active-turn' : ''}`;
+
+                const statusBadge = p.status === 'PACKED' ? '<div class="status-badge">PACKED</div>' : '';
+                const actionText = p.lastAction ? `<div class="action-text">${p.lastAction}</div>` : '';
+                const avatarIcon = p.isBot ? 'fa-robot' : 'fa-user';
+
+                seatDiv.innerHTML = `
+                    ${actionText}
+                    <div class="avatar-wrap">
+                        <div class="avatar"><i class="fas ${avatarIcon}"></i></div>
+                        ${statusBadge}
                     </div>
-                    <div class="name-tag">${p.name}</div>
-                    <div class="cards-hand">${renderHandHtml(p.hand, isHidden)}</div>
+                    <div class="name-tag">${p.name} ${p.blind && table.state === 'PLAYING' ? '(B)' : ''}</div>
+                    <div class="cards-hand">${renderHandHtml(p.hand, p.blind && table.state !== 'SHOW')}</div>
                 `;
-                otherDiv.appendChild(seat);
+                container.appendChild(seatDiv);
+
+                // If it's my turn
+                if (uid === myId && table.state === 'PLAYING' && table.currentTurn === myId) {
+                    document.querySelector(".game-controls").style.opacity = "1";
+                    document.querySelector(".game-controls").style.pointerEvents = "auto";
+
+                    document.getElementById("seeBtn").style.display = p.blind ? "block" : "none";
+                    document.getElementById("chaalBtn").innerText = p.blind ? `Blind ₹${table.lastBet}` : `Chaal ₹${table.lastBet*2}`;
+
+                    // Side Show button logic
+                    const canSideShow = !p.blind && !table.sideShowRequester;
+                    document.getElementById("sideBtn").style.display = canSideShow ? "block" : "none";
+                } else if (uid === myId) {
+                    document.querySelector(".game-controls").style.opacity = "0.5";
+                    document.querySelector(".game-controls").style.pointerEvents = "none";
+                }
+
+                // Handle Side Show Request to me
+                if (table.sideShowTarget === myId) {
+                    const reqName = table.players[table.sideShowRequester].name;
+                    document.getElementById("ssMsg").innerText = `${reqName} requested a Side Show!`;
+                    document.getElementById("sideshowPopup").style.display = "block";
+                } else {
+                    document.getElementById("sideshowPopup").style.display = "none";
+                }
             });
 
             if (table.state === 'SHOW' && lastState !== 'SHOW') showResult(table);
             lastState = table.state;
+        }
+
+        function renderHandHtml(hand, isHidden) {
+            if (!hand || hand.length === 0) return '';
+            return hand.map(c => `
+                <div class="card ${isHidden ? 'back' : ''}" style="color: ${['♥','♦'].includes(c.suit) ? '#ef4444' : '#1e293b'}">
+                    <span style="font-size:10px">${isHidden ? '' : c.rank}</span>
+                    <span style="font-size:16px">${isHidden ? '' : c.suit}</span>
+                </div>
+            `).join('');
         }
 
         async function handleMove(move) {
@@ -346,61 +526,45 @@
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ tableId: currentTable, move })
             });
-            fetchBalance();
+            const data = await res.json();
+            if(!data.success) alert(data.message);
             fetchState();
+            fetchBalance();
         }
 
-        function renderHand(id, hand, blind) {
-            document.getElementById(id).innerHTML = renderHandHtml(hand, blind);
-        }
-
-        function renderHandHtml(hand, blind) {
-            if (!hand || hand.length === 0) return `
-                <div class="card back"></div>
-                <div class="card back"></div>
-                <div class="card back"></div>
-            `;
-            return hand.map(c => `
-                <div class="card ${blind ? 'back' : ''}" style="color: ${['♥','♦'].includes(c.suit) ? 'red' : 'black'}">
-                    ${blind ? '' : c.rank + '<br>' + c.suit}
-                </div>
-            `).join('');
+        async function ssResponse(accepted) {
+            await fetch(`${API_URL}/api/teenpatti/sideshow-response`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: currentTable, accepted })
+            });
+            document.getElementById("sideshowPopup").style.display = "none";
+            fetchState();
         }
 
         function showResult(table) {
             const me = table.players[myId];
+            if (!me) return;
             const overlay = document.getElementById("resultOverlay");
-            overlay.style.display = "block";
-            if (me && me.result === 'WIN') {
-                document.getElementById("resultTitle").innerText = "YOU WIN!";
-                document.getElementById("resultBody").innerText = `Won ₹ ${me.winAmount}`;
+            const title = document.getElementById("resTitle");
+            const amt = document.getElementById("resAmount");
+
+            overlay.style.display = "flex";
+            if (me.result === 'WIN') {
+                title.innerText = "YOU WIN!";
+                title.style.color = "#4ade80";
+                amt.innerText = "₹" + me.winAmount;
                 new Audio('sound/win.mp3').play().catch(e=>{});
             } else {
-                const winner = Object.values(table.players).find(p => p.result === 'WIN');
-                document.getElementById("resultTitle").innerText = "YOU LOSE";
-                document.getElementById("resultBody").innerText = winner ? `${winner.name} won the pot!` : "Better luck next time!";
+                title.innerText = "YOU LOSE";
+                title.style.color = "#ef4444";
+                amt.innerText = "Better luck next round!";
                 new Audio('sound/lose.mp3').play().catch(e=>{});
             }
             fetchBalance();
         }
 
-        function closeResult() { document.getElementById("resultOverlay").style.display = "none"; }
-
-        async function switchTable(id) {
-            currentTable = id;
-            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            await joinGame();
-        }
-
-        async function joinGame() {
-            await fetch(`${API_URL}/api/teenpatti/join`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ tableId: currentTable })
-            });
-            fetchState();
-        }
+        function closeRes() { document.getElementById("resultOverlay").style.display = "none"; }
 
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
@@ -410,10 +574,6 @@
                 myId = data.user.id;
             }
         }
-
-        joinGame();
-        setInterval(fetchState, 1500);
-        fetchBalance();
     </script>
 </body>
 </html>
