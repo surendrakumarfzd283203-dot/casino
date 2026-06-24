@@ -486,6 +486,7 @@
 
         const planeImg = new Image();
         planeImg.src = 'image/aviator.png';
+        planeImg.onload = () => drawGame(0); // Draw immediately when loaded
         planeImg.onerror = () => { console.error("Plane image failed to load at", planeImg.src); };
 
         function resizeCanvas() {
@@ -522,9 +523,18 @@
                 updateButtonsWaiting(data.timer);
                 document.getElementById("multiplier").innerText = "1.00x";
                 document.getElementById("multiplier").style.color = "white";
+                drawGame(0); // Show plane at start position
             }
             renderHistory(data.history);
             renderBets(data.activeBets, data.fakeUsers);
+            updateOnlineCount();
+        }
+
+        function updateOnlineCount() {
+            const el = document.getElementById("fakeUsers");
+            const current = parseInt(el.innerText);
+            const change = Math.floor(Math.random() * 7) - 3; // -3 to +3
+            el.innerText = Math.max(150, Math.min(600, current + change));
         }
 
         function renderBets(real, fake) {
@@ -621,14 +631,16 @@
 
             // Draw Plane
             if (planeImg.complete) {
-                const pW = 140; // Increased width
-                const pH = 70;  // Increased height
+                const pW = 160; // Slightly larger
+                const pH = 80;
                 ctx.save();
                 ctx.translate(endX, endY);
-                ctx.rotate(-Math.atan2(y, x * 0.5) * 0.5); // Slight upward rotation
+                // When not flying, keep it level, otherwise rotate
+                const rotation = elapsed > 0 ? -Math.atan2(y, x * 0.5) * 0.5 : 0;
+                ctx.rotate(rotation);
 
-                // Add a red glow to the plane
-                ctx.shadowBlur = 20;
+                // Glow effect
+                ctx.shadowBlur = isFlying ? 25 : 10;
                 ctx.shadowColor = "var(--primary-red)";
 
                 ctx.drawImage(planeImg, -pW/2, -pH/2, pW, pH);
