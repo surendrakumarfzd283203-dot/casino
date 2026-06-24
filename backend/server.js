@@ -251,10 +251,10 @@ app.get("/api/wallet", auth, async (req, res) => {
 
 app.get("/api/wallet/transactions", auth, async (req, res) => {
     try {
-        const transactions = await DepositRequest.find({ user_id: req.user.id }).sort({ created_at: -1 });
+        const transactions = await Transaction.find({ user_id: req.user.id }).sort({ created_at: -1 });
         res.json({ success: true, transactions: transactions.map(t => ({ ...t.toObject(), id: t._id })) });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Unable to load requests" });
+        res.status(500).json({ success: false, message: "Unable to load transactions" });
     }
 });
 
@@ -524,7 +524,7 @@ app.get("/api/game/aviator/state", auth, (req, res) => {
 
 app.post("/api/play/aviator", auth, async (req, res) => {
     try {
-        const { betAmount, cashOutMultiplier } = req.body;
+        const { betAmount, cashOutMultiplier, slot } = req.body;
         const userId = req.user.id;
 
         if (!betAmount || betAmount < 10) return res.json({ success: false, message: "Minimum bet is 10 INR" });
@@ -545,6 +545,7 @@ app.post("/api/play/aviator", auth, async (req, res) => {
             cashedOut: false,
             multiplier: 0,
             winAmount: 0,
+            slot: slot || 1, // Store slot (1 or 2)
             timestamp: Date.now()
         });
 
@@ -568,10 +569,14 @@ app.post("/api/game/aviator/cancel", auth, async (req, res) => {
 
 app.post("/api/game/aviator/cashout", auth, async (req, res) => {
     try {
-        const { multiplier } = req.body;
+        const { multiplier, slot } = req.body;
         const userId = req.user.id;
 
-        const betIndex = activeBets.aviator.findIndex(b => b.userId.toString() === userId.toString());
+        const betIndex = activeBets.aviator.findIndex(b =>
+            b.userId.toString() === userId.toString() &&
+            !b.cashedOut &&
+            (slot === undefined || b.slot === slot)
+        );
         if (betIndex === -1) return res.json({ success: false, message: "No active bet" });
 
         const bet = activeBets.aviator[betIndex];

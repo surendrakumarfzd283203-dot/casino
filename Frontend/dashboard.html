@@ -162,6 +162,28 @@
         }
         .btn-copy-ref:active { transform: scale(0.95); }
 
+        .referral-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-whatsapp-ref {
+            flex: 1;
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
         /* Game Section */
         .section-header {
             padding: 10px 20px;
@@ -392,10 +414,15 @@
     <!-- Referral Card Component -->
     <div class="referral-card">
         <div class="referral-title"><i class="fas fa-gift"></i> Refer & Earn Coins</div>
-        <div class="referral-desc">Share your unique referral code with friends and earn rewards when they join and play!</div>
+        <div class="referral-desc">Share your unique code or link and earn rewards when friends join and play!</div>
         <div class="referral-box">
             <span class="referral-code-text" id="referralCode">LOADING...</span>
-            <button class="btn-copy-ref" onclick="copyReferral()"><i class="fas fa-copy"></i> COPY</button>
+            <button class="btn-copy-ref" onclick="copyReferral()"><i class="fas fa-copy"></i> COPY CODE</button>
+        </div>
+        <div class="referral-actions">
+            <a href="#" id="whatsappLink" class="btn-whatsapp-ref" onclick="shareWhatsApp()">
+                <i class="fab fa-whatsapp"></i> SHARE ON WHATSAPP
+            </a>
         </div>
     </div>
 
@@ -410,11 +437,11 @@
     </div>
 
     <div class="category-tabs">
-        <div class="tab active">ALL GAMES</div>
-        <div class="tab">HOT</div>
-        <div class="tab">CASINO</div>
-        <div class="tab">TABLE</div>
-        <div class="tab">SLOTS</div>
+        <div class="tab active" onclick="filterGames('all', this)">ALL GAMES</div>
+        <div class="tab" onclick="filterGames('hot', this)">HOT</div>
+        <div class="tab" onclick="filterGames('casino', this)">CASINO</div>
+        <div class="tab" onclick="filterGames('table', this)">TABLE</div>
+        <div class="tab" onclick="filterGames('slots', this)">SLOTS</div>
     </div>
 
     <div class="winners-ticker">
@@ -429,9 +456,9 @@
         <span style="font-size:10px; color:var(--casino-gold); font-weight:800;">VIEW ALL <i class="fas fa-chevron-right"></i></span>
     </div>
 
-    <div class="games-grid">
+    <div class="games-grid" id="gamesGrid">
         <!-- Aviator -->
-        <div class="game-card" onclick="location.href='aviator.html'">
+        <div class="game-card" data-category="hot casino" onclick="location.href='aviator.html'">
             <div class="game-img img-aviator"></div>
             <div class="play-badge">POPULAR</div>
             <div class="game-info">
@@ -441,7 +468,7 @@
         </div>
 
         <!-- Color Game -->
-        <div class="game-card" onclick="location.href='colorgame.html'">
+        <div class="game-card" data-category="hot slots" onclick="location.href='colorgame.html'">
             <div class="game-img img-color"></div>
             <div class="play-badge">18X PAY</div>
             <div class="game-info">
@@ -451,7 +478,7 @@
         </div>
 
         <!-- Big Small -->
-        <div class="game-card" onclick="location.href='bigsmall.html'">
+        <div class="game-card" data-category="table" onclick="location.href='bigsmall.html'">
             <div class="game-img img-bigsmall"></div>
             <div class="play-badge">DICE</div>
             <div class="game-info">
@@ -461,7 +488,7 @@
         </div>
 
         <!-- Spin & Win -->
-        <div class="game-card" onclick="location.href='spin.html'">
+        <div class="game-card" data-category="slots" onclick="location.href='spin.html'">
             <div class="game-img img-spin"></div>
             <div class="play-badge">EASY</div>
             <div class="game-info">
@@ -471,7 +498,7 @@
         </div>
 
         <!-- Lucky Draw -->
-        <div class="game-card" onclick="location.href='luckydraw.html'">
+        <div class="game-card" data-category="slots" onclick="location.href='luckydraw.html'">
             <div class="game-img img-lucky"></div>
             <div class="play-badge">JACKPOT</div>
             <div class="game-info">
@@ -481,7 +508,7 @@
         </div>
 
         <!-- Rummy -->
-        <div class="game-card" onclick="location.href='rummy.html'">
+        <div class="game-card" data-category="table" onclick="location.href='rummy.html'">
             <div class="game-img img-rummy"></div>
             <div class="play-badge">SKILL</div>
             <div class="game-info">
@@ -491,7 +518,7 @@
         </div>
 
         <!-- Teen Patti -->
-        <div class="game-card" onclick="location.href='teenpatti.html'">
+        <div class="game-card" data-category="hot casino table" onclick="location.href='teenpatti.html'">
             <div class="game-img img-teenpatti"></div>
             <div class="play-badge">LIVE</div>
             <div class="game-info">
@@ -585,9 +612,37 @@
             if (refCode === "LOADING..." || refCode === "N/A") return;
 
             navigator.clipboard.writeText(refCode).then(() => {
-                alert("Referral Code copied successfully: " + refCode);
+                alert("Referral Code copied: " + refCode);
             }).catch(err => {
                 console.error("Could not copy text: ", err);
+            });
+        }
+
+        function shareWhatsApp() {
+            const refCode = document.getElementById("referralCode").innerText;
+            if (refCode === "LOADING..." || refCode === "N/A") return;
+            const link = `${window.location.origin}/register.html?ref=${refCode}`;
+            const text = `Join Solo Casino and earn coins! Use my referral code: ${refCode} or click here: ${link}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`);
+        }
+
+        function filterGames(category, el) {
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+
+            const cards = document.querySelectorAll('.game-card');
+            cards.forEach(card => {
+                if (category === 'all') {
+                    card.style.display = 'flex';
+                } else {
+                    const categories = (card.getAttribute('data-category') || '').split(' ');
+                    if (categories.includes(category)) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
             });
         }
 

@@ -977,7 +977,7 @@
                 const res = await fetch(`${API_URL}/api/play/aviator`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ betAmount: amount, cashOutMultiplier: 100 })
+                    body: JSON.stringify({ betAmount: amount, cashOutMultiplier: 100, slot: i })
                 });
                 const data = await res.json();
                 if (data.success) { fetchBalance(); }
@@ -1011,7 +1011,7 @@
                 const res = await fetch(`${API_URL}/api/game/aviator/cashout`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ multiplier: currentMult.toFixed(2) })
+                    body: JSON.stringify({ multiplier: currentMult.toFixed(2), slot: i })
                 });
                 const data = await res.json();
                 if (data.success) {
