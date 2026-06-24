@@ -627,9 +627,9 @@
     </div>
 
 
-    <audio id="sndFly" src="fly.mpeg" loop></audio>
-    <audio id="sndWin" src="win.wav"></audio>
-    <audio id="sndCrash" src="crash.wav"></audio>
+    <audio id="sndFly" src="sound/fly.mp3" loop></audio>
+    <audio id="sndWin" src="sound/win.mp3"></audio>
+    <audio id="sndCrash" src="sound/crash.mp3"></audio>
 
     <script>
         const API_URL = window.location.origin;
@@ -919,6 +919,11 @@
             sndCrash.play().catch(e=>{});
             document.getElementById("multiplier").style.color = "var(--primary-red)";
 
+            // Play lose sound if user had active bets
+            if (activeBets[1].placed || activeBets[2].placed) {
+                new Audio('sound/lose.mp3').play().catch(e=>{});
+            }
+
             activeBets[1].placed = false;
             activeBets[2].placed = false;
         }
@@ -965,23 +970,44 @@
             const autoCashOut = parseFloat(document.getElementById(`autoVal${i}`).value);
 
             if (label === "BET") {
+                // Optimistic UI for immediate feel
+                activeBets[i] = { placed: true, amount };
+                updateButtonsWaiting(0);
+
                 const res = await fetch(`${API_URL}/api/play/aviator`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", authorization: token },
                     body: JSON.stringify({ betAmount: amount, cashOutMultiplier: 100 })
                 });
                 const data = await res.json();
-                if (data.success) { activeBets[i] = { placed: true, amount }; fetchBalance(); }
-                else alert(data.message);
+                if (data.success) { fetchBalance(); }
+                else {
+                    activeBets[i].placed = false;
+                    alert(data.message);
+                    updateButtonsWaiting(0);
+                }
             } else if (label === "CANCEL") {
+                activeBets[i].placed = false;
+                updateButtonsWaiting(0);
+
                 const res = await fetch(`${API_URL}/api/game/aviator/cancel`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", authorization: token }
                 });
                 const data = await res.json();
-                if (data.success) { activeBets[i].placed = false; fetchBalance(); }
+                if (data.success) { fetchBalance(); }
+                else {
+                    activeBets[i].placed = true;
+                    updateButtonsWaiting(0);
+                }
             } else if (label === "CASH OUT") {
                 const winAmt = (activeBets[i].amount * currentMult).toFixed(2);
+
+                // Fast Cashout UI: Don't wait for server to play sound and update UI
+                activeBets[i].placed = false;
+                sndWin.play().catch(e=>{});
+                updateButtonsFlying();
+
                 const res = await fetch(`${API_URL}/api/game/aviator/cashout`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", authorization: token },
@@ -989,9 +1015,9 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    activeBets[i].placed = false;
-                    sndWin.play().catch(e=>{});
                     fetchBalance();
+                } else {
+                    console.error("Cashout failed on server:", data.message);
                 }
             }
         }

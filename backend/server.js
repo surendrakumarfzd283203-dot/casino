@@ -415,6 +415,7 @@ app.post("/api/game/rummy/join", auth, async (req, res) => {
     const betRes = rummyManager.placeBet(tableId, req.user.id, user.name, betAmount);
     if (betRes.success) {
         user.coins -= betAmount;
+        user.referral_played = true; // Mark that user has played at least once
         await user.save();
     }
     res.json(betRes);
@@ -533,6 +534,7 @@ app.post("/api/play/aviator", auth, async (req, res) => {
         if (user.coins < betAmount) return res.json({ success: false, message: "Insufficient coins" });
 
         user.coins -= betAmount;
+        user.referral_played = true; // Mark that user has played at least once
         await user.save();
 
         activeBets.aviator.push({
