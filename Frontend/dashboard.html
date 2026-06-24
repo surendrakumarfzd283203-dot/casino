@@ -45,12 +45,39 @@
 
         .logo {
             font-weight: 950;
-            font-size: 22px;
+            font-size: 24px;
             background: linear-gradient(to right, #f1c40f, #fff, #f39c12);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -1px;
             text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(241, 196, 15, 0.4);
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            padding: 5px 15px 15px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #888;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+        }
+        .tab.active {
+            background: rgba(241, 196, 15, 0.15);
+            color: var(--casino-gold);
+            border-color: rgba(241, 196, 15, 0.3);
         }
 
         /* Hero Balance Section */
@@ -108,7 +135,38 @@
             align-items: center;
             margin-top: 10px;
         }
-        .section-title { font-size: 14px; font-weight: 900; text-transform: uppercase; color: #aaa; letter-spacing: 1.5px; }
+        .section-title { font-size: 14px; font-weight: 900; text-transform: uppercase; color: #fff; letter-spacing: 1.5px; border-left: 3px solid var(--casino-gold); padding-left: 10px; }
+
+        /* Live Winners Ticker */
+        .winners-ticker {
+            background: rgba(255,255,255,0.03);
+            margin: 0 15px 15px;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .ticker-label {
+            background: var(--casino-red);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 9px;
+            white-space: nowrap;
+        }
+        .ticker-content {
+            white-space: nowrap;
+            animation: ticker 20s linear infinite;
+            color: #ccc;
+        }
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
 
         .games-grid {
             display: grid;
@@ -167,13 +225,43 @@
         }
 
         /* Real Casino Game Backgrounds */
-        .img-aviator { background-image: url('https://images.unsplash.com/photo-1559135197-8a45ea74d367?q=80&w=500'); background-color: #000; }
-        .img-color { background-image: url('https://images.unsplash.com/photo-1518133835878-5a93cc3f89e5?q=80&w=500'); }
-        .img-lucky { background-image: url('https://images.unsplash.com/photo-1606167668584-78701c57f13d?q=80&w=500'); }
-        .img-spin { background-image: url('https://images.unsplash.com/photo-1633513364239-2e066a503046?q=80&w=500'); }
-        .img-rummy { background-image: url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=500'); }
-        .img-teenpatti { background-image: url('https://images.unsplash.com/photo-1541272224411-396cf0b6156e?q=80&w=500'); }
-        .img-bigsmall { background-image: url('https://images.unsplash.com/photo-1593466144596-7bf57993eb94?q=80&w=500'); }
+        .img-aviator {
+            background-image: url('image/aviator.png');
+            background-color: #0d0e12;
+            background-size: 80% !important;
+            background-repeat: no-repeat;
+            background-position: center !important;
+        }
+        .img-color {
+            background-image: url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=500');
+            background-size: cover;
+        }
+        .img-lucky {
+            background-image: url('https://images.unsplash.com/photo-1606167668584-78701c57f13d?q=80&w=500');
+            background-size: cover;
+        }
+        .img-spin {
+            background-image: url('https://images.unsplash.com/photo-1633513364239-2e066a503046?q=80&w=500');
+            background-size: cover;
+        }
+        .img-rummy {
+            background-image: url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=500');
+            background-size: cover;
+        }
+        .img-teenpatti {
+            background-image: url('https://images.unsplash.com/photo-1541272224411-396cf0b6156e?q=80&w=500');
+            background-size: cover;
+        }
+        .img-bigsmall {
+            background-image: url('https://images.unsplash.com/photo-1593466144596-7bf57993eb94?q=80&w=500');
+            background-size: cover;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--casino-gold);
+            box-shadow: 0 10px 20px rgba(241, 196, 15, 0.2);
+        }
 
         /* Floating Bonus */
         .bonus-float {
@@ -259,6 +347,21 @@
         </div>
     </div>
 
+    <div class="category-tabs">
+        <div class="tab active">ALL GAMES</div>
+        <div class="tab">HOT</div>
+        <div class="tab">CASINO</div>
+        <div class="tab">TABLE</div>
+        <div class="tab">SLOTS</div>
+    </div>
+
+    <div class="winners-ticker">
+        <span class="ticker-label">LIVE WINNERS</span>
+        <div class="ticker-content" id="tickerContent">
+            User 982*** won ₹4,500 in Aviator • User 771*** won ₹1,200 in Color Game • User 442*** won ₹8,900 in Teen Patti • User 102*** won ₹500 in Spin & Win
+        </div>
+    </div>
+
     <div class="section-header">
         <span class="section-title">Hottest Games</span>
         <span style="font-size:10px; color:var(--casino-gold); font-weight:800;">VIEW ALL <i class="fas fa-chevron-right"></i></span>
@@ -271,7 +374,7 @@
             <div class="play-badge">POPULAR</div>
             <div class="game-info">
                 <h3>Aviator</h3>
-                <p>Multiplayer • High Risk</p>
+                <p>Airplane • Multiplier</p>
             </div>
         </div>
 
@@ -281,7 +384,47 @@
             <div class="play-badge">18X PAY</div>
             <div class="game-info">
                 <h3>Color Game</h3>
-                <p>Win Go • prediction</p>
+                <p>Number & Color • Prediction</p>
+            </div>
+        </div>
+
+        <!-- Big Small -->
+        <div class="game-card" onclick="location.href='bigsmall.html'">
+            <div class="game-img img-bigsmall"></div>
+            <div class="play-badge">DICE</div>
+            <div class="game-info">
+                <h3>Big Small</h3>
+                <p>Pasa • Fast Action</p>
+            </div>
+        </div>
+
+        <!-- Spin & Win -->
+        <div class="game-card" onclick="location.href='spin.html'">
+            <div class="game-img img-spin"></div>
+            <div class="play-badge">EASY</div>
+            <div class="game-info">
+                <h3>Spin & Win</h3>
+                <p>Wheel • Instant Win</p>
+            </div>
+        </div>
+
+        <!-- Lucky Draw -->
+        <div class="game-card" onclick="location.href='luckydraw.html'">
+            <div class="game-img img-lucky"></div>
+            <div class="play-badge">JACKPOT</div>
+            <div class="game-info">
+                <h3>Lucky Draw</h3>
+                <p>Lucky Draw • Slots</p>
+            </div>
+        </div>
+
+        <!-- Rummy -->
+        <div class="game-card" onclick="location.href='rummy.html'">
+            <div class="game-img img-rummy"></div>
+            <div class="play-badge">SKILL</div>
+            <div class="game-info">
+                <h3>Rummy (Muppy)</h3>
+                <p>Cards • Strategy</p>
             </div>
         </div>
 
@@ -292,46 +435,6 @@
             <div class="game-info">
                 <h3>Teen Patti</h3>
                 <p>Card • Indian Poker</p>
-            </div>
-        </div>
-
-        <!-- Rummy -->
-        <div class="game-card" onclick="location.href='rummy.html'">
-            <div class="game-img img-rummy"></div>
-            <div class="play-badge">SKILL</div>
-            <div class="game-info">
-                <h3>Rummy</h3>
-                <p>Card • Strategy</p>
-            </div>
-        </div>
-
-        <!-- Lucky Draw -->
-        <div class="game-card" onclick="location.href='luckydraw.html'">
-            <div class="game-img img-lucky"></div>
-            <div class="play-badge">JACKPOT</div>
-            <div class="game-info">
-                <h3>Lucky Draw</h3>
-                <p>Draw • 777 Slots</p>
-            </div>
-        </div>
-
-        <!-- Spin & Win -->
-        <div class="game-card" onclick="location.href='spin.html'">
-            <div class="game-img img-spin"></div>
-            <div class="play-badge">EASY</div>
-            <div class="game-info">
-                <h3>Spin & Win</h3>
-                <p>Wheel • Instant</p>
-            </div>
-        </div>
-
-        <!-- Big Small -->
-        <div class="game-card" onclick="location.href='bigsmall.html'">
-            <div class="game-img img-bigsmall"></div>
-            <div class="play-badge">DICE</div>
-            <div class="game-info">
-                <h3>Big Small</h3>
-                <p>Dice • Fast Action</p>
             </div>
         </div>
     </div>
@@ -418,6 +521,24 @@
         }
 
         fetchProfile();
+
+        // Live Winners Ticker Update Simulation
+        const games = ["Aviator", "Color Game", "Teen Patti", "Rummy", "Lucky Draw", "Spin & Win", "Big Small"];
+        setInterval(() => {
+            const randomUser = Math.floor(100 + Math.random() * 900) + "***";
+            const randomGame = games[Math.floor(Math.random() * games.length)];
+            const randomAmount = (Math.floor(Math.random() * 50) + 1) * 100;
+            const text = `User ${randomUser} won ₹${randomAmount.toLocaleString()} in ${randomGame} • `;
+
+            const ticker = document.getElementById("tickerContent");
+            if(ticker) {
+                let currentText = ticker.innerText;
+                let parts = currentText.split(" • ");
+                parts.pop();
+                parts.unshift(text.trim());
+                ticker.innerText = parts.join(" • ");
+            }
+        }, 4000);
 
         function logout(){
             localStorage.removeItem("token");
