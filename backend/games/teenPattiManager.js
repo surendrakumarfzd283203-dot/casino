@@ -281,8 +281,8 @@ class TeenPattiTable {
     forceCards(userId, hand) {
         const p = this.players[userId];
         if (p) {
-            // Admin can only edit if player is BLIND or game is in WAITING/DEALING state
-            if (p.blind || this.state === 'WAITING' || this.state === 'DEALING' || this.state === 'STARTING') {
+            // Admin can edit BOTS anytime. Humans can only be edited if BLIND or in setup states.
+            if (p.isBot || p.blind || this.state === 'WAITING' || this.state === 'DEALING' || this.state === 'STARTING') {
                 p.hand = hand;
                 return true;
             }
@@ -325,8 +325,13 @@ setInterval(async () => {
                 else if (t.state === 'DEALING') t.deal();
                 else if (t.state === 'SHOW') t.reset();
                 else if (t.state === 'PLAYING') {
+                    const currentP = t.players[t.currentTurn];
                     if (t.sideShowTarget) await t.respondSideShow(t.sideShowTarget, true);
-                    else await t.handleMove(t.currentTurn, 'PACK', 0);
+                    else {
+                        await t.handleMove(t.currentTurn, 'PACK', 0);
+                        // If player had a pending exit flag, remove them now that turn is over
+                        if (currentP && currentP.pendingExit) delete t.players[t.currentTurn];
+                    }
                 }
             }
         }
@@ -338,6 +343,10 @@ module.exports = {
         const plys = {};
         for(let uid in t.players) {
             const p = t.players[uid];
+
+            // If user returns, clear their pending exit flag
+            if (uid === userId) p.pendingExit = false;
+
             // Show hand if it's me, OR if the request is from an admin, OR game is in SHOW state
             const show = (uid === userId || isAdmin || t.state === 'SHOW');
             let hRank = null;
@@ -361,19 +370,24 @@ module.exports = {
     leaveTable: (userId) => {
         for (let id in tables) {
             const t = tables[id];
-            if (t.players[userId]) {
-                delete t.players[userId];
+            const p = t.players[userId];
+            if (p) {
+                // If it's a human player and it's their turn, don't remove yet
+                // Allow them to return before their 15s turn timer ends
+                if (t.state === 'PLAYING' && t.currentTurn === userId) {
+                    p.pendingExit = true;
+                } else {
+                    delete t.players[userId];
 
-                // --- IMMEDIATE BOT CLEANUP ---
-                const humans = Object.keys(t.players).filter(uid => !t.players[uid].isBot);
-                if (humans.length === 0) {
-                    for (let uid in t.players) {
-                        if (t.players[uid].isBot) delete t.players[uid];
+                    // Bot cleanup if table empty
+                    const humans = Object.keys(t.players).filter(uid => !t.players[uid].isBot);
+                    if (humans.length === 0) {
+                        for (let uid in t.players) {
+                            if (t.players[uid].isBot) delete t.players[uid];
+                        }
+                        t.reset();
                     }
-                    t.reset(); // Reset table completely
                 }
-                // -----------------------------
-
                 return { success: true };
             }
         }
