@@ -31,7 +31,36 @@
         .poker-table { width: 96%; height: 75%; background: var(--poker-blue); border-radius: 180px; position: relative; box-shadow: inset 0 0 120px rgba(0,0,0,0.8), 0 30px 60px rgba(0,0,0,0.8); border: 4px solid #fcc419; outline: 10px solid #1e293b; transform: rotateX(5deg); }
 
         .dealer-box { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 10; }
-        .dealer-img { width: 120px; filter: drop-shadow(0 10px 20px black); }
+        .dealer-img { width: 160px; filter: drop-shadow(0 10px 20px black); transform: translateY(-20px); }
+
+        /* CARD DEALING ANIMATION */
+        .dealing-card {
+            position: absolute;
+            width: 25px; height: 35px;
+            background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png');
+            border: 1px solid white;
+            border-radius: 3px;
+            z-index: 1000;
+            transition: all 0.5s ease-in-out;
+            top: 10%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* SHOWDOWN LABELS */
+        .showdown-label {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            z-index: 500;
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+        .label-win { background: #22c55e; color: white; border: 2px solid #fff; box-shadow: 0 0 20px #22c55e; }
+        .label-lose { background: #ef4444; color: white; border: 2px solid #fff; opacity: 0.8; }
 
         .pot-container { position: absolute; top: 45%; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 5px 20px; border-radius: 25px; border: 1px solid var(--gold); z-index: 20; }
         .pot-amount { font-size: 22px; font-weight: 900; color: var(--gold); }
@@ -153,9 +182,10 @@
 
     <div class="game-area">
         <div class="dealer-box">
-            <img src="https://i.ibb.co/L5pZ0vX/dealer-girl.png" class="dealer-img" alt="dealer">
+            <img src="https://i.postimg.cc/9FmS06Y1/dealer-girl-tp.png" class="dealer-img" alt="dealer">
         </div>
         <div class="poker-table"></div>
+        <div id="dealingContainer"></div>
         <div class="pot-container">
             <img src="https://cdn-icons-png.flaticon.com/512/2489/2489756.png" width="25">
             <div class="pot-amount">₹<span id="potVal">0</span></div>
@@ -277,6 +307,11 @@
                 rt.style.display = "none";
             }
 
+            // DEALING ANIMATION
+            if (t.state === 'DEALING' && lastState !== 'DEALING') {
+                animateDealing(t);
+            }
+
             if (t.currentTurn === myId && lastTurn !== myId) document.getElementById('snd-turn').play().catch(e=>{});
             lastTurn = t.currentTurn;
             maxBetUnit = t.maxBet;
@@ -303,16 +338,25 @@
 
                 const seat = document.createElement("div");
                 seat.className = `player-seat seat-${pos} ${t.currentTurn === uid ? 'active-turn' : ''}`;
-                const status = p.status === 'PACKED' ? 'PACKED' : (p.blind && t.state==='PLAYING' ? 'BLIND' : 'SEEN');
+
+                const isShowdown = t.state === 'SHOW';
+                const status = p.status === 'PACKED' ? 'PACKED' : (p.blind && !isShowdown ? 'BLIND' : 'SEEN');
                 const showCardsOnTable = p.status !== 'WAITING' && p.status !== 'PACKED';
+
+                // Result Label
+                let resultLabel = "";
+                if (isShowdown && p.result) {
+                    resultLabel = `<div class="showdown-label label-${p.result.toLowerCase()}">${p.result}</div>`;
+                }
 
                 if (pos !== "me") {
                     seat.innerHTML = `
+                        ${resultLabel}
                         <div class="cards-status">
                             ${showCardsOnTable ? `<div class="status-tag" style="background:${status==='BLIND'?'#000':'#15803d'}">${status}</div>` : ''}
                             ${p.status === 'PACKED' ? `<div class="status-tag">PACKED</div>` : ''}
                             <div class="mini-cards">
-                                ${t.state === 'SHOW' ? renderHandIcons(p.hand) : '<div class="m-card"></div><div class="m-card"></div><div class="m-card"></div>'}
+                                ${isShowdown ? renderHandIcons(p.hand) : (showCardsOnTable ? '<div class="m-card"></div><div class="m-card"></div><div class="m-card"></div>' : '')}
                             </div>
                         </div>
                         <div class="avatar-group">
@@ -326,13 +370,14 @@
                     const myHandArea = document.getElementById("myHandArea");
                     myHandArea.innerHTML = `
                         <div style="display:flex;">${renderBigCards(p.hand, p.blind && t.state !== 'SHOW')}</div>
-                        ${(!p.blind || t.state === 'SHOW') && p.handRank ? `<div class="rank-label">${p.handRank}</div>` : ''}
+                        ${(!p.blind || isShowdown) && p.handRank ? `<div class="rank-label">${p.handRank}</div>` : ''}
                         ${(p.blind && t.state === 'PLAYING' && p.status === 'ACTIVE') ? `<div class="see-btn" onclick="handleMove('SEE')">SEE</div>` : ''}
                     `;
 
                     const myAvatarGroup = document.createElement('div');
                     myAvatarGroup.className = 'avatar-group';
                     myAvatarGroup.innerHTML = `
+                        ${resultLabel}
                         <div class="timer-overlay"></div>
                         <div class="avatar"><img src="https://i.pravatar.cc/100?u=${myId}"></div>
                         <div class="p-name-plate"><div class="p-name">${p.name}</div></div>
@@ -356,8 +401,26 @@
                 }
             });
 
-            if (t.state === 'SHOW' && lastState !== 'SHOW') { document.getElementById('snd-win').play().catch(e=>{}); showResult(t); }
+            if (t.state === 'SHOW' && lastState !== 'SHOW') {
+                document.getElementById('snd-win').play().catch(e=>{});
+                setTimeout(() => showResult(t), 1000);
+            }
             lastState = t.state;
+        }
+
+        function animateDealing(t) {
+            const container = document.getElementById("dealingContainer");
+            const activeUids = Object.keys(t.players).filter(id => t.players[id].status === 'ACTIVE');
+            activeUids.forEach((uid, pIdx) => {
+                for(let i=0; i<3; i++) {
+                    setTimeout(() => {
+                        const card = document.createElement('div');
+                        card.className = 'dealing-card';
+                        container.appendChild(card);
+                        setTimeout(() => card.remove(), 600);
+                    }, (pIdx * 300) + (i * 100));
+                }
+            });
         }
 
         function renderBigCards(hand, hidden) {
