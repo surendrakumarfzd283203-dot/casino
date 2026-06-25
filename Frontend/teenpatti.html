@@ -135,19 +135,22 @@
         /* SEATS */
         .player-seat {
             position: absolute;
-            width: 90px;
+            width: 100px;
             text-align: center;
             z-index: 100;
             transition: 0.5s;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .seat-me { bottom: -20px; left: 50%; transform: translateX(-50%) scale(1.1); z-index: 200; }
-        .seat-2 { left: 2%; bottom: 38%; }
-        .seat-3 { left: 15%; top: 15%; transform: scale(0.85); }
-        .seat-4 { right: 15%; top: 15%; transform: scale(0.85); }
-        .seat-5 { right: 2%; bottom: 38%; }
+        .seat-me { bottom: 15%; left: 50%; transform: translateX(-50%) scale(1.2); z-index: 200; }
+        .seat-2 { left: 5%; bottom: 35%; }
+        .seat-3 { left: 15%; top: 15%; transform: scale(0.9); }
+        .seat-4 { right: 15%; top: 15%; transform: scale(0.9); }
+        .seat-5 { right: 5%; bottom: 35%; }
 
-        .avatar-group { position: relative; width: 65px; height: 65px; margin: 0 auto; }
+        .avatar-group { position: relative; width: 60px; height: 60px; margin-top: 5px; }
         .avatar { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--gold); overflow: hidden; background: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.6); position: relative; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -155,23 +158,45 @@
         .active-turn .active-turn-ring { opacity: 1; animation: ring-spin 2s linear infinite; }
         @keyframes ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        .p-name-plate { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); border-radius: 12px; padding: 2px 10px; border: 1px solid rgba(255,255,255,0.2); width: 80px; z-index: 2; }
-        .p-name { font-size: 9px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-name-plate { background: rgba(0,0,0,0.85); border-radius: 12px; padding: 2px 10px; border: 1px solid var(--gold); width: 85px; margin-top: 2px; }
+        .p-name { font-size: 10px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* CARDS */
-        .cards-status { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); width: 70px; display: flex; flex-direction: column; align-items: center; }
+        .cards-status { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 2px; }
         .status-tag { background: #000; color: white; font-size: 8px; font-weight: 900; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--gold); text-transform: uppercase; margin-bottom: 2px; }
-        .mini-cards { display: flex; justify-content: center; }
-        .m-card { width: 22px; height: 32px; background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png'); border: 1.5px solid #fff; border-radius: 3px; margin: 0 -8px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
 
-        /* MY HAND */
-        .my-hand-container { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 300; pointer-events: none; }
-        .my-hand { display: flex; justify-content: center; align-items: center; }
-        .card-big { width: 90px; height: 130px; background: white; border-radius: 10px; color: black; font-size: 28px; font-weight: 950; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 -20px; box-shadow: 0 15px 30px rgba(0,0,0,0.8); border: 3px solid #fff; position: relative; pointer-events: auto; }
+        .mini-cards { display: flex; justify-content: center; }
+        .m-card {
+            width: 25px; height: 35px;
+            background: white; border: 1px solid #999; border-radius: 3px;
+            margin: 0 -8px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; align-items: center; justify-content: space-around;
+            font-size: 10px; font-weight: 950;
+        }
+        .m-card.back { background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png'); border-color: #fff; }
+
+        /* MY HAND (Special styling for grouped view) */
+        .my-hand-grouped { display: flex; justify-content: center; align-items: center; position: relative; }
+        .card-big {
+            width: 70px; height: 100px;
+            background: white; border-radius: 8px;
+            color: black; font-weight: 950;
+            display: flex; flex-direction: column;
+            margin: 0 -15px; box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+            border: 2px solid #ccc; position: relative;
+            pointer-events: auto;
+            padding: 5px;
+            box-sizing: border-box;
+        }
         .card-big.back { background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png'); border-color: #fff; }
 
+        .c-corner { position: absolute; font-size: 14px; line-height: 1; }
+        .c-top { top: 4px; left: 4px; text-align: center; }
+        .c-bot { bottom: 4px; right: 4px; transform: rotate(180deg); text-align: center; }
+        .c-mid { margin: auto; font-size: 32px; }
+
         .rank-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: var(--gold); padding: 4px 15px; border-radius: 15px; font-size: 14px; font-weight: 950; border: 1.5px solid var(--gold); white-space: nowrap; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 310; }
-        .see-btn { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(to bottom, #3b82f6, #1d4ed8); color: #fff; padding: 6px 18px; border-radius: 20px; font-weight: 900; font-size: 14px; border: 1.5px solid #fff; pointer-events: auto; cursor: pointer; z-index: 320; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .see-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(to bottom, #3b82f6, #1d4ed8); color: #fff; padding: 8px 20px; border-radius: 20px; font-weight: 900; font-size: 14px; border: 1.5px solid #fff; pointer-events: auto; cursor: pointer; z-index: 320; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
 
         .rank-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: var(--gold); padding: 4px 15px; border-radius: 15px; font-size: 14px; font-weight: 950; border: 1.5px solid var(--gold); white-space: nowrap; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 310; }
         .see-btn { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(to bottom, #3b82f6, #1d4ed8); color: #fff; padding: 6px 18px; border-radius: 20px; font-weight: 900; font-size: 14px; border: 1.5px solid #fff; pointer-events: auto; cursor: pointer; z-index: 320; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
@@ -300,16 +325,6 @@
         </div>
 
         <div id="seatsContainer"></div>
-
-        <div class="my-hand-container">
-            <div class="my-hand" id="myHandArea"></div>
-        </div>
-
-        <div class="bet-stepper-side" id="betStepper" style="display: none;">
-            <button class="step-btn" onclick="adjustBet(1)">+</button>
-            <div class="bet-val-box"><div class="bet-val" id="nextBetDisplay">₹0</div></div>
-            <button class="step-btn" onclick="adjustBet(-1)">-</button>
-        </div>
     </div>
 
     <div class="controls-wrapper" id="controls" style="opacity: 0.5; pointer-events: none;">
@@ -487,41 +502,34 @@
                             ${showCardsOnTable ? `<div class="status-tag" style="background:${status==='BLIND'?'#000':'#15803d'}">${status}</div>` : ''}
                             ${p.status === 'PACKED' ? `<div class="status-tag">PACKED</div>` : ''}
                             <div class="mini-cards">
-                                ${isShowdown ? renderHandIcons(p.hand) : (showCardsOnTable ? '<div class="m-card"></div><div class="m-card"></div><div class="m-card"></div>' : '')}
+                                ${isShowdown ? renderHandIcons(p.hand) : (showCardsOnTable ? '<div class="m-card back"></div><div class="m-card back"></div><div class="m-card back"></div>' : '')}
                             </div>
                         </div>
                         <div class="avatar-group">
                             <div class="active-turn-ring"></div>
                             <div class="avatar">${avatarHtml}</div>
-                            <div class="p-name-plate"><div class="p-name">${p.name}</div></div>
                         </div>
-                    `;
-                    container.appendChild(seat);
-                } else {
-                    const myHandArea = document.getElementById("myHandArea");
-                    myHandArea.innerHTML = `
-                        <div style="display:flex;">${renderBigCards(p.hand, p.blind && t.state !== 'SHOW')}</div>
-                        ${(!p.blind || isShowdown) && p.handRank ? `<div class="rank-label">${p.handRank}</div>` : ''}
-                        ${(p.blind && (t.state === 'PLAYING' || t.state === 'DEALING')) ? `<div class="see-btn" onclick="handleMove('SEE')">SEE</div>` : ''}
-                    `;
-
-                    const myAvatarGroup = document.createElement('div');
-                    myAvatarGroup.className = 'avatar-group';
-                    myAvatarGroup.innerHTML = `
-                        ${resultLabel}
-                        <div class="active-turn-ring"></div>
-                        <div class="avatar">${avatarHtml}</div>
                         <div class="p-name-plate"><div class="p-name">${p.name}</div></div>
                     `;
-                    seat.appendChild(myAvatarGroup);
-                    container.appendChild(seat);
-
+                } else {
                     const isTurn = t.currentTurn === myId && t.state === 'PLAYING' && p.status === 'ACTIVE';
+                    seat.innerHTML = `
+                        ${resultLabel}
+                        <div class="my-hand-grouped">
+                            ${renderBigCards(p.hand, p.blind && t.state !== 'SHOW')}
+                            ${(!p.blind || isShowdown) && p.handRank ? `<div class="rank-label">${p.handRank}</div>` : ''}
+                            ${(p.blind && (t.state === 'PLAYING' || t.state === 'DEALING')) ? `<div class="see-btn" onclick="handleMove('SEE')">SEE</div>` : ''}
+                        </div>
+                        <div class="avatar-group">
+                            <div class="active-turn-ring"></div>
+                            <div class="avatar">${avatarHtml}</div>
+                        </div>
+                        <div class="p-name-plate"><div class="p-name">${p.name}</div></div>
+                    `;
+
                     const ctrl = document.getElementById("controls");
-                    const stepper = document.getElementById("betStepper");
                     ctrl.style.opacity = isTurn ? "1" : "0.5";
                     ctrl.style.pointerEvents = isTurn ? "auto" : "none";
-                    stepper.style.display = isTurn ? "flex" : "none";
 
                     if (isTurn) {
                         const active = uids.filter(id => t.players[id].status === 'ACTIVE').length;
@@ -529,13 +537,14 @@
                         showBtn.style.display = active === 2 ? "block" : "none";
 
                         if (nextBet < t.lastBet) nextBet = t.lastBet;
-                        document.getElementById("nextBetDisplay").innerText = `₹${nextBet}`;
+                        // document.getElementById("nextBetDisplay").innerText = `₹${nextBet}`; // bet stepper removed from UI but keeping logic
 
                         const cost = p.blind ? nextBet : nextBet * 2;
                         document.getElementById("chaalAmt").innerText = `₹${cost}`;
                         document.getElementById("showAmt").innerText = `₹${cost}`;
                     }
                 }
+                container.appendChild(seat);
             });
 
             if (t.state === 'SHOW' && lastState !== 'SHOW') {
@@ -564,7 +573,13 @@
             if (!hand || hand.length === 0) return Array(3).fill('<div class="card-big back"></div>').join('');
             return hand.map(c => {
                 const color = (c.suit==='♥'||c.suit==='♦') ? '#ef4444' : 'black';
-                return `<div class="card-big ${hidden?'back':''}" style="color:${color}"><div style="font-size:22px;line-height:1;">${hidden?'':c.rank}</div><div style="font-size:32px;line-height:1;">${hidden?'':c.suit}</div></div>`;
+                if (hidden) return '<div class="card-big back"></div>';
+                return `
+                    <div class="card-big" style="color:${color}">
+                        <div class="c-corner c-top"><div>${c.rank}</div><div style="font-size:10px">${c.suit}</div></div>
+                        <div class="c-mid">${c.suit}</div>
+                        <div class="c-corner c-bot"><div>${c.rank}</div><div style="font-size:10px">${c.suit}</div></div>
+                    </div>`;
             }).join('');
         }
 
@@ -572,7 +587,11 @@
             if (!hand || hand.length === 0) return '';
             return hand.map(c => {
                 const color = (c.suit==='♥'||c.suit==='♦') ? '#ef4444' : 'black';
-                return `<div class="m-card" style="background:#fff; color:${color}; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; font-weight:900;"><div>${c.rank}</div><div>${c.suit}</div></div>`;
+                return `
+                    <div class="m-card" style="color:${color}">
+                        <div style="line-height:1">${c.rank}</div>
+                        <div style="font-size:12px; line-height:1">${c.suit}</div>
+                    </div>`;
             }).join('');
         }
 
