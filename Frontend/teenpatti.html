@@ -11,15 +11,47 @@
         body { background: #0e0202; color: white; font-family: 'Roboto', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; }
 
         /* LOBBY */
-        #lobby { position: fixed; inset: 0; background: radial-gradient(circle, #4a0d0d, #0e0202); z-index: 5000; display: flex; flex-direction: column; padding: 15px; overflow-y: auto; }
+        #lobby { position: fixed; inset: 0; background: radial-gradient(circle, #4a0d0d, #0e0202); z-index: 5000; display: flex; flex-direction: column; padding: 15px; overflow: hidden; }
         .lobby-header { text-align: center; margin: 20px 0; }
         .lobby-title { font-size: 32px; font-weight: 900; color: var(--gold); text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 15px rgba(255,193,7,0.5); }
-        .table-grid { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 350px; margin: 0 auto; padding-bottom: 50px; }
-        .table-card { background: linear-gradient(145deg, #7c1c1c, #3d0a0a); border: 2px solid #b91c1c; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.6); }
-        .table-card h3 { margin: 0; font-size: 14px; color: #fca5a5; text-transform: uppercase; }
-        .table-card .boot { font-size: 28px; font-weight: 900; color: var(--gold); margin: 10px 0; }
-        .table-card button { background: linear-gradient(to bottom, #34d399, #059669); color: white; border: none; padding: 12px 0; border-radius: 15px; font-weight: 900; cursor: pointer; width: 100%; font-size: 16px; box-shadow: 0 4px 0 #064e3b; }
-        .table-card button:active { transform: translateY(2px); box-shadow: 0 2px 0 #064e3b; }
+
+        .table-grid {
+            display: flex;
+            gap: 20px;
+            padding: 20px 40px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .table-grid::-webkit-scrollbar { display: none; }
+
+        .table-card {
+            flex: 0 0 220px;
+            background: linear-gradient(145deg, #7c1c1c, #3d0a0a);
+            border: 2px solid #b91c1c;
+            border-radius: 25px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+            scroll-snap-align: center;
+        }
+        .table-card h3 { margin: 0; font-size: 16px; color: #fca5a5; text-transform: uppercase; }
+        .table-card .boot { font-size: 36px; font-weight: 900; color: var(--gold); margin: 20px 0; text-shadow: 0 0 10px rgba(255,193,7,0.4); }
+        .table-card button {
+            background: linear-gradient(to bottom, #22c55e, #15803d);
+            color: white;
+            border: none;
+            padding: 15px 0;
+            border-radius: 50px;
+            font-weight: 900;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+            box-shadow: 0 6px 0 #064e3b, 0 10px 20px rgba(0,0,0,0.3);
+            transition: 0.1s;
+        }
+        .table-card button:active { transform: translateY(3px); box-shadow: 0 3px 0 #064e3b; }
 
         /* HEADER */
         .game-header { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; box-sizing: border-box; z-index: 1000; background: rgba(0,0,0,0.4); }
@@ -57,30 +89,20 @@
 
         .dealer-box {
             position: absolute;
-            top: 12%;
+            top: 5%;
             left: 50%;
             transform: translateX(-50%);
             z-index: 5;
             pointer-events: none;
-        }
-        .dealer-box::after {
-            content: "";
-            position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 140px;
-            height: 30px;
-            background: rgba(0,0,0,0.7);
-            filter: blur(12px);
-            z-index: -1;
-            border-radius: 50%;
+            width: 100%;
+            text-align: center;
         }
         .dealer-img {
-            width: 170px;
-            filter: drop-shadow(0 15px 30px black) brightness(1.1);
-            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+            width: 160px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+            mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
         }
 
         .pot-container {
@@ -129,8 +151,8 @@
             transform: rotateX(-20deg);
         }
 
-        .avatar-group { position: relative; width: 70px; height: 70px; margin: 0 auto; order: 2; }
-        .avatar { width: 100%; height: 100%; border-radius: 50%; border: 2.5px solid var(--gold); overflow: hidden; background: #1a0505; box-shadow: 0 0 15px rgba(255,193,7,0.4); position: relative; }
+        .avatar-group { position: relative; width: 65px; height: 65px; margin: 0 auto; order: 2; z-index: 50; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; border: 2.5px solid var(--gold); overflow: hidden; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.8); position: relative; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         .active-turn-ring { position: absolute; inset: -8px; border: 4px solid #22c55e; border-radius: 50%; opacity: 0; z-index: 1; pointer-events: none; border-top-color: transparent; }
@@ -162,21 +184,19 @@
         .see-btn { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(to bottom, #3b82f6, #1d4ed8); color: #fff; padding: 10px 25px; border-radius: 25px; font-weight: 950; font-size: 16px; border: 2px solid #fff; pointer-events: auto; cursor: pointer; z-index: 320; }
 
         /* ACTION CONTROLS */
-        .controls-wrapper { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #111, #222); border-top: 2px solid #333; z-index: 1000; padding: 10px 0; }
+        .controls-wrapper { position: absolute; bottom: 0; width: 100%; background: #000; border-top: 2px solid #333; z-index: 1000; padding: 10px 0; height: 130px; }
 
-        /* SIDE BET STEPPER */
-        .bet-stepper-side { position: absolute; right: 10px; bottom: 130px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1000; }
-        .step-btn { width: 40px; height: 40px; border-radius: 50%; background: #334155; border: none; color: white; font-size: 20px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 #1e293b; }
-        .bet-val-box { background: rgba(0,0,0,0.8); border: 1px solid var(--gold); border-radius: 10px; padding: 5px 10px; min-width: 60px; text-align: center; }
-        .bet-val { font-size: 14px; font-weight: 900; color: var(--gold); }
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 10px; height: 100%; }
+        .btn-col { display: flex; flex-direction: column; gap: 8px; height: 100%; }
 
-        .action-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 10px; }
-        .btn-act { height: 50px; border-radius: 10px; border: none; font-weight: 950; font-size: 13px; color: white; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .btn-act:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+        .btn-act { flex: 1; border-radius: 10px; border: none; font-weight: 950; font-size: 11px; color: white; text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 48px; }
+        .btn-act:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+
         .btn-pack { background: linear-gradient(to bottom, #ef4444, #991b1b); }
         .btn-side { background: linear-gradient(to bottom, #64748b, #334155); }
         .btn-chaal { background: linear-gradient(to bottom, #22c55e, #065f46); }
-        .btn-show { background: linear-gradient(to bottom, #f59e0b, #b45309); }
+        .btn-plus { background: linear-gradient(to bottom, #eab308, #a16207); }
+        .btn-show { background: linear-gradient(to bottom, #3b82f6, #1d4ed8); }
         .btn-sub { font-size: 10px; opacity: 0.9; margin-top: 2px; font-weight: 800; }
 
         /* DEALING CARD */
@@ -281,11 +301,18 @@
 
     <div class="controls-wrapper" id="controls" style="opacity: 0.5; pointer-events: none;">
         <div class="action-btns">
-            <button class="btn-act btn-pack" onclick="handleMove('PACK')">Pack</button>
-            <button class="btn-act btn-side" onclick="handleMove('SIDESHOW')">Side Show</button>
-            <button class="btn-act btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">
-                <span>Chaal</span><span class="btn-sub" id="chaalAmt">₹0</span>
-            </button>
+            <div class="btn-col">
+                <button class="btn-act btn-pack" onclick="handleMove('PACK')">Pack</button>
+                <button class="btn-act btn-side" onclick="handleMove('SIDESHOW')">Side Show</button>
+            </div>
+            <div class="btn-col">
+                <button class="btn-act btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">
+                    <span>Chaal</span><span class="btn-sub" id="chaalAmt">₹0</span>
+                </button>
+                <button class="btn-act btn-plus" id="plusBtn" onclick="handlePlusMove()">
+                    <span>Raise 2x</span><span class="btn-sub" id="plusAmt">₹0</span>
+                </button>
+            </div>
             <button class="btn-act btn-show" id="showBtn" onclick="handleMove('SHOW')" style="display: none;">
                 <span>Show</span><span class="btn-sub" id="showAmt">₹0</span>
             </button>
@@ -477,12 +504,24 @@
 
                     if (isTurn) {
                         const active = uids.filter(id => t.players[id].status === 'ACTIVE').length;
-                        document.getElementById("showBtn").style.display = active === 2 ? "block" : "none";
-                        if (nextBet < t.lastBet) nextBet = t.lastBet;
-                        document.getElementById("nextBetDisplay").innerText = `₹${nextBet}`;
-                        const cost = p.blind ? nextBet : nextBet * 2;
+                        const showBtn = document.getElementById("showBtn");
+                        showBtn.style.display = active === 2 ? "block" : "none";
+
+                        // Default chaal is current table's lastBet
+                        const baseChaal = t.lastBet;
+                        const cost = p.blind ? baseChaal : baseChaal * 2;
+
                         document.getElementById("chaalAmt").innerText = `₹${cost}`;
+
+                        // Raise 2x
+                        const raiseBet = baseChaal * 2;
+                        const plusCost = p.blind ? raiseBet : raiseBet * 2;
+                        document.getElementById("plusAmt").innerText = `₹${plusCost}`;
+
                         document.getElementById("showAmt").innerText = `₹${cost}`;
+
+                        // Store these for moves
+                        window.currentBaseChaal = baseChaal;
                     }
                 }
             });
@@ -537,11 +576,17 @@
 
         async function handleMove(move) {
             if (move === 'CHAAL' || move === 'SHOW' || move === 'SIDESHOW') document.getElementById('snd-bet').play().catch(e=>{});
+            const betAmount = move === 'PLUS' ? (window.currentBaseChaal * 2) : window.currentBaseChaal;
+
             await fetch(`${API_URL}/api/teenpatti/move`, {
                 method: "POST", headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ tableId: currentTable, move, amount: nextBet })
+                body: JSON.stringify({ tableId: currentTable, move: (move === 'PLUS' ? 'CHAAL' : move), amount: betAmount })
             });
             fetchState();
+        }
+
+        async function handlePlusMove() {
+            handleMove('PLUS');
         }
 
         async function respondSideShow(accepted) {
