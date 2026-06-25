@@ -605,15 +605,22 @@ app.post("/api/game/aviator/cashout", auth, async (req, res) => {
 });
 
 app.post("/api/teenpatti/join", auth, async (req, res) => {
-    const user = await User.findById(req.user.id);
-    const { tableId, bootAmount } = req.body;
-    let result;
-    if (bootAmount) {
-        result = teenPattiManager.joinByBoot(bootAmount, req.user.id, user.name);
-    } else {
-        result = teenPattiManager.joinTable(tableId, req.user.id, user.name);
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.json({ success: false, message: "User not found" });
+
+        const { tableId, bootAmount } = req.body;
+        let result;
+        if (bootAmount) {
+            result = teenPattiManager.joinByBoot(Number(bootAmount), req.user.id, user.name);
+        } else {
+            result = teenPattiManager.joinTable(tableId, req.user.id, user.name);
+        }
+        res.json(result);
+    } catch (error) {
+        console.error("TP Join Error:", error);
+        res.json({ success: false, message: "Internal Server Error" });
     }
-    res.json(result);
 });
 
 app.post("/api/teenpatti/move", auth, async (req, res) => {
