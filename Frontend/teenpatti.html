@@ -109,25 +109,41 @@
     <div id="lobby">
         <div class="lobby-header">
             <div class="lobby-title">Teen Patti Gold</div>
+            <p style="color: #fca5a5; font-weight: 700;">Select Stakes to Join</p>
         </div>
-        <div class="tab-container">
-            <div class="tab active" onclick="showTab(1)">₹1</div>
-            <div class="tab" onclick="showTab(5)">₹5</div>
-            <div class="tab" onclick="showTab(10)">₹10</div>
-            <div class="tab" onclick="showTab(50)">₹50</div>
-            <div class="tab" onclick="showTab(100)">₹100</div>
+        <div class="table-grid" style="grid-template-columns: 1fr; max-width: 350px;">
+            <div class="table-card">
+                <h3>Bronze Table</h3>
+                <div class="boot">₹1</div>
+                <button onclick="joinByBoot(1)">JOIN NOW</button>
+            </div>
+            <div class="table-card">
+                <h3>Silver Table</h3>
+                <div class="boot">₹5</div>
+                <button onclick="joinByBoot(5)">JOIN NOW</button>
+            </div>
+            <div class="table-card">
+                <h3>Gold Table</h3>
+                <div class="boot">₹10</div>
+                <button onclick="joinByBoot(10)">JOIN NOW</button>
+            </div>
+            <div class="table-card">
+                <h3>Platinum Table</h3>
+                <div class="boot">₹50</div>
+                <button onclick="joinByBoot(50)">JOIN NOW</button>
+            </div>
+            <div class="table-card">
+                <h3>Diamond Table</h3>
+                <div class="boot">₹100</div>
+                <button onclick="joinByBoot(100)">JOIN NOW</button>
+            </div>
         </div>
-        <div id="tab-1" class="tab-content active"><div class="table-grid" id="grid-1"></div></div>
-        <div id="tab-5" class="tab-content"><div class="table-grid" id="grid-5"></div></div>
-        <div id="tab-10" class="tab-content"><div class="table-grid" id="grid-10"></div></div>
-        <div id="tab-50" class="tab-content"><div class="table-grid" id="grid-50"></div></div>
-        <div id="tab-100" class="tab-content"><div class="table-grid" id="grid-100"></div></div>
     </div>
 
     <div class="game-header">
         <div class="header-left">
             <div class="circle-btn" onclick="location.reload()"><i class="fas fa-arrow-left"></i></div>
-            <div class="circle-btn"><i class="fas fa-info-circle"></i></div>
+            <div class="circle-btn" onclick="switchTable()" title="Switch Table"><i class="fas fa-random"></i></div>
         </div>
         <div class="header-right">
             <div class="add-btn">ADD <i class="fas fa-coins" style="color:#000"></i></div>
@@ -183,41 +199,37 @@
         async function init() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
-            if (data.success) { myId = data.user.id; renderLobby(); }
+            if (data.success) { myId = data.user.id; }
         }
         init();
 
-        function renderLobby() {
-            const boots = [1, 5, 10, 50, 100];
-            boots.forEach(b => {
-                const grid = document.getElementById(`grid-${b}`);
-                grid.innerHTML = "";
-                for(let i=1; i<=5; i++) {
-                    const tid = `${b}_${i}`;
-                    const card = document.createElement("div");
-                    card.className = "table-card";
-                    card.innerHTML = `<h3>Table ${i}</h3><div class="boot">₹${b}</div><button onclick="join('${tid}')">PLAY NOW</button>`;
-                    grid.appendChild(card);
-                }
-            });
-        }
-
-        function showTab(b) {
-            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-            event.target.classList.add("active");
-            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-            document.getElementById(`tab-${b}`).classList.add("active");
-        }
-
-        async function join(id) {
-            currentTable = id;
+        let lastBootAmount = 1;
+        async function joinByBoot(boot) {
+            lastBootAmount = boot;
             const res = await fetch(`${API_URL}/api/teenpatti/join`, {
                 method: "POST", headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ tableId: id })
+                body: JSON.stringify({ bootAmount: boot })
             });
             const data = await res.json();
-            if (data.success) { document.getElementById("lobby").style.display = "none"; setInterval(fetchState, 1500); }
+            if (data.success) {
+                currentTable = data.tableId;
+                document.getElementById("lobby").style.display = "none";
+                if(!window.stateInterval) window.stateInterval = setInterval(fetchState, 1500);
+            }
             else alert(data.message);
+        }
+
+        async function switchTable() {
+            if(!confirm("Are you sure you want to switch table?")) return;
+            const res = await fetch(`${API_URL}/api/teenpatti/join`, {
+                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ bootAmount: lastBootAmount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentTable = data.tableId;
+                alert("Table switched!");
+            } else alert(data.message);
         }
 
         async function fetchState() {

@@ -606,7 +606,13 @@ app.post("/api/game/aviator/cashout", auth, async (req, res) => {
 
 app.post("/api/teenpatti/join", auth, async (req, res) => {
     const user = await User.findById(req.user.id);
-    const result = teenPattiManager.joinTable(req.body.tableId, req.user.id, user.name);
+    const { tableId, bootAmount } = req.body;
+    let result;
+    if (bootAmount) {
+        result = teenPattiManager.joinByBoot(bootAmount, req.user.id, user.name);
+    } else {
+        result = teenPattiManager.joinTable(tableId, req.user.id, user.name);
+    }
     res.json(result);
 });
 

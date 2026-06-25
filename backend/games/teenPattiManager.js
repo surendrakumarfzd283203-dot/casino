@@ -231,8 +231,25 @@ module.exports = {
         const t = tables[tableId];
         if (!t) return { success: false, message: "Table not found" };
         if (Object.keys(t.players).length >= 5) return { success: false, message: "Table full" };
+
+        // Remove from other tables
+        for(let id in tables) delete tables[id].players[userId];
+
         t.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
-        return { success: true };
+        return { success: true, tableId };
+    },
+    joinByBoot: (bootAmount, userId, name) => {
+        // Find an available table with this boot amount
+        const bootTables = Object.values(tables).filter(t => t.bootAmount == bootAmount);
+        let targetTable = bootTables.find(t => Object.keys(t.players).length < 5);
+
+        if (!targetTable) return { success: false, message: "All tables for this amount are full" };
+
+        // Remove from other tables
+        for(let id in tables) delete tables[id].players[userId];
+
+        targetTable.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
+        return { success: true, tableId: targetTable.id };
     },
     makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount)
 };
