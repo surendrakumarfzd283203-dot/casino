@@ -236,7 +236,8 @@ module.exports = {
             const p = t.players[uid];
             const show = (uid === userId || t.state === 'SHOW');
             let hRank = null;
-            if (p.hand && p.hand.length === 3 && (!p.blind || t.state === 'SHOW' || uid === userId)) {
+            // Only calculate and send hand rank if the player has seen their cards or it's showdown
+            if (!p.blind || t.state === 'SHOW') {
                 try { hRank = evaluateHand(p.hand).rank; } catch(e) {}
             }
             plys[uid] = {
