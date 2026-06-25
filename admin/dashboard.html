@@ -494,9 +494,12 @@
                             <span class="badge" style="background: ${statusColor}; font-size:8px;">${statusLabel}</span>
                             <br><small style="font-family: monospace; font-size:11px;">${cards}</small>
                         </div>
-                        <button class="action-btn btn-edit" style="padding:4px 8px; font-size:9px; opacity: ${canEdit ? 1 : 0.4}"
-                            ${canEdit ? `onclick="openTPCardEditor('${t.id}', '${uid}', '${p.name}')"` : 'disabled'}
-                            >${canEdit ? 'EDIT' : 'LOCKED'}</button>
+                        <div style="display:flex; gap:5px;">
+                            <button class="action-btn btn-edit" style="padding:4px 8px; font-size:9px; opacity: ${canEdit ? 1 : 0.4}"
+                                ${canEdit ? `onclick="openTPCardEditor('${t.id}', '${uid}', '${p.name}')"` : 'disabled'}
+                                >${canEdit ? 'EDIT' : 'LOCKED'}</button>
+                            ${p.status === 'ACTIVE' ? `<button class="action-btn btn-block" style="padding:4px 8px; font-size:9px;" onclick="forcePack('${t.id}', '${uid}')">PACK</button>` : ''}
+                        </div>
                     </div>`;
                 }).join('');
 
@@ -547,6 +550,17 @@
             const data = await res.json();
             alert(data.message);
             document.getElementById('tp-card-modal').style.display = 'none';
+        }
+
+        async function forcePack(tableId, userId) {
+            if(!confirm("Force player to Pack?")) return;
+            const res = await fetch(`${API_URL}/api/admin/teenpatti/force-pack`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId, userId })
+            });
+            const data = await res.json();
+            alert(data.message);
         }
 
         function renderLiveBets(game, bets) {

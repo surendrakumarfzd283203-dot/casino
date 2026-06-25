@@ -779,6 +779,12 @@ app.post("/api/admin/teenpatti/force-cards", adminAuth, (req, res) => {
     res.json({ success, message: success ? "Cards updated" : "Cannot edit cards (Player has already seen them or game state invalid)" });
 });
 
+app.post("/api/admin/teenpatti/force-pack", adminAuth, (req, res) => {
+    const { tableId, userId } = req.body;
+    const success = teenPattiManager.forcePack(tableId, userId);
+    res.json({ success, message: success ? "Player Packed" : "Failed to pack player" });
+});
+
 app.get("/api/admin/game-logs", adminAuth, async (req, res) => {
     try {
         const logs = await Transaction.find({ type: { $regex: /^game_/ } })

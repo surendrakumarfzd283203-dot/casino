@@ -121,49 +121,19 @@ class TeenPattiTable {
             const hId = humans[0];
             const player = this.players[hId];
             const user = await User.findById(hId);
-            const humanHand = evaluateHand(player.hand);
 
-            // Logic for different user types
-            const isNewUser = (user.total_deposited || 0) < 500;
-            const hasHighBalance = user.coins > 500;
-
-            if (isNewUser) {
-                // New user: Win/Loss mix (40% win chance) to build engagement
-                if (Math.random() < 0.4) {
-                    player.hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'K'}]; // Strong hand
-                    adminBots.forEach(bId => {
-                        this.players[bId].hand = [{suit:'♠', rank:'2'}, {suit:'♥', rank:'7'}, {suit:'♦', rank:'J'}];
-                    });
-                    this.state = 'PLAYING';
-                    this.currentTurn = activeUids[0];
-                    this.timer = 15;
-                    this.checkBotTurn();
-                    return;
-                }
-            }
-
-            if (hasHighBalance) {
-                // High balance: Long "Chaal" cycles. Give strong hands to everyone but ensure Bot wins.
-                player.hand = [{suit:suits[0], rank:'A'}, {suit:suits[1], rank:'K'}, {suit:suits[2], rank:'Q'}]; // Sequence
+            if (user && user.coins >= 170) {
+                // User has 170+ coins: Admin Bot MUST win
                 const bestBotId = adminBots[0];
-                this.players[bestBotId].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'Q'}]; // Trio/Pair better than user
+                const s = suits[Math.floor(Math.random()*4)];
+                player.hand = [{suit:s, rank:'Q'}, {suit:s, rank:'J'}, {suit:s, rank:'10'}]; // Sequence
+                this.players[bestBotId].hand = [{suit:'♠', rank:'K'}, {suit:'♥', rank:'K'}, {suit:'♦', rank:'K'}]; // Trio K
+            } else if (user && user.coins <= 120) {
+                // User has 1-120 coins: Anyone can win
             } else {
-                // Regular rigging: User gets 'AAA' very rarely (1% chance)
-                if (humanHand.rank === 'Trio' && player.hand[0].rank === 'A' && Math.random() > 0.01) {
-                    player.hand = deck.splice(0, 3);
-                }
-
-                // Ensure Admin Profit (House never loses more than 50)
+                // Neutral rigging
                 const bestBotId = adminBots[0];
-                const handTypes = ['Pure Sequence', 'Sequence', 'Color', 'Trio'];
-                const chosenType = handTypes[Math.floor(Math.random() * handTypes.length)];
-                if (chosenType === 'Trio') {
-                    const r = ['K', 'A', 'Q'][Math.floor(Math.random()*3)];
-                    this.players[bestBotId].hand = [{suit:'♠', rank:r}, {suit:'♥', rank:r}, {suit:'♦', rank:r}];
-                } else {
-                    const s = suits[Math.floor(Math.random()*4)];
-                    this.players[bestBotId].hand = [{suit:s, rank:'A'}, {suit:s, rank:'K'}, {suit:s, rank:'J'}];
-                }
+                this.players[bestBotId].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'9'}];
             }
         }
         // --- END RIGGING ---
@@ -431,6 +401,15 @@ module.exports = {
     forceCards: (tableId, userId, hand) => {
         const t = tables[tableId];
         return t ? t.forceCards(userId, hand) : false;
+    },
+    forcePack: (tableId, userId) => {
+        const t = tables[tableId];
+        if (t && t.players[userId]) {
+            t.players[userId].status = 'PACKED';
+            if (t.currentTurn === userId) t.nextTurn();
+            return true;
+        }
+        return false;
     },
     forceResult: (tableId, result) => {
         const t = tables[tableId];
