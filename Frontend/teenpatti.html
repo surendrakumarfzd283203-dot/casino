@@ -30,7 +30,7 @@
         .game-area {
             flex: 1;
             position: relative;
-            background: radial-gradient(circle at 50% 10%, #4a0d0d, #0e0202);
+            background: radial-gradient(circle at 50% 10%, #3a1a1a, #0e0202);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -42,14 +42,14 @@
         .poker-table {
             width: 96%;
             height: 65%;
-            background: radial-gradient(circle, #1a472a 0%, #0d2b1a 100%);
+            background: radial-gradient(circle, #2e5a3a 0%, #0d2b1a 100%);
             border-radius: 50% / 50%;
             position: relative;
             box-shadow:
                 inset 0 0 100px rgba(0,0,0,0.8),
-                0 25px 0 #3d1a1a, /* 3D Side Thickness */
+                0 25px 0 #5d2906, /* 3D Side Thickness */
                 0 45px 80px rgba(0,0,0,0.9);
-            border: 10px solid #5d2906; /* Wooden Rim */
+            border: 10px solid #7c4d2b; /* Golden-Brown Wooden Rim */
             transform: rotateX(40deg);
             transition: 0.5s;
             z-index: 10;
@@ -113,34 +113,38 @@
             transition: 0.5s;
             cursor: pointer;
             transform-style: preserve-3d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
         }
-        .seat-me { bottom: -10px; left: 50%; transform: translateX(-50%) scale(1.1); z-index: 200; }
-        .seat-2 { left: 4%; bottom: 38%; }
-        .seat-3 { left: 18%; top: 18%; transform: scale(0.85); }
-        .seat-4 { right: 18%; top: 18%; transform: scale(0.85); }
-        .seat-5 { right: 4%; bottom: 38%; }
+        .seat-me { bottom: 10px; left: 50%; transform: translateX(-50%) scale(1.1); z-index: 200; }
+        .seat-2 { left: 5%; bottom: 35%; }
+        .seat-3 { left: 20%; top: 15%; transform: scale(0.85); }
+        .seat-4 { right: 20%; top: 15%; transform: scale(0.85); }
+        .seat-5 { right: 5%; bottom: 35%; }
 
         /* Counter-tilt for Seat UI to make it look standing on the table */
         .avatar-group, .cards-status, .p-name-plate {
             transform: rotateX(-20deg);
         }
 
-        .avatar-group { position: relative; width: 75px; height: 75px; margin: 0 auto; }
-        .avatar { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--gold); overflow: hidden; background: #1a0505; box-shadow: 0 0 15px rgba(255,193,7,0.4); position: relative; }
+        .avatar-group { position: relative; width: 70px; height: 70px; margin: 0 auto; order: 2; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; border: 2.5px solid var(--gold); overflow: hidden; background: #1a0505; box-shadow: 0 0 15px rgba(255,193,7,0.4); position: relative; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         .active-turn-ring { position: absolute; inset: -8px; border: 4px solid #22c55e; border-radius: 50%; opacity: 0; z-index: 1; pointer-events: none; border-top-color: transparent; }
         .active-turn .active-turn-ring { opacity: 1; animation: ring-spin 1.5s linear infinite; }
         @keyframes ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        .turn-timer-text { position: absolute; top: -15px; right: -15px; width: 28px; height: 28px; background: #ef4444; color: white; border-radius: 50%; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .turn-timer-text { position: absolute; top: -10px; right: -10px; width: 25px; height: 25px; background: #ef4444; color: white; border-radius: 50%; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
-        .p-name-plate { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #450a0a, #000); border-radius: 10px; padding: 2px 8px; border: 1.5px solid var(--gold); min-width: 70px; z-index: 5; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-        .p-name { font-size: 10px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
+        .p-name-plate { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: linear-gradient(to bottom, #450a0a, #000); border-radius: 10px; padding: 1px 8px; border: 1.5px solid var(--gold); min-width: 65px; z-index: 5; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        .p-name { font-size: 9px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
 
         /* CARDS */
-        .cards-status { position: absolute; top: -45px; left: 50%; transform: translateX(-50%); width: 60px; }
-        .status-tag { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: #b91c1c; color: white; font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 4px; border: 1px solid white; text-transform: uppercase; z-index: 20; }
+        .cards-status { position: relative; margin-bottom: 5px; width: 60px; order: 1; z-index: 10; }
+        .status-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #b91c1c; color: white; font-size: 7px; font-weight: 900; padding: 1px 4px; border-radius: 3px; border: 1px solid white; text-transform: uppercase; z-index: 20; }
         .mini-cards { display: flex; justify-content: center; }
         .m-card { width: 22px; height: 32px; background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png'); border: 1px solid #fff; border-radius: 3px; margin: 0 -6px; box-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .m-card:nth-child(1) { transform: rotate(-10deg); }
@@ -352,7 +356,8 @@
 
         async function switchTable() {
             if(!confirm("Switch table?")) return;
-            joinByBoot(1);
+            const currentBoot = currentTable ? currentTable.split('_')[0] : 1;
+            joinByBoot(Number(currentBoot));
         }
 
         async function fetchState() {
@@ -558,11 +563,28 @@
         }
 
         function showResult(t) {
-            const overlay = document.getElementById("resultOverlay"); overlay.style.display = "flex";
-            const me = t.players[myId], win = Object.values(t.players).find(p => p.result === 'WIN');
+            const overlay = document.getElementById("resultOverlay");
+            overlay.style.display = "flex";
+            const me = t.players[myId];
+            const winner = Object.values(t.players).find(p => p.result === 'WIN');
+
             document.getElementById("resTitle").innerText = me.result === 'WIN' ? "YOU WIN!" : "YOU LOSE";
             document.getElementById("resAmount").innerText = me.result === 'WIN' ? `+₹${me.winAmount}` : "Better luck next time!";
-            if(win) document.getElementById("resHand").innerHTML = renderBigCards(win.hand, false);
+
+            // Show cards of all active players who reached showdown
+            let handsHtml = "";
+            Object.values(t.players).forEach(p => {
+                if (p.status !== 'WAITING' && p.status !== 'PACKED') {
+                    handsHtml += `
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; color:var(--gold); margin-bottom:5px;">${p.name}</div>
+                            <div style="display:flex; gap:5px;">${renderBigCards(p.hand, false)}</div>
+                        </div>
+                    `;
+                }
+            });
+            document.getElementById("resHand").innerHTML = handsHtml;
+            document.getElementById("resHand").style.flexDirection = "column";
 
             if (me.result === 'WIN') document.getElementById('snd-win').play().catch(e=>{});
             else document.getElementById('snd-lose').play().catch(e=>{});
