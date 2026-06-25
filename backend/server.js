@@ -612,9 +612,9 @@ app.post("/api/teenpatti/join", auth, async (req, res) => {
         const { tableId, bootAmount } = req.body;
         let result;
         if (bootAmount) {
-            result = teenPattiManager.joinByBoot(Number(bootAmount), req.user.id, user.name);
+            result = teenPattiManager.joinByBoot(Number(bootAmount), req.user.id, user.name, user.avatar);
         } else {
-            result = teenPattiManager.joinTable(tableId, req.user.id, user.name);
+            result = teenPattiManager.joinTable(tableId, req.user.id, user.name, user.avatar);
         }
         res.json(result);
     } catch (error) {

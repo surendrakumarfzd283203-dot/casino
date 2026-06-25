@@ -38,42 +38,54 @@ class TeenPattiTable {
     }
 
     async start() {
-        const playerIds = Object.keys(this.players);
-        if (playerIds.length < 1) return;
+        if (this.isStarting) return;
+        this.isStarting = true;
+        try {
+            const playerIds = Object.keys(this.players);
+            if (playerIds.length < 1) return;
 
-        // Auto-add bot if only 1 player
-        if (playerIds.length === 1) {
-             const botNames = ["Pro_Player", "Lucky_TP", "Golden_Hand", "Casino_King", "Dealer_Bot"];
-             const name = botNames[Math.floor(Math.random() * botNames.length)];
-             const botId = "bot_" + Math.random().toString(36).substring(7);
-             this.players[botId] = { name, hand: [], status: 'WAITING', blind: true, isBot: true };
-        }
-
-        // Collect Boot
-        for (let uid in this.players) {
-            if (!this.players[uid].isBot) {
-                const user = await User.findById(uid);
-                if (!user || user.coins < this.bootAmount) {
-                    delete this.players[uid];
-                    continue;
-                }
-                user.coins -= this.bootAmount;
-                await user.save();
-                this.pot += this.bootAmount;
-                await new Transaction({ user_id: uid, amount: -this.bootAmount, type: 'game_loss', details: `TP Boot T#${this.id}` }).save();
-            } else {
-                this.pot += this.bootAmount;
+            // Auto-add bot if only 1 player
+            if (playerIds.length === 1) {
+                const botNames = ["Pro_Player", "Lucky_TP", "Golden_Hand", "Casino_King", "Dealer_Bot"];
+                const name = botNames[Math.floor(Math.random() * botNames.length)];
+                const botId = "bot_" + Math.random().toString(36).substring(7);
+                this.players[botId] = {
+                    name, hand: [], status: 'WAITING', blind: true, isBot: true,
+                    avatar: `https://i.pravatar.cc/100?u=${botId}`
+                };
             }
-            this.players[uid].status = 'ACTIVE';
-        }
 
-        if (Object.keys(this.players).length < 2) {
-            this.timer = 7;
-            return;
-        }
+            // Collect Boot
+            for (let uid in this.players) {
+                if (this.players[uid].status !== 'WAITING') continue;
+                if (!this.players[uid].isBot) {
+                    const user = await User.findById(uid);
+                    if (!user || user.coins < this.bootAmount) {
+                        delete this.players[uid];
+                        continue;
+                    }
+                    user.coins -= this.bootAmount;
+                    await user.save();
+                    this.pot += this.bootAmount;
+                    await new Transaction({ user_id: uid, amount: -this.bootAmount, type: 'game_loss', details: `TP Boot T#${this.id}` }).save();
+                } else {
+                    this.pot += this.bootAmount;
+                }
+                this.players[uid].status = 'ACTIVE';
+            }
 
-        this.state = 'DEALING';
-        this.timer = 3; // Time for dealing animation
+            if (Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE').length < 2) {
+                this.timer = 7;
+                return;
+            }
+
+            this.state = 'DEALING';
+            this.timer = 3; // Time for dealing animation
+        } catch (e) {
+            console.error("Table Start Error:", e);
+        } finally {
+            this.isStarting = false;
+        }
     }
 
     deal() {
@@ -244,19 +256,21 @@ const tables = {};
 });
 
 setInterval(async () => {
-    for (let id in tables) {
-        const t = tables[id];
-        if (t.timer > 0) t.timer--;
-        else {
-            if (t.state === 'WAITING') await t.start();
-            else if (t.state === 'DEALING') t.deal();
-            else if (t.state === 'SHOW') t.reset();
-            else if (t.state === 'PLAYING') {
-                if (t.sideShowTarget) await t.respondSideShow(t.sideShowTarget, true);
-                else await t.handleMove(t.currentTurn, 'PACK', 0);
+    try {
+        for (let id in tables) {
+            const t = tables[id];
+            if (t.timer > 0) t.timer--;
+            else {
+                if (t.state === 'WAITING') await t.start();
+                else if (t.state === 'DEALING') t.deal();
+                else if (t.state === 'SHOW') t.reset();
+                else if (t.state === 'PLAYING') {
+                    if (t.sideShowTarget) await t.respondSideShow(t.sideShowTarget, true);
+                    else await t.handleMove(t.currentTurn, 'PACK', 0);
+                }
             }
         }
-    }
+    } catch (e) { console.error("TP Interval Error:", e); }
 }, 1000);
 
 module.exports = {
@@ -279,19 +293,19 @@ module.exports = {
             sideShowRequester: t.sideShowRequester, sideShowTarget: t.sideShowTarget
         };
     }),
-    joinTable: (tableId, userId, name) => {
+    joinTable: (tableId, userId, name, avatar) => {
         const t = tables[tableId];
         if (!t) return { success: false, message: "Table not found" };
         if (Object.keys(t.players).length >= 5) return { success: false, message: "Table full" };
-        t.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
+        t.players[userId] = { name, avatar, hand: [], status: 'WAITING', blind: true, isBot: false };
         return { success: true, tableId };
     },
-    joinByBoot: (bootAmount, userId, name) => {
+    joinByBoot: (bootAmount, userId, name, avatar) => {
         const bootTables = Object.values(tables).filter(t => t.bootAmount == bootAmount);
         let targetTable = bootTables.find(t => Object.keys(t.players).length < 5);
         if (!targetTable) return { success: false, message: "All tables full" };
         for(let id in tables) if (tables[id].players[userId]) delete tables[id].players[userId];
-        targetTable.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
+        targetTable.players[userId] = { name, avatar, hand: [], status: 'WAITING', blind: true, isBot: false };
         return { success: true, tableId: targetTable.id };
     },
     makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount),
