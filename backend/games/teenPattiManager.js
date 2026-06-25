@@ -95,7 +95,7 @@ class TeenPattiTable {
         }
     }
 
-    deal() {
+    async deal() {
         const activeUids = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
 
         const suits = ['♠', '♥', '♦', '♣'];
