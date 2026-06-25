@@ -123,11 +123,53 @@ class TeenPattiTable {
             const user = await User.findById(hId);
 
             if (user && user.coins >= 170) {
-                // User has 170+ coins: Admin Bot MUST win
-                const bestBotId = adminBots[0];
-                const s = suits[Math.floor(Math.random()*4)];
-                player.hand = [{suit:s, rank:'Q'}, {suit:s, rank:'J'}, {suit:s, rank:'10'}]; // Sequence
-                this.players[bestBotId].hand = [{suit:'♠', rank:'K'}, {suit:'♥', rank:'K'}, {suit:'♦', rank:'K'}]; // Trio K
+                // User has 170+ coins: One of the Admin Bots MUST win, but randomly and with varied hands.
+
+                // 1. Give human a random "Good" hand (Pair or low Sequence/Color)
+                const goodHands = [
+                    { type: 'Pair', ranks: ['A', 'A', '9'] },
+                    { type: 'Color', ranks: ['A', 'J', '8'] },
+                    { type: 'Sequence', ranks: ['Q', 'J', '10'] }
+                ];
+                const hHandType = goodHands[Math.floor(Math.random() * goodHands.length)];
+                const hSuit = suits[Math.floor(Math.random() * 4)];
+                if (hHandType.type === 'Color') {
+                    player.hand = hHandType.ranks.map(r => ({ suit: hSuit, rank: r }));
+                } else if (hHandType.type === 'Pair') {
+                    player.hand = [{suit: suits[0], rank: hHandType.ranks[0]}, {suit: suits[1], rank: hHandType.ranks[1]}, {suit: suits[2], rank: hHandType.ranks[2]}];
+                } else {
+                    player.hand = hHandType.ranks.map((r, i) => ({ suit: suits[i % 4], rank: r }));
+                }
+
+                // 2. Pick a random Admin Bot to be the winner
+                const winnerBotId = adminBots[Math.floor(Math.random() * adminBots.length)];
+
+                // 3. Give the winner bot a slightly better hand than the human
+                const winnerHands = [
+                    { type: 'Pure Sequence', ranks: ['A', 'K', 'Q'] },
+                    { type: 'Trio', ranks: ['J', 'J', 'J'] },
+                    { type: 'Trio', ranks: ['K', 'K', 'K'] },
+                    { suit: '♠', type: 'Color', ranks: ['A', 'K', 'J'] }
+                ];
+                const wHandType = winnerHands[Math.floor(Math.random() * winnerHands.length)];
+                const wSuit = suits[Math.floor(Math.random() * 4)];
+
+                if (wHandType.type === 'Trio') {
+                    const r = wHandType.ranks[0];
+                    this.players[winnerBotId].hand = [{suit: '♠', rank: r}, {suit: '♥', rank: r}, {suit: '♦', rank: r}];
+                } else if (wHandType.type === 'Pure Sequence') {
+                    this.players[winnerBotId].hand = wHandType.ranks.map(r => ({ suit: wSuit, rank: r }));
+                } else {
+                    this.players[winnerBotId].hand = wHandType.ranks.map(r => ({ suit: wSuit, rank: r }));
+                }
+
+                // 4. Give other bots random average hands
+                adminBots.forEach(bId => {
+                    if (bId !== winnerBotId) {
+                        this.players[bId].hand = deck.splice(0, 3);
+                    }
+                });
+
             } else if (user && user.coins <= 120) {
                 // User has 1-120 coins: Anyone can win
             } else {
