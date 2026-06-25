@@ -223,7 +223,15 @@ module.exports = {
         for(let uid in t.players) {
             const p = t.players[uid];
             const show = (uid === userId || t.state === 'SHOW');
-            plys[uid] = { ...p, hand: show ? p.hand : [], handRank: (!p.blind || t.state==='SHOW') ? evaluateHand(p.hand).rank : null };
+            let hRank = null;
+            if (p.hand && p.hand.length === 3 && (!p.blind || t.state === 'SHOW' || uid === userId)) {
+                try { hRank = evaluateHand(p.hand).rank; } catch(e) {}
+            }
+            plys[uid] = {
+                ...p,
+                hand: show ? p.hand : [],
+                handRank: hRank
+            };
         }
         return { id: t.id, state: t.state, timer: t.timer, pot: t.pot, currentTurn: t.currentTurn, lastBet: t.lastBet, boot: t.bootAmount, players: plys, maxBet: t.maxBet };
     }),
@@ -239,16 +247,19 @@ module.exports = {
         return { success: true, tableId };
     },
     joinByBoot: (bootAmount, userId, name) => {
-        // Find an available table with this boot amount
+        console.log(`User ${name} joining boot ${bootAmount}`);
         const bootTables = Object.values(tables).filter(t => t.bootAmount == bootAmount);
         let targetTable = bootTables.find(t => Object.keys(t.players).length < 5);
 
         if (!targetTable) return { success: false, message: "All tables for this amount are full" };
 
         // Remove from other tables
-        for(let id in tables) delete tables[id].players[userId];
+        for(let id in tables) {
+            if (tables[id].players[userId]) delete tables[id].players[userId];
+        }
 
         targetTable.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
+        console.log(`User joined table ${targetTable.id}`);
         return { success: true, tableId: targetTable.id };
     },
     makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount)
