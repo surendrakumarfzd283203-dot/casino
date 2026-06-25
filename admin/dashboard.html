@@ -490,7 +490,7 @@
 
                     return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background: ${p.status === 'PACKED' ? 'rgba(239, 68, 68, 0.05)' : (p.isBlind ? 'transparent' : 'rgba(16, 185, 129, 0.05)')}">
                         <div style="font-size:10px;">
-                            <b style="color: ${p.isBot ? '#fde047' : '#fff'}">${p.name}</b>
+                            <b style="color: ${p.isAdminBot ? '#ff4d4d' : (p.isBot ? '#fde047' : '#fff')}">${p.name} ${p.isAdminBot ? '[ADMIN]' : ''}</b>
                             <span class="badge" style="background: ${statusColor}; font-size:8px;">${statusLabel}</span>
                             <br><small style="font-family: monospace; font-size:11px;">${cards}</small>
                         </div>

