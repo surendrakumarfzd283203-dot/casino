@@ -8,13 +8,15 @@ class TeenPattiTable {
     constructor(id, bootAmount = 10, maxBet = 100) {
         this.id = id;
         this.players = {}; // { userId: { name, hand, status, blind, isBot, lastAction } }
-        this.state = 'WAITING';
-        this.timer = 15;
+        this.state = 'WAITING'; // WAITING, STARTING, DEALING, PLAYING, SHOW
+        this.timer = 7; // Round start timer
         this.currentTurn = null;
         this.pot = 0;
         this.lastBet = bootAmount;
         this.bootAmount = bootAmount;
         this.maxBet = maxBet;
+        this.sideShowRequester = null;
+        this.sideShowTarget = null;
         this.history = [];
     }
 
@@ -24,24 +26,26 @@ class TeenPattiTable {
             this.players[uid].status = 'WAITING';
             this.players[uid].blind = true;
             this.players[uid].result = null;
+            this.players[uid].winAmount = 0;
         }
         this.pot = 0;
         this.lastBet = this.bootAmount;
         this.state = 'WAITING';
-        this.timer = 15;
+        this.timer = 7;
         this.currentTurn = null;
+        this.sideShowRequester = null;
+        this.sideShowTarget = null;
     }
 
     async start() {
         const playerIds = Object.keys(this.players);
         if (playerIds.length < 1) return;
 
-        // If only 1 human player, add a bot from admin side
-        const humanPlayers = playerIds.filter(id => !this.players[id].isBot);
-        if (humanPlayers.length === playerIds.length && playerIds.length < 5) {
+        // Auto-add bot if only 1 player
+        if (playerIds.length === 1) {
              const botNames = ["Pro_Player", "Lucky_TP", "Golden_Hand", "Casino_King", "Dealer_Bot"];
              const name = botNames[Math.floor(Math.random() * botNames.length)];
-             const botId = "admin_bot_" + Math.random().toString(36).substring(7);
+             const botId = "bot_" + Math.random().toString(36).substring(7);
              this.players[botId] = { name, hand: [], status: 'WAITING', blind: true, isBot: true };
         }
 
@@ -64,11 +68,12 @@ class TeenPattiTable {
         }
 
         if (Object.keys(this.players).length < 2) {
-            this.timer = 15;
+            this.timer = 7;
             return;
         }
 
-        this.deal();
+        this.state = 'DEALING';
+        this.timer = 3; // Time for dealing animation
     }
 
     deal() {
@@ -84,22 +89,19 @@ class TeenPattiTable {
             this.players[uid].blind = true;
         }
 
-        // RIGGING: If User vs Bot (Admin), Admin Bot MUST WIN
+        // Rigging: Admin bot always wins when playing against humans alone
         const bots = activeUids.filter(id => this.players[id].isBot);
         const humans = activeUids.filter(id => !this.players[id].isBot);
-
         if (bots.length > 0 && humans.length > 0) {
             let bestHumanScore = -1;
             humans.forEach(h => {
                 const score = evaluateHand(this.players[h].hand).score;
                 if(score > bestHumanScore) bestHumanScore = score;
             });
-
             bots.forEach(b => {
-                let botHand = evaluateHand(this.players[b].hand);
-                // If bot is losing, give it a better hand (rigging)
-                if (botHand.score <= bestHumanScore) {
-                    this.players[b].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'K'}]; // High Pair/Trio
+                let botScore = evaluateHand(this.players[b].hand).score;
+                if (botScore <= bestHumanScore) {
+                    this.players[b].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'K'}];
                 }
             });
         }
@@ -110,7 +112,9 @@ class TeenPattiTable {
     }
 
     async handleMove(userId, move, amount) {
-        if (this.state !== 'PLAYING') return { success: false };
+        if (this.state !== 'PLAYING') return { success: false, message: "Game not in playing state" };
+        if (this.sideShowTarget) return { success: false, message: "Side show request pending" };
+
         const player = this.players[userId];
         if (!player || player.status !== 'ACTIVE') return { success: false };
 
@@ -123,11 +127,9 @@ class TeenPattiTable {
 
         if (move === 'PACK') {
             player.status = 'PACKED';
-        } else if (move === 'CHAAL' || move === 'RAISE' || move === 'SHOW') {
-            // Logic for regular Chaal vs Raise (amount provided is the unit bet)
-            let betLevel = amount || this.lastBet;
+        } else if (move === 'CHAAL' || move === 'SHOW') {
+            let betLevel = Math.min(amount || this.lastBet, this.maxBet);
             if (betLevel < this.lastBet) betLevel = this.lastBet;
-            if (betLevel > this.maxBet) betLevel = this.maxBet;
 
             const totalToPay = player.blind ? betLevel : betLevel * 2;
 
@@ -137,7 +139,7 @@ class TeenPattiTable {
                 user.coins -= totalToPay;
                 await user.save();
                 this.pot += totalToPay;
-                await new Transaction({ user_id: userId, amount: -totalToPay, type: 'game_loss', details: `TP ${move} T#${this.id}` }).save();
+                await new Transaction({ user_id: userId, amount: -totalToPay, type: 'game_loss', details: `TP Bet T#${this.id}` }).save();
             } else {
                 this.pot += totalToPay;
             }
@@ -147,17 +149,39 @@ class TeenPattiTable {
                 return { success: true };
             }
         } else if (move === 'SIDESHOW') {
+            if (player.blind) return { success: false, message: "You must see your cards first" };
             const active = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
             const myIdx = active.indexOf(userId);
             const targetId = active[(myIdx - 1 + active.length) % active.length];
-            if (this.players[targetId] && !this.players[targetId].blind) {
-                const myScore = evaluateHand(player.hand).score;
-                const targetScore = evaluateHand(this.players[targetId].hand).score;
-                if (myScore > targetScore) this.players[targetId].status = 'PACKED';
-                else player.status = 'PACKED';
+
+            if (this.players[targetId].blind) return { success: false, message: "Target player is blind" };
+
+            this.sideShowRequester = userId;
+            this.sideShowTarget = targetId;
+            this.timer = 15; // Time for target to respond
+
+            if (this.players[targetId].isBot) {
+                setTimeout(() => this.respondSideShow(targetId, true), 2000);
             }
+            return { success: true };
         }
 
+        this.nextTurn();
+        return { success: true };
+    }
+
+    async respondSideShow(userId, accepted) {
+        if (!this.sideShowTarget || this.sideShowTarget !== userId) return { success: false };
+
+        if (accepted) {
+            const reqScore = evaluateHand(this.players[this.sideShowRequester].hand).score;
+            const tarScore = evaluateHand(this.players[this.sideShowTarget].hand).score;
+            if (reqScore > tarScore) this.players[this.sideShowTarget].status = 'PACKED';
+            else this.players[this.sideShowRequester].status = 'PACKED';
+        }
+
+        this.sideShowRequester = null;
+        this.sideShowTarget = null;
         this.nextTurn();
         return { success: true };
     }
@@ -175,9 +199,13 @@ class TeenPattiTable {
         if (this.players[this.currentTurn].isBot) {
             setTimeout(() => {
                 const b = this.players[this.currentTurn];
-                if (b.blind && Math.random() > 0.5) b.blind = false;
-                this.handleMove(this.currentTurn, Math.random() > 0.9 ? 'PACK' : (active.length === 2 && Math.random() > 0.8 ? 'SHOW' : 'CHAAL'), this.lastBet);
-            }, 2000);
+                if (b.blind && Math.random() > 0.4) b.blind = false;
+                const activeCount = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE').length;
+                let move = 'CHAAL';
+                if (Math.random() > 0.9) move = 'PACK';
+                else if (activeCount === 2 && Math.random() > 0.7) move = 'SHOW';
+                this.handleMove(this.currentTurn, move, this.lastBet);
+            }, 3000);
         }
     }
 
@@ -208,12 +236,10 @@ class TeenPattiTable {
 }
 
 const tables = {};
-// Create 5 tables for each boot amount: 1, 5, 10, 50, 100
 [1, 5, 10, 50, 100].forEach(boot => {
-    const maxB = boot * 10;
     for(let i=1; i<=5; i++) {
         const tId = `${boot}_${i}`;
-        tables[tId] = new TeenPattiTable(tId, boot, maxB);
+        tables[tId] = new TeenPattiTable(tId, boot, boot * 10);
     }
 });
 
@@ -223,8 +249,12 @@ setInterval(async () => {
         if (t.timer > 0) t.timer--;
         else {
             if (t.state === 'WAITING') await t.start();
+            else if (t.state === 'DEALING') t.deal();
             else if (t.state === 'SHOW') t.reset();
-            else if (t.state === 'PLAYING') await t.handleMove(t.currentTurn, 'PACK', 0);
+            else if (t.state === 'PLAYING') {
+                if (t.sideShowTarget) await t.respondSideShow(t.sideShowTarget, true);
+                else await t.handleMove(t.currentTurn, 'PACK', 0);
+            }
         }
     }
 }, 1000);
@@ -234,46 +264,36 @@ module.exports = {
         const plys = {};
         for(let uid in t.players) {
             const p = t.players[uid];
+            // Show hand if it's me, or game is in SHOW state, or it's a sideshow in progress (optional)
             const show = (uid === userId || t.state === 'SHOW');
             let hRank = null;
-            // Only calculate and send hand rank if the player has seen their cards or it's showdown
             if (!p.blind || t.state === 'SHOW') {
                 try { hRank = evaluateHand(p.hand).rank; } catch(e) {}
             }
-            plys[uid] = {
-                ...p,
-                hand: show ? p.hand : [],
-                handRank: hRank
-            };
+            plys[uid] = { ...p, hand: show ? p.hand : [], handRank: hRank };
         }
-        return { id: t.id, state: t.state, timer: t.timer, pot: t.pot, currentTurn: t.currentTurn, lastBet: t.lastBet, boot: t.bootAmount, players: plys, maxBet: t.maxBet };
+        return {
+            id: t.id, state: t.state, timer: t.timer, pot: t.pot,
+            currentTurn: t.currentTurn, lastBet: t.lastBet, boot: t.bootAmount,
+            players: plys, maxBet: t.maxBet,
+            sideShowRequester: t.sideShowRequester, sideShowTarget: t.sideShowTarget
+        };
     }),
     joinTable: (tableId, userId, name) => {
         const t = tables[tableId];
         if (!t) return { success: false, message: "Table not found" };
         if (Object.keys(t.players).length >= 5) return { success: false, message: "Table full" };
-
-        // Remove from other tables
-        for(let id in tables) delete tables[id].players[userId];
-
         t.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
         return { success: true, tableId };
     },
     joinByBoot: (bootAmount, userId, name) => {
-        console.log(`User ${name} joining boot ${bootAmount}`);
         const bootTables = Object.values(tables).filter(t => t.bootAmount == bootAmount);
         let targetTable = bootTables.find(t => Object.keys(t.players).length < 5);
-
-        if (!targetTable) return { success: false, message: "All tables for this amount are full" };
-
-        // Remove from other tables
-        for(let id in tables) {
-            if (tables[id].players[userId]) delete tables[id].players[userId];
-        }
-
+        if (!targetTable) return { success: false, message: "All tables full" };
+        for(let id in tables) if (tables[id].players[userId]) delete tables[id].players[userId];
         targetTable.players[userId] = { name, hand: [], status: 'WAITING', blind: true, isBot: false };
-        console.log(`User joined table ${targetTable.id}`);
         return { success: true, tableId: targetTable.id };
     },
-    makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount)
+    makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount),
+    respondSideShow: (userId, accepted, tableId) => tables[tableId].respondSideShow(userId, accepted)
 };

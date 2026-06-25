@@ -33,8 +33,10 @@
         .dealer-box { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 10; }
         .dealer-img { width: 120px; filter: drop-shadow(0 10px 20px black); }
 
-        .pot-container { position: absolute; top: 45%; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 5px 20px; border-radius: 25px; border: 1.5px solid var(--gold); z-index: 20; }
+        .pot-container { position: absolute; top: 45%; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 5px 20px; border-radius: 25px; border: 1px solid var(--gold); z-index: 20; }
         .pot-amount { font-size: 22px; font-weight: 900; color: var(--gold); }
+
+        .round-timer { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 48px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #f00; z-index: 1000; display: none; }
 
         /* SEATS POSITIONED FOR PORTRAIT */
         .player-seat { position: absolute; width: 90px; text-align: center; z-index: 100; transition: 0.5s; }
@@ -60,6 +62,8 @@
         .status-tag { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: #b91c1c; color: white; font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 4px; border: 1px solid white; text-transform: uppercase; z-index: 20; }
         .mini-cards { display: flex; justify-content: center; }
         .m-card { width: 22px; height: 32px; background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png'); border: 1px solid #fff; border-radius: 3px; margin: 0 -6px; box-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .m-card:nth-child(1) { transform: rotate(-10deg); }
+        .m-card:nth-child(3) { transform: rotate(10deg); }
 
         /* MY HAND (VISIBLE IN PORTRAIT) */
         .my-hand-container { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); z-index: 300; pointer-events: none; }
@@ -91,6 +95,10 @@
         .emoji-bar { position: absolute; right: 10px; top: -60px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
         .emoji-icon { font-size: 24px; background: rgba(0,0,0,0.6); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1.5px solid var(--gold); cursor: pointer; }
 
+        /* SIDESHOW OVERLAY */
+        #sideShowOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 8000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .side-card { background: #1e293b; padding: 25px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; }
+
         /* RESULT */
         #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 7000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .res-card { background: radial-gradient(circle, #7c2d12, #1a0505); padding: 40px; border-radius: 30px; border: 3px solid var(--gold); text-align: center; width: 85%; max-width: 450px; box-shadow: 0 0 60px rgba(251,191,36,0.3); }
@@ -108,6 +116,7 @@
     <audio id="snd-bet" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
     <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
     <audio id="snd-turn" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <audio id="snd-tick" src="https://assets.mixkit.co/active_storage/sfx/2564/2564-preview.mp3"></audio>
 
     <div id="lobby">
         <div class="lobby-header">
@@ -153,6 +162,8 @@
         </div>
         <div id="seatsContainer"></div>
 
+        <div class="round-timer" id="roundTimer">7</div>
+
         <div class="my-hand-container">
             <div class="my-hand" id="myHandArea"></div>
         </div>
@@ -179,6 +190,16 @@
             <button class="btn-act btn-show" id="showBtn" onclick="handleMove('SHOW')" style="display: none;">
                 <span>Show</span><span class="btn-sub" id="showAmt">₹0</span>
             </button>
+        </div>
+    </div>
+
+    <div id="sideShowOverlay">
+        <div class="side-card">
+            <h3 id="sideRequesterName">Player wants a Side Show</h3>
+            <div style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
+                <button class="btn-act btn-chaal" onclick="respondSideShow(true)">ACCEPT</button>
+                <button class="btn-act btn-pack" onclick="respondSideShow(false)">REJECT</button>
+            </div>
         </div>
     </div>
 
@@ -227,7 +248,7 @@
 
         async function switchTable() {
             if(!confirm("Switch table?")) return;
-            joinByBoot(1); // Defaulting for simple switch, server finds right boot
+            joinByBoot(1);
         }
 
         async function fetchState() {
@@ -245,9 +266,30 @@
         function updateUI(t) {
             if (!myId) return;
             document.getElementById("potVal").innerText = t.pot;
+
+            // Round Timer UI
+            const rt = document.getElementById("roundTimer");
+            if (t.state === 'WAITING' || t.state === 'STARTING') {
+                rt.style.display = "block";
+                rt.innerText = t.timer;
+                if (t.timer > 0) document.getElementById('snd-tick').play().catch(e=>{});
+            } else {
+                rt.style.display = "none";
+            }
+
             if (t.currentTurn === myId && lastTurn !== myId) document.getElementById('snd-turn').play().catch(e=>{});
             lastTurn = t.currentTurn;
             maxBetUnit = t.maxBet;
+
+            // Side Show Logic
+            const ssOverlay = document.getElementById("sideShowOverlay");
+            if (t.sideShowTarget === myId) {
+                ssOverlay.style.display = "flex";
+                const req = t.players[t.sideShowRequester];
+                document.getElementById("sideRequesterName").innerText = `${req.name} wants a Side Show`;
+            } else {
+                ssOverlay.style.display = "none";
+            }
 
             const container = document.getElementById("seatsContainer");
             container.innerHTML = "";
@@ -262,14 +304,16 @@
                 const seat = document.createElement("div");
                 seat.className = `player-seat seat-${pos} ${t.currentTurn === uid ? 'active-turn' : ''}`;
                 const status = p.status === 'PACKED' ? 'PACKED' : (p.blind && t.state==='PLAYING' ? 'BLIND' : 'SEEN');
-                const showCards = p.status !== 'WAITING' && p.status !== 'PACKED';
+                const showCardsOnTable = p.status !== 'WAITING' && p.status !== 'PACKED';
 
                 if (pos !== "me") {
                     seat.innerHTML = `
                         <div class="cards-status">
-                            ${showCards ? `<div class="status-tag" style="background:${status==='BLIND'?'#000':'#15803d'}">${status}</div>` : ''}
+                            ${showCardsOnTable ? `<div class="status-tag" style="background:${status==='BLIND'?'#000':'#15803d'}">${status}</div>` : ''}
                             ${p.status === 'PACKED' ? `<div class="status-tag">PACKED</div>` : ''}
-                            <div class="mini-cards"><div class="m-card"></div><div class="m-card"></div><div class="m-card"></div></div>
+                            <div class="mini-cards">
+                                ${t.state === 'SHOW' ? renderHandIcons(p.hand) : '<div class="m-card"></div><div class="m-card"></div><div class="m-card"></div>'}
+                            </div>
                         </div>
                         <div class="avatar-group">
                             <div class="timer-overlay"></div>
@@ -320,7 +364,15 @@
             if (!hand || hand.length === 0) return Array(3).fill('<div class="card-big back"></div>').join('');
             return hand.map(c => {
                 const color = (c.suit==='♥'||c.suit==='♦') ? '#ef4444' : 'black';
-                return `<div class="card-big ${hidden?'back':''}" style="color:${color}"><div>${hidden?'':c.rank}</div><div>${hidden?'':c.suit}</div></div>`;
+                return `<div class="card-big ${hidden?'back':''}" style="color:${color}"><div style="font-size:22px;line-height:1;">${hidden?'':c.rank}</div><div style="font-size:32px;line-height:1;">${hidden?'':c.suit}</div></div>`;
+            }).join('');
+        }
+
+        function renderHandIcons(hand) {
+            if (!hand || hand.length === 0) return '';
+            return hand.map(c => {
+                const color = (c.suit==='♥'||c.suit==='♦') ? '#ef4444' : 'black';
+                return `<div class="m-card" style="background:#fff; color:${color}; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; font-weight:900;"><div>${c.rank}</div><div>${c.suit}</div></div>`;
             }).join('');
         }
 
@@ -338,7 +390,15 @@
             fetchState();
         }
 
-        function sendEmoji(e) { console.log("Emoji sent:", e); alert("Emoji sent: " + e); }
+        async function respondSideShow(accepted) {
+            await fetch(`${API_URL}/api/teenpatti/sideshow-response`, {
+                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: currentTable, accepted })
+            });
+            fetchState();
+        }
+
+        function sendEmoji(e) { console.log("Emoji sent:", e); }
 
         function showResult(t) {
             const overlay = document.getElementById("resultOverlay"); overlay.style.display = "flex";
