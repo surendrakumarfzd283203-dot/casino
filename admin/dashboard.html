@@ -479,12 +479,19 @@
                 const players = Object.keys(t.players).map(uid => {
                     const p = t.players[uid];
                     const cards = p.hand.length > 0 ? p.hand.map(c => `<span style="color:${(c.suit==='♥'||c.suit==='♦')?'#ef4444':'#fff'}">${c.rank}${c.suit}</span>`).join(' ') : '---';
-                    const canEdit = p.isBlind || t.state === 'WAITING' || t.state === 'DEALING';
+                    const canEdit = p.status === 'ACTIVE' && (p.isBlind || t.state === 'WAITING' || t.state === 'DEALING');
 
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background: ${p.isBlind ? 'transparent' : 'rgba(16, 185, 129, 0.05)'}">
+                    let statusLabel = p.status;
+                    if (p.status === 'ACTIVE') {
+                        statusLabel = p.isBlind ? 'BLIND' : 'SEEN';
+                    }
+
+                    const statusColor = p.status === 'PACKED' ? '#ef4444' : (p.isBlind ? '#334155' : '#10b981');
+
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background: ${p.status === 'PACKED' ? 'rgba(239, 68, 68, 0.05)' : (p.isBlind ? 'transparent' : 'rgba(16, 185, 129, 0.05)')}">
                         <div style="font-size:10px;">
                             <b style="color: ${p.isBot ? '#fde047' : '#fff'}">${p.name}</b>
-                            <span class="badge" style="background: ${p.isBlind ? '#334155' : '#10b981'}; font-size:8px;">${p.isBlind ? 'BLIND' : 'SEEN'}</span>
+                            <span class="badge" style="background: ${statusColor}; font-size:8px;">${statusLabel}</span>
                             <br><small style="font-family: monospace; font-size:11px;">${cards}</small>
                         </div>
                         <button class="action-btn btn-edit" style="padding:4px 8px; font-size:9px; opacity: ${canEdit ? 1 : 0.4}"

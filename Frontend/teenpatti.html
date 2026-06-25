@@ -162,10 +162,12 @@
         .p-name { font-size: 10px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* CARDS */
-        .cards-status { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 2px; }
-        .status-tag { background: #000; color: white; font-size: 8px; font-weight: 900; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--gold); text-transform: uppercase; margin-bottom: 2px; }
+        .cards-status { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 2px; position: relative; }
+        .status-tag { background: #000; color: white; font-size: 8px; font-weight: 900; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--gold); text-transform: uppercase; margin-bottom: 2px; z-index: 10; }
+        .rank-tag { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: var(--gold); font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--gold); white-space: nowrap; z-index: 20; }
+        .packed-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); border-radius: 3px; z-index: 5; }
 
-        .mini-cards { display: flex; justify-content: center; }
+        .mini-cards { display: flex; justify-content: center; transition: 0.3s; }
         .m-card {
             width: 25px; height: 35px;
             background: white; border: 1px solid #999; border-radius: 3px;
@@ -174,6 +176,8 @@
             font-size: 10px; font-weight: 950;
         }
         .m-card.back { background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png'); border-color: #fff; }
+        .packed .m-card { opacity: 0.5; filter: grayscale(1); }
+        .packed .status-tag { background: #ef4444; border-color: #fff; }
 
         /* MY HAND (Special styling for grouped view) */
         .my-hand-grouped { display: flex; justify-content: center; align-items: center; position: relative; }
@@ -187,8 +191,10 @@
             pointer-events: auto;
             padding: 5px;
             box-sizing: border-box;
+            transition: 0.3s;
         }
         .card-big.back { background: #b91c1c url('https://www.transparenttextures.com/patterns/poker-qr.png'); border-color: #fff; }
+        .packed .card-big { opacity: 0.5; filter: grayscale(1); }
 
         .c-corner { position: absolute; font-size: 14px; line-height: 1; }
         .c-top { top: 4px; left: 4px; text-align: center; }
@@ -514,6 +520,13 @@
                 const status = p.status === 'PACKED' ? 'PACKED' : (p.blind && !isShowdown ? 'BLIND' : 'SEEN');
                 const showCardsOnTable = p.status !== 'WAITING' && p.status !== 'PACKED';
 
+                const seatClasses = [
+                    'player-seat',
+                    `seat-${pos}`,
+                    t.currentTurn === uid ? 'active-turn' : '',
+                    p.status === 'PACKED' ? 'packed' : ''
+                ].join(' ');
+
                 let resultLabel = "";
                 if (isShowdown && p.result) {
                     resultLabel = `<div class="showdown-label label-${p.result.toLowerCase()}">${p.result}</div>`;
@@ -528,9 +541,11 @@
                 }
 
                 if (pos !== "me") {
+                    seat.className = seatClasses;
                     seat.innerHTML = `
                         ${resultLabel}
                         <div class="cards-status">
+                            ${(p.status === 'ACTIVE' && !p.blind) || isShowdown ? `<div class="rank-tag">${p.handRank || ''}</div>` : ''}
                             ${showCardsOnTable ? `<div class="status-tag" style="background:${status==='BLIND'?'#000':'#15803d'}">${status}</div>` : ''}
                             ${p.status === 'PACKED' ? `<div class="status-tag">PACKED</div>` : ''}
                             <div class="mini-cards">
@@ -548,6 +563,7 @@
                     seat.appendChild(namePlate);
                 } else {
                     const isTurn = t.currentTurn === myId && t.state === 'PLAYING' && p.status === 'ACTIVE';
+                    seat.className = seatClasses;
                     seat.innerHTML = `
                         ${resultLabel}
                         <div class="my-hand-grouped">
