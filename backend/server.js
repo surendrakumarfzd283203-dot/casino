@@ -197,9 +197,22 @@ app.get("/api/profile", auth, async (req, res) => {
 
 app.post("/api/update-profile", auth, async (req, res) => {
     try {
-        const { name } = req.body;
-        await User.findByIdAndUpdate(req.user.id, { name });
+        const { name, avatar } = req.body;
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (avatar) updateData.avatar = avatar;
+        await User.findByIdAndUpdate(req.user.id, updateData);
         res.json({ success: true, message: "Profile Updated" });
+    } catch (error) {
+        res.json({ success: false });
+    }
+});
+
+app.post("/api/profile/update", auth, async (req, res) => {
+    try {
+        const { avatar } = req.body;
+        await User.findByIdAndUpdate(req.user.id, { avatar });
+        res.json({ success: true, message: "Avatar Updated" });
     } catch (error) {
         res.json({ success: false });
     }
