@@ -123,9 +123,11 @@ class TeenPattiTable {
 
         if (move === 'PACK') {
             player.status = 'PACKED';
-        } else if (move === 'CHAAL' || move === 'SHOW') {
-            let betLevel = Math.min(amount, this.maxBet);
+        } else if (move === 'CHAAL' || move === 'RAISE' || move === 'SHOW') {
+            // Logic for regular Chaal vs Raise (amount provided is the unit bet)
+            let betLevel = amount || this.lastBet;
             if (betLevel < this.lastBet) betLevel = this.lastBet;
+            if (betLevel > this.maxBet) betLevel = this.maxBet;
 
             const totalToPay = player.blind ? betLevel : betLevel * 2;
 
@@ -135,7 +137,7 @@ class TeenPattiTable {
                 user.coins -= totalToPay;
                 await user.save();
                 this.pot += totalToPay;
-                await new Transaction({ user_id: userId, amount: -totalToPay, type: 'game_loss', details: `TP Bet T#${this.id}` }).save();
+                await new Transaction({ user_id: userId, amount: -totalToPay, type: 'game_loss', details: `TP ${move} T#${this.id}` }).save();
             } else {
                 this.pot += totalToPay;
             }
@@ -143,6 +145,16 @@ class TeenPattiTable {
             if (move === 'SHOW') {
                 await this.resolve();
                 return { success: true };
+            }
+        } else if (move === 'SIDESHOW') {
+            const active = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
+            const myIdx = active.indexOf(userId);
+            const targetId = active[(myIdx - 1 + active.length) % active.length];
+            if (this.players[targetId] && !this.players[targetId].blind) {
+                const myScore = evaluateHand(player.hand).score;
+                const targetScore = evaluateHand(this.players[targetId].hand).score;
+                if (myScore > targetScore) this.players[targetId].status = 'PACKED';
+                else player.status = 'PACKED';
             }
         }
 
