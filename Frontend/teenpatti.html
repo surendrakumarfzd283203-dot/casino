@@ -303,7 +303,10 @@
             <i class="fas fa-coins" style="color:var(--gold)"></i>
             ₹<span id="balance">0.00</span>
         </div>
-        <div class="circle-btn" onclick="switchTable()"><i class="fas fa-random"></i></div>
+        <div style="display:flex; gap:10px;">
+            <div class="circle-btn" onclick="switchTable()"><i class="fas fa-random"></i></div>
+            <div class="circle-btn" onclick="openAv()"><i class="fas fa-ellipsis-v"></i></div>
+        </div>
     </div>
 
     <div class="game-area">
@@ -472,11 +475,14 @@
                 const seat = document.createElement("div");
                 seat.className = `player-seat seat-${pos} ${t.currentTurn === uid ? 'active-turn' : ''}`;
 
-                // Clicking own avatar opens selector, others open emoji popup
-                seat.onclick = (e) => {
-                    if (uid === myId) openAv();
-                    else openEmojiPopup(uid);
-                };
+                // Clicking avatar opens selector, name opens emoji popup
+                const avatarGroup = document.createElement("div");
+                avatarGroup.className = "avatar-group";
+                avatarGroup.onclick = (e) => { e.stopPropagation(); if (uid === myId) openAv(); };
+
+                const namePlate = document.createElement("div");
+                namePlate.className = "p-name-plate";
+                namePlate.onclick = (e) => { e.stopPropagation(); if (uid !== myId) openEmojiPopup(uid); };
 
                 const isShowdown = t.state === 'SHOW';
                 const status = p.status === 'PACKED' ? 'PACKED' : (p.blind && !isShowdown ? 'BLIND' : 'SEEN');
@@ -505,12 +511,15 @@
                                 ${isShowdown ? renderHandIcons(p.hand) : (showCardsOnTable ? '<div class="m-card back"></div><div class="m-card back"></div><div class="m-card back"></div>' : '')}
                             </div>
                         </div>
-                        <div class="avatar-group">
-                            <div class="active-turn-ring"></div>
-                            <div class="avatar">${avatarHtml}</div>
-                        </div>
-                        <div class="p-name-plate"><div class="p-name">${p.name}</div></div>
                     `;
+                    avatarGroup.innerHTML = `
+                        ${t.currentTurn === uid ? `<div class="turn-timer-text">${t.timer}</div>` : ''}
+                        <div class="active-turn-ring"></div>
+                        <div class="avatar">${avatarHtml}</div>
+                    `;
+                    namePlate.innerHTML = `<div class="p-name">${p.name}</div>`;
+                    seat.appendChild(avatarGroup);
+                    seat.appendChild(namePlate);
                 } else {
                     const isTurn = t.currentTurn === myId && t.state === 'PLAYING' && p.status === 'ACTIVE';
                     seat.innerHTML = `
@@ -518,14 +527,17 @@
                         <div class="my-hand-grouped">
                             ${renderBigCards(p.hand, p.blind && t.state !== 'SHOW')}
                             ${(!p.blind || isShowdown) && p.handRank ? `<div class="rank-label">${p.handRank}</div>` : ''}
-                            ${(p.blind && (t.state === 'PLAYING' || t.state === 'DEALING')) ? `<div class="see-btn" onclick="handleMove('SEE')">SEE</div>` : ''}
+                            ${(p.blind && (t.state === 'PLAYING' || t.state === 'DEALING')) ? `<div class="see-btn" onclick="event.stopPropagation(); handleMove('SEE')">SEE</div>` : ''}
                         </div>
-                        <div class="avatar-group">
-                            <div class="active-turn-ring"></div>
-                            <div class="avatar">${avatarHtml}</div>
-                        </div>
-                        <div class="p-name-plate"><div class="p-name">${p.name}</div></div>
                     `;
+                    avatarGroup.innerHTML = `
+                        ${t.currentTurn === uid ? `<div class="turn-timer-text">${t.timer}</div>` : ''}
+                        <div class="active-turn-ring"></div>
+                        <div class="avatar">${avatarHtml}</div>
+                    `;
+                    namePlate.innerHTML = `<div class="p-name">${p.name}</div>`;
+                    seat.appendChild(avatarGroup);
+                    seat.appendChild(namePlate);
 
                     const ctrl = document.getElementById("controls");
                     ctrl.style.opacity = isTurn ? "1" : "0.5";
@@ -645,15 +657,20 @@
             document.getElementById("resTitle").innerText = me.result === 'WIN' ? "YOU WIN!" : "YOU LOSE";
             document.getElementById("resAmount").innerText = me.result === 'WIN' ? `+₹${me.winAmount}` : "Better luck next time!";
 
-            // Show hands face to face
+            // Show hands face to face (Winner vs Runner-up/Loser)
             let handsHtml = "";
             const winners = Object.keys(t.players).filter(uid => t.players[uid].result === 'WIN');
             const losers = Object.keys(t.players).filter(uid => t.players[uid].result === 'LOSE' && t.players[uid].hand && t.players[uid].hand.length > 0);
 
-            [...winners, ...losers].forEach(uid => {
+            // Only take top 2 for face-to-face
+            const displayUids = [...winners, ...losers].slice(0, 2);
+
+            displayUids.forEach((uid, idx) => {
                 const p = t.players[uid];
+                const vsText = idx === 1 ? '<div style="font-size:24px; color:#fff; margin: 10px 0;">VS</div>' : '';
                 handsHtml += `
-                    <div style="margin: 15px 0; display: flex; flex-direction: column; align-items: center;">
+                    ${vsText}
+                    <div style="margin: 5px 0; display: flex; flex-direction: column; align-items: center;">
                         <div style="font-size:14px; color:var(--gold); font-weight:900; margin-bottom:5px;">${p.name} ${p.result === 'WIN' ? '🏆' : ''}</div>
                         <div style="display:flex; justify-content:center; gap:5px;">${renderBigCards(p.hand, false)}</div>
                         <div style="font-size:12px; color:#fff; margin-top:3px; font-weight:700;">${p.handRank || ''}</div>

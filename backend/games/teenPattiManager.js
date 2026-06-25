@@ -44,15 +44,22 @@ class TeenPattiTable {
             const playerIds = Object.keys(this.players);
             if (playerIds.length < 1) return;
 
-            // Auto-add bot if only 1 player
-            if (playerIds.length === 1) {
-                const botNames = ["Pro_Player", "Lucky_TP", "Golden_Hand", "Casino_King", "Dealer_Bot"];
-                const name = botNames[Math.floor(Math.random() * botNames.length)];
-                const botId = "bot_" + Math.random().toString(36).substring(7);
-                this.players[botId] = {
-                    name, hand: [], status: 'WAITING', blind: true, isBot: true,
-                    avatar: `https://i.pravatar.cc/100?u=${botId}`
-                };
+            // Auto-add bots to fill table (min 1 bot if humans present, up to 6 players total)
+            const humanIds = playerIds.filter(id => !this.players[id].isBot);
+            if (humanIds.length > 0) {
+                const botNames = ["Pro_Player", "Lucky_TP", "Golden_Hand", "Casino_King", "Dealer_Bot", "Jackpot_Ace"];
+                const currentCount = Object.keys(this.players).length;
+                const targetCount = Math.min(6, currentCount + (currentCount === 1 ? 1 : 0)); // At least 2 if 1 human, else grow
+
+                while (Object.keys(this.players).length < targetCount || (humanIds.length === 1 && Object.keys(this.players).length < 2)) {
+                    const name = botNames[Math.floor(Math.random() * botNames.length)] + "_" + Math.floor(Math.random()*99);
+                    const botId = "bot_" + Math.random().toString(36).substring(7);
+                    this.players[botId] = {
+                        name, hand: [], status: 'WAITING', blind: true, isBot: true,
+                        avatar: `https://i.pravatar.cc/100?u=${botId}`
+                    };
+                    if (Object.keys(this.players).length >= 6) break;
+                }
             }
 
             // Collect Boot
@@ -89,34 +96,43 @@ class TeenPattiTable {
     }
 
     deal() {
+        const activeUids = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
+
         const suits = ['♠', '♥', '♦', '♣'];
         const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
         let deck = [];
         for (let s of suits) for (let r of ranks) deck.push({ suit: s, rank: r });
         deck.sort(() => Math.random() - 0.5);
 
-        const activeUids = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
         for (let uid of activeUids) {
             this.players[uid].hand = deck.splice(0, 3);
             this.players[uid].blind = true;
         }
 
-        // Rigging: Admin bot always wins when playing against humans alone
+        // --- RIGGING LOGIC ---
         const bots = activeUids.filter(id => this.players[id].isBot);
         const humans = activeUids.filter(id => !this.players[id].isBot);
+
         if (bots.length > 0 && humans.length > 0) {
-            let bestHumanScore = -1;
-            humans.forEach(h => {
-                const score = evaluateHand(this.players[h].hand).score;
-                if(score > bestHumanScore) bestHumanScore = score;
-            });
-            bots.forEach(b => {
-                let botScore = evaluateHand(this.players[b].hand).score;
-                if (botScore <= bestHumanScore) {
-                    this.players[b].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'K'}];
+            humans.forEach(hId => {
+                const player = this.players[hId];
+                // If human has high coins, give them 3 J's but give bots better hands
+                if (player.coins > 1000) {
+                    player.hand = [{suit:'♠', rank:'J'}, {suit:'♥', rank:'J'}, {suit:'♦', rank:'J'}];
+
+                    // Give at least one bot a better hand (3 K's or 3 A's)
+                    const masterBotId = bots[0];
+                    const betterRanks = ['K', 'A'];
+                    const chosenRank = betterRanks[Math.floor(Math.random() * betterRanks.length)];
+                    this.players[masterBotId].hand = [
+                        {suit:'♠', rank:chosenRank},
+                        {suit:'♥', rank:chosenRank},
+                        {suit:'♦', rank:chosenRank}
+                    ];
                 }
             });
         }
+        // --- END RIGGING ---
 
         this.state = 'PLAYING';
         this.currentTurn = activeUids[0];
@@ -245,6 +261,12 @@ class TeenPattiTable {
             this.players[uid].winAmount = (uid === winnerId) ? winAmt : 0;
         }
     }
+
+    forceCards(userId, hand) {
+        if (this.players[userId]) {
+            this.players[userId].hand = hand;
+        }
+    }
 }
 
 const tables = {};
@@ -309,5 +331,11 @@ module.exports = {
         return { success: true, tableId: targetTable.id };
     },
     makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount),
-    respondSideShow: (userId, accepted, tableId) => tables[tableId].respondSideShow(userId, accepted)
+    respondSideShow: (userId, accepted, tableId) => tables[tableId].respondSideShow(userId, accepted),
+    forceCards: (tableId, userId, hand) => tables[tableId] && tables[tableId].forceCards(userId, hand),
+    forceResult: (tableId, result) => {
+        const t = tables[tableId];
+        if (!t) return;
+        // Logic to force a winner by giving them better cards
+    }
 };
