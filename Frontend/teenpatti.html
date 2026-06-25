@@ -192,6 +192,15 @@
         .label-win { background: #22c55e; box-shadow: 0 0 20px #22c55e; }
         .label-lose { background: #ef4444; opacity: 0.8; }
 
+        /* SIDESHOW OVERLAY */
+        #sideShowOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 8000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .side-card { background: #1e293b; padding: 25px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; }
+
+        /* SHOWDOWN LABELS */
+        .showdown-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 900; text-transform: uppercase; text-shadow: 0 0 10px rgba(0,0,0,0.8); z-index: 500; padding: 5px 15px; border-radius: 10px; border: 2px solid #fff; }
+        .label-win { background: #22c55e; box-shadow: 0 0 20px #22c55e; }
+        .label-lose { background: #ef4444; opacity: 0.8; }
+
         /* RESULT */
         #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 7000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .res-card { background: radial-gradient(circle, #7c2d12, #1a0505); padding: 40px; border-radius: 30px; border: 3px solid var(--gold); text-align: center; width: 85%; max-width: 450px; box-shadow: 0 0 60px rgba(251,191,36,0.3); }
@@ -208,8 +217,10 @@
 
     <audio id="snd-bet" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
     <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+    <audio id="snd-lose" src="https://assets.mixkit.co/active_storage/sfx/2564/2564-preview.mp3"></audio>
     <audio id="snd-turn" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
     <audio id="snd-tick" src="https://assets.mixkit.co/active_storage/sfx/2564/2564-preview.mp3"></audio>
+    <audio id="snd-show" src="https://assets.mixkit.co/active_storage/sfx/1103/1103-preview.mp3"></audio>
 
     <div id="lobby">
         <div class="lobby-header">
@@ -369,7 +380,7 @@
                 rt.innerText = t.timer;
                 waitMsg.style.display = "none";
                 if (t.timer > 0) document.getElementById('snd-tick').play().catch(e=>{});
-            } else if (me && me.status === 'WAITING') {
+            } else if (me && me.status === 'WAITING' && t.state !== 'PLAYING') {
                 rt.style.display = "none";
                 waitMsg.style.display = "block";
             } else {
@@ -472,7 +483,7 @@
             });
 
             if (t.state === 'SHOW' && lastState !== 'SHOW') {
-                document.getElementById('snd-win').play().catch(e=>{});
+                document.getElementById('snd-show').play().catch(e=>{});
                 setTimeout(() => showResult(t), 1000);
             }
             lastState = t.state;
@@ -510,7 +521,12 @@
         }
 
         function adjustBet(val) {
-            nextBet = Math.min(Math.max(nextBet + (val * 5), 5), maxBetUnit);
+            if (val > 0) {
+                nextBet = nextBet * 2;
+            } else {
+                nextBet = Math.max(nextBet / 2, 5);
+            }
+            nextBet = Math.min(nextBet, maxBetUnit);
             document.getElementById("nextBetDisplay").innerText = `₹${nextBet}`;
         }
 
@@ -547,6 +563,10 @@
             document.getElementById("resTitle").innerText = me.result === 'WIN' ? "YOU WIN!" : "YOU LOSE";
             document.getElementById("resAmount").innerText = me.result === 'WIN' ? `+₹${me.winAmount}` : "Better luck next time!";
             if(win) document.getElementById("resHand").innerHTML = renderBigCards(win.hand, false);
+
+            if (me.result === 'WIN') document.getElementById('snd-win').play().catch(e=>{});
+            else document.getElementById('snd-lose').play().catch(e=>{});
+
             fetchBalance();
         }
         function closeRes() { document.getElementById("resultOverlay").style.display = "none"; }
