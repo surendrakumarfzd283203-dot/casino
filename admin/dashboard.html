@@ -479,15 +479,29 @@
                 const players = Object.keys(t.players).map(uid => {
                     const p = t.players[uid];
                     const cards = p.hand.length > 0 ? p.hand.map(c => `<span style="color:${(c.suit==='♥'||c.suit==='♦')?'#ef4444':'#fff'}">${c.rank}${c.suit}</span>`).join(' ') : '---';
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <div style="font-size:10px;"><b>${p.name}</b><br><small>${cards}</small></div>
-                        <button class="action-btn btn-edit" style="padding:4px 8px; font-size:9px;" onclick="openTPCardEditor('${t.id}', '${uid}', '${p.name}')">EDIT</button>
+                    const canEdit = p.isBlind || t.state === 'WAITING' || t.state === 'DEALING';
+
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background: ${p.isBlind ? 'transparent' : 'rgba(16, 185, 129, 0.05)'}">
+                        <div style="font-size:10px;">
+                            <b style="color: ${p.isBot ? '#fde047' : '#fff'}">${p.name}</b>
+                            <span class="badge" style="background: ${p.isBlind ? '#334155' : '#10b981'}; font-size:8px;">${p.isBlind ? 'BLIND' : 'SEEN'}</span>
+                            <br><small style="font-family: monospace; font-size:11px;">${cards}</small>
+                        </div>
+                        <button class="action-btn btn-edit" style="padding:4px 8px; font-size:9px; opacity: ${canEdit ? 1 : 0.4}"
+                            ${canEdit ? `onclick="openTPCardEditor('${t.id}', '${uid}', '${p.name}')"` : 'disabled'}
+                            >${canEdit ? 'EDIT' : 'LOCKED'}</button>
                     </div>`;
                 }).join('');
+
+                const stateColors = { 'WAITING': '#64748b', 'PLAYING': '#10b981', 'SHOW': '#3b82f6', 'DEALING': '#eab308' };
+
                 return `<div style="background:rgba(0,0,0,0.3); border-radius:12px; padding:15px; border:1px solid var(--glass-border);">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span style="font-weight:800; color:var(--primary);">TABLE ${t.id}</span>
-                        <span style="font-size:10px; color:#10b981;">Pot: ₹${t.pot}</span>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                        <div>
+                            <span style="font-weight:800; color:var(--primary);">TABLE ${t.id}</span>
+                            <div class="badge" style="background:${stateColors[t.state] || '#333'}">${t.state} (${t.timer}s)</div>
+                        </div>
+                        <span style="font-size:12px; color:#10b981; font-weight:900;">Pot: ₹${t.pot}</span>
                     </div>
                     ${players || '<div style="font-size:10px; opacity:0.5;">Empty Table</div>'}
                 </div>`;

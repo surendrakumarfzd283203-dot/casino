@@ -650,6 +650,11 @@ app.post("/api/teenpatti/sideshow-response", auth, async (req, res) => {
 
 
 
+app.post("/api/teenpatti/leave", auth, async (req, res) => {
+    const result = teenPattiManager.leaveTable(req.user.id);
+    res.json(result);
+});
+
 app.get("/api/teenpatti/tables", auth, (req, res) => {
     res.json({ success: true, tables: teenPattiManager.getTables(req.user.id) });
 });
@@ -770,9 +775,8 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
 
 app.post("/api/admin/teenpatti/force-cards", adminAuth, (req, res) => {
     const { tableId, userId, hand } = req.body;
-    // hand is expected to be [{suit, rank}, {suit, rank}, {suit, rank}]
     const success = teenPattiManager.forceCards(tableId, userId, hand);
-    res.json({ success, message: success ? "Cards updated" : "Failed to update cards" });
+    res.json({ success, message: success ? "Cards updated" : "Cannot edit cards (Player has already seen them or game state invalid)" });
 });
 
 app.get("/api/admin/game-logs", adminAuth, async (req, res) => {

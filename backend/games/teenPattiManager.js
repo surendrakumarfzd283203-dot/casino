@@ -272,9 +272,13 @@ class TeenPattiTable {
     }
 
     forceCards(userId, hand) {
-        if (this.players[userId]) {
-            this.players[userId].hand = hand;
-            return true;
+        const p = this.players[userId];
+        if (p) {
+            // Admin can only edit if player is BLIND or game is in WAITING/DEALING state
+            if (p.blind || this.state === 'WAITING' || this.state === 'DEALING' || this.state === 'STARTING') {
+                p.hand = hand;
+                return true;
+            }
         }
         return false;
     }
@@ -333,7 +337,12 @@ module.exports = {
             if (!p.blind || t.state === 'SHOW' || isAdmin) {
                 try { hRank = evaluateHand(p.hand).rank; } catch(e) {}
             }
-            plys[uid] = { ...p, hand: show ? p.hand : [], handRank: hRank };
+            plys[uid] = {
+                ...p,
+                hand: show ? p.hand : [],
+                handRank: hRank,
+                isBlind: p.blind // Explicitly send blind status to admin
+            };
         }
         return {
             id: t.id, state: t.state, timer: t.timer, pot: t.pot,
@@ -342,10 +351,21 @@ module.exports = {
             sideShowRequester: t.sideShowRequester, sideShowTarget: t.sideShowTarget
         };
     }),
+    leaveTable: (userId) => {
+        for (let id in tables) {
+            if (tables[id].players[userId]) {
+                delete tables[id].players[userId];
+                return { success: true };
+            }
+        }
+        return { success: false };
+    },
     joinTable: (tableId, userId, name, avatar) => {
         const t = tables[tableId];
         if (!t) return { success: false, message: "Table not found" };
-        if (Object.keys(t.players).length >= 5) return { success: false, message: "Table full" };
+        if (Object.keys(t.players).length >= 6) return { success: false, message: "Table full" };
+        // Remove from any other table first
+        for(let id in tables) if (tables[id].players[userId]) delete tables[id].players[userId];
         t.players[userId] = { name, avatar, hand: [], status: 'WAITING', blind: true, isBot: false };
         return { success: true, tableId };
     },

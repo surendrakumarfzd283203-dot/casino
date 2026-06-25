@@ -298,7 +298,7 @@
     </div>
 
     <div class="game-header">
-        <div class="circle-btn" onclick="location.reload()"><i class="fas fa-arrow-left"></i></div>
+        <div class="circle-btn" onclick="exitTable()"><i class="fas fa-sign-out-alt"></i></div>
         <div class="wallet-display">
             <i class="fas fa-coins" style="color:var(--gold)"></i>
             ₹<span id="balance">0.00</span>
@@ -413,9 +413,35 @@
 
         async function switchTable() {
             if(!confirm("Switch table?")) return;
-            const currentBoot = currentTable ? currentTable.split('_')[0] : 1;
-            joinByBoot(Number(currentBoot));
+            const boot = currentTable ? Number(currentTable.split('_')[0]) : 1;
+
+            // 1. Leave current
+            await fetch(`${API_URL}/api/teenpatti/leave`, { method: "POST", headers: { authorization: token } });
+
+            // 2. Join new table with same boot
+            const res = await fetch(`${API_URL}/api/teenpatti/join`, {
+                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ bootAmount: boot })
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentTable = data.tableId;
+                fetchState();
+            }
         }
+
+        async function exitTable() {
+            if(!confirm("Are you sure you want to leave?")) return;
+            await fetch(`${API_URL}/api/teenpatti/leave`, { method: "POST", headers: { authorization: token } });
+            location.href = "dashboard.html";
+        }
+
+        // Remove from table when browser closes/backs
+        window.addEventListener('beforeunload', () => {
+            if (currentTable) {
+                navigator.sendBeacon(`${API_URL}/api/teenpatti/leave?token=${token}`);
+            }
+        });
 
         async function fetchState() {
             if(isFetching || !currentTable) return; isFetching = true;
