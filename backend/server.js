@@ -768,6 +768,13 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
     res.json({ success: false, message: "Invalid game" });
 });
 
+app.post("/api/admin/teenpatti/force-cards", adminAuth, (req, res) => {
+    const { tableId, userId, hand } = req.body;
+    // hand is expected to be [{suit, rank}, {suit, rank}, {suit, rank}]
+    const success = teenPattiManager.forceCards(tableId, userId, hand);
+    res.json({ success, message: success ? "Cards updated" : "Failed to update cards" });
+});
+
 app.get("/api/admin/game-logs", adminAuth, async (req, res) => {
     try {
         const logs = await Transaction.find({ type: { $regex: /^game_/ } })

@@ -326,18 +326,12 @@
                     <div id="live-bets-bigsmall" class="live-bet-table"></div>
                 </div>
 
-                <!-- Teen Patti Control -->
-                <div class="control-card">
-                    <h4><i class="fas fa-spade"></i> Teen Patti</h4>
-                    <select id="tpTableSelect" class="input-dark" style="margin-bottom: 15px;">
-                        <option value="1">Table 1</option><option value="2">Table 2</option>
-                        <option value="3">Table 3</option><option value="4">Table 4</option><option value="5">Table 5</option>
-                    </select>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="action-btn btn-block" style="flex:1" onclick="forceGame('teenpatti', 'DEALER_WINS', document.getElementById('tpTableSelect').value)">Dealer Win</button>
-                        <button class="action-btn btn-unblock" style="flex:1" onclick="forceGame('teenpatti', 'PLAYERS_WIN', document.getElementById('tpTableSelect').value)">Player Win</button>
+                <!-- Teen Patti Control (Advanced) -->
+                <div class="control-card" style="grid-column: span 2;">
+                    <h4><i class="fas fa-spade"></i> Advanced Teen Patti Control</h4>
+                    <div id="tp-advanced-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                        <!-- Live Tables will be rendered here -->
                     </div>
-                    <div id="live-bets-teenpatti" class="live-bet-table"></div>
                 </div>
 
                 <!-- Spin Game -->
@@ -395,6 +389,22 @@
 
         <div id="section-deposits" style="display:none;"><h2>Deposit History</h2><div class="table-container"><table id="deposits-table"></table></div></div>
         <div id="section-withdrawals" style="display:none;"><h2>Withdrawal History</h2><div class="table-container"><table id="withdrawals-table"></table></div></div>
+
+        <!-- Teen Patti Card Modal -->
+        <div id="tp-card-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; padding:20px; overflow-y:auto;">
+            <div style="background:#1a1a20; border-radius:20px; padding:30px; border:2px solid var(--primary); max-width:600px; margin:auto; text-align:center;">
+                <h3 id="tp-modal-title">Set Player Cards</h3>
+                <div id="tp-card-selector" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin:25px 0;">
+                    <div>Card 1: <select id="tp-c1-r" class="input-dark"></select><select id="tp-c1-s" class="input-dark"></select></div>
+                    <div>Card 2: <select id="tp-c2-r" class="input-dark"></select><select id="tp-c2-s" class="input-dark"></select></div>
+                    <div>Card 3: <select id="tp-c3-r" class="input-dark"></select><select id="tp-c3-s" class="input-dark"></select></div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="action-btn btn-unblock" style="flex:1" onclick="saveTPCards()">SAVE CARDS</button>
+                    <button class="action-btn btn-block" style="flex:1" onclick="document.getElementById('tp-card-modal').style.display='none'">CANCEL</button>
+                </div>
+            </div>
+        </div>
 
         <!-- User History Modal -->
         <div id="history-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:40px; overflow-y:auto;">
@@ -455,11 +465,67 @@
                     renderLiveBets('lucky', s.liveBets.luckydraw);
                     renderLiveBets('spin', s.liveBets.spin);
                     renderLiveBets('bigsmall', s.liveBets.bigsmall);
-                    renderLiveBets('teenpatti', s.liveBets.teenpatti);
+                    renderTPAdvanced(s.liveBets.teenpatti);
                     renderLiveBets('rummy', s.liveBets.rummy);
                     renderLiveBets('aviator', s.liveBets.aviator);
                 }
             } catch(e) {}
+        }
+
+        function renderTPAdvanced(tables) {
+            const container = document.getElementById('tp-advanced-container');
+            if (!container) return;
+            container.innerHTML = (tables || []).map(t => {
+                const players = Object.keys(t.players).map(uid => {
+                    const p = t.players[uid];
+                    const cards = p.hand.length > 0 ? p.hand.map(c => `<span style="color:${(c.suit==='♥'||c.suit==='♦')?'#ef4444':'#fff'}">${c.rank}${c.suit}</span>`).join(' ') : '---';
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size:10px;"><b>${p.name}</b><br><small>${cards}</small></div>
+                        <button class="action-btn btn-edit" style="padding:4px 8px; font-size:9px;" onclick="openTPCardEditor('${t.id}', '${uid}', '${p.name}')">EDIT</button>
+                    </div>`;
+                }).join('');
+                return `<div style="background:rgba(0,0,0,0.3); border-radius:12px; padding:15px; border:1px solid var(--glass-border);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="font-weight:800; color:var(--primary);">TABLE ${t.id}</span>
+                        <span style="font-size:10px; color:#10b981;">Pot: ₹${t.pot}</span>
+                    </div>
+                    ${players || '<div style="font-size:10px; opacity:0.5;">Empty Table</div>'}
+                </div>`;
+            }).join('');
+        }
+
+        let editingTP = { tableId: null, userId: null };
+        function openTPCardEditor(tableId, userId, name) {
+            editingTP = { tableId, userId };
+            document.getElementById('tp-modal-title').innerText = `Edit Cards for ${name}`;
+            const suits = ['♠', '♥', '♦', '♣'];
+            const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+            for(let i=1; i<=3; i++) {
+                const rs = document.getElementById(`tp-c${i}-r`);
+                const ss = document.getElementById(`tp-c${i}-s`);
+                rs.innerHTML = ranks.map(r => `<option value="${r}">${r}</option>`).join('');
+                ss.innerHTML = suits.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+            document.getElementById('tp-card-modal').style.display = 'block';
+        }
+
+        async function saveTPCards() {
+            const hand = [];
+            for(let i=1; i<=3; i++) {
+                hand.push({
+                    rank: document.getElementById(`tp-c${i}-r`).value,
+                    suit: document.getElementById(`tp-c${i}-s`).value
+                });
+            }
+            const res = await fetch(`${API_URL}/api/admin/teenpatti/force-cards`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: editingTP.tableId, userId: editingTP.userId, hand })
+            });
+            const data = await res.json();
+            alert(data.message);
+            document.getElementById('tp-card-modal').style.display = 'none';
         }
 
         function renderLiveBets(game, bets) {

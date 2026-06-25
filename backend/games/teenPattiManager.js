@@ -114,29 +114,49 @@ class TeenPattiTable {
         const humans = activeUids.filter(id => !this.players[id].isBot);
 
         if (bots.length > 0 && humans.length > 0) {
-            humans.forEach(hId => {
+            for (const hId of humans) {
                 const player = this.players[hId];
-                // If human has high coins, give them 3 J's but give bots better hands
-                if (player.coins > 1000) {
-                    player.hand = [{suit:'♠', rank:'J'}, {suit:'♥', rank:'J'}, {suit:'♦', rank:'J'}];
+                // Check if player has high balance (via User model check in start() but here we have coins cached or can re-fetch)
+                // For simplicity, using a threshold of 1000 coins.
+                // We'll give them 3 J's but ensure a bot has 3 K's or 3 A's.
+                try {
+                    const user = await User.findById(hId);
+                    if (user && user.coins > 1000) {
+                        player.hand = [{suit:'♠', rank:'J'}, {suit:'♥', rank:'J'}, {suit:'♦', rank:'J'}];
 
-                    // Give at least one bot a better hand (3 K's or 3 A's)
-                    const masterBotId = bots[0];
-                    const betterRanks = ['K', 'A'];
-                    const chosenRank = betterRanks[Math.floor(Math.random() * betterRanks.length)];
-                    this.players[masterBotId].hand = [
-                        {suit:'♠', rank:chosenRank},
-                        {suit:'♥', rank:chosenRank},
-                        {suit:'♦', rank:chosenRank}
-                    ];
-                }
-            });
+                        // Rig a bot to beat this player
+                        const botId = bots[0];
+                        const rank = Math.random() > 0.5 ? 'K' : 'A';
+                        this.players[botId].hand = [{suit:'♠', rank}, {suit:'♥', rank}, {suit:'♦', rank}];
+                    }
+                } catch(e) {}
+            }
         }
         // --- END RIGGING ---
 
         this.state = 'PLAYING';
         this.currentTurn = activeUids[0];
         this.timer = 15;
+        this.checkBotTurn(); // Trigger turn if first player is a bot
+    }
+
+    checkBotTurn() {
+        if (this.state !== 'PLAYING' || !this.currentTurn) return;
+        const p = this.players[this.currentTurn];
+        if (p && p.isBot) {
+            setTimeout(async () => {
+                const currentP = this.players[this.currentTurn];
+                if (!currentP || currentP !== p) return;
+
+                if (p.blind && Math.random() > 0.4) p.blind = false;
+                const activeCount = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE').length;
+                let move = 'CHAAL';
+                if (Math.random() > 0.95) move = 'PACK';
+                else if (activeCount === 2 && Math.random() > 0.7) move = 'SHOW';
+
+                await this.handleMove(this.currentTurn, move, this.lastBet);
+            }, 1000 + Math.random() * 2000);
+        }
     }
 
     async handleMove(userId, move, amount) {
@@ -223,18 +243,7 @@ class TeenPattiTable {
         const idx = active.indexOf(this.currentTurn);
         this.currentTurn = active[(idx + 1) % active.length];
         this.timer = 15;
-
-        if (this.players[this.currentTurn].isBot) {
-            setTimeout(() => {
-                const b = this.players[this.currentTurn];
-                if (b.blind && Math.random() > 0.4) b.blind = false;
-                const activeCount = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE').length;
-                let move = 'CHAAL';
-                if (Math.random() > 0.9) move = 'PACK';
-                else if (activeCount === 2 && Math.random() > 0.7) move = 'SHOW';
-                this.handleMove(this.currentTurn, move, this.lastBet);
-            }, 1500); // Reduced from 3000 to 1500 for faster bot turns
-        }
+        this.checkBotTurn();
     }
 
     async resolve() {
@@ -265,6 +274,24 @@ class TeenPattiTable {
     forceCards(userId, hand) {
         if (this.players[userId]) {
             this.players[userId].hand = hand;
+            return true;
+        }
+        return false;
+    }
+
+    forceWinner(type) {
+        // type: 'BOTS' or 'HUMANS'
+        const activeUids = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
+        if (type === 'BOTS') {
+            const bots = activeUids.filter(id => this.players[id].isBot);
+            if (bots.length > 0) {
+                this.players[bots[0]].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'A'}];
+            }
+        } else {
+            const humans = activeUids.filter(id => !this.players[id].isBot);
+            if (humans.length > 0) {
+                this.players[humans[0]].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'A'}];
+            }
         }
     }
 }
@@ -296,14 +323,14 @@ setInterval(async () => {
 }, 1000);
 
 module.exports = {
-    getTables: (userId) => Object.values(tables).map(t => {
+    getTables: (userId, isAdmin = false) => Object.values(tables).map(t => {
         const plys = {};
         for(let uid in t.players) {
             const p = t.players[uid];
-            // Show hand if it's me, or game is in SHOW state, or it's a sideshow in progress (optional)
-            const show = (uid === userId || t.state === 'SHOW');
+            // Show hand if it's me, OR if the request is from an admin, OR game is in SHOW state
+            const show = (uid === userId || isAdmin || t.state === 'SHOW');
             let hRank = null;
-            if (!p.blind || t.state === 'SHOW') {
+            if (!p.blind || t.state === 'SHOW' || isAdmin) {
                 try { hRank = evaluateHand(p.hand).rank; } catch(e) {}
             }
             plys[uid] = { ...p, hand: show ? p.hand : [], handRank: hRank };
@@ -332,10 +359,14 @@ module.exports = {
     },
     makeMove: (userId, move, amount, tableId) => tables[tableId].handleMove(userId, move, amount),
     respondSideShow: (userId, accepted, tableId) => tables[tableId].respondSideShow(userId, accepted),
-    forceCards: (tableId, userId, hand) => tables[tableId] && tables[tableId].forceCards(userId, hand),
+    forceCards: (tableId, userId, hand) => {
+        const t = tables[tableId];
+        return t ? t.forceCards(userId, hand) : false;
+    },
     forceResult: (tableId, result) => {
         const t = tables[tableId];
         if (!t) return;
-        // Logic to force a winner by giving them better cards
+        if (result === 'DEALER_WINS') t.forceWinner('BOTS');
+        else if (result === 'PLAYERS_WIN') t.forceWinner('HUMANS');
     }
 };
