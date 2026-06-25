@@ -31,7 +31,7 @@ class TeenPattiTable {
         this.pot = 0;
         this.lastBet = this.bootAmount;
         this.state = 'WAITING';
-        this.timer = 7;
+        this.timer = 5; // Reduced from 7 to 5 for faster start
         this.currentTurn = null;
         this.sideShowRequester = null;
         this.sideShowTarget = null;
@@ -75,12 +75,12 @@ class TeenPattiTable {
             }
 
             if (Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE').length < 2) {
-                this.timer = 7;
+                this.timer = 5;
                 return;
             }
 
             this.state = 'DEALING';
-            this.timer = 3; // Time for dealing animation
+            this.timer = 2; // Reduced from 3 to 2 for faster dealing
         } catch (e) {
             console.error("Table Start Error:", e);
         } finally {
@@ -217,7 +217,7 @@ class TeenPattiTable {
                 if (Math.random() > 0.9) move = 'PACK';
                 else if (activeCount === 2 && Math.random() > 0.7) move = 'SHOW';
                 this.handleMove(this.currentTurn, move, this.lastBet);
-            }, 3000);
+            }, 1500); // Reduced from 3000 to 1500 for faster bot turns
         }
     }
 
