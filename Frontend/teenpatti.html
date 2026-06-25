@@ -549,7 +549,7 @@
                     seat.innerHTML = `
                         ${resultLabel}
                         <div class="cards-status">
-                            ${(p.status === 'ACTIVE' && !p.blind) || isShowdown ? `<div class="rank-tag">${p.handRank || ''}</div>` : ''}
+                            ${isShowdown && p.handRank ? `<div class="rank-tag">${p.handRank}</div>` : ''}
                             ${showCardsOnTable ? `<div class="status-tag" style="background:${status==='BLIND'?'#000':'#15803d'}">${status}</div>` : ''}
                             ${p.status === 'PACKED' ? `<div class="status-tag">PACKED</div>` : ''}
                             <div class="mini-cards">
@@ -666,10 +666,17 @@
         async function handleMove(move) {
             if (move === 'CHAAL' || move === 'SHOW' || move === 'SIDESHOW') document.getElementById('snd-bet').play().catch(e=>{});
 
-            await fetch(`${API_URL}/api/teenpatti/move`, {
+            const res = await fetch(`${API_URL}/api/teenpatti/move`, {
                 method: "POST", headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ tableId: currentTable, move, amount: nextBet })
             });
+            const data = await res.json();
+
+            if (!data.success && data.message === "Insufficient coins") {
+                if (confirm("Insufficient Coins! Want to add cash to continue your turn?")) {
+                    location.href = "wallet.html";
+                }
+            }
             fetchState();
         }
 
