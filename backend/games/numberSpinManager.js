@@ -108,28 +108,37 @@ class NumberSpinManager {
     }
 
     getAdminControlledResult() {
-        // Calculate potential payout for each possible number and pick the one with least payout
-        let minPayout = Infinity;
-        let bestNumber = this.numbers[0];
+        const betTotals = {};
+        this.numbers.forEach(n => betTotals[n] = 0);
 
-        for (let n of this.numbers) {
-            let payout = 0;
+        // Calculate total payout for each possible winning number (2-12)
+        let payouts = this.numbers.map(n => {
+            let totalPayout = 0;
             for (let bet of this.bets) {
-                let m = 0;
-                if (bet.selection === 'DOWN' && n >= 2 && n <= 6) m = 2;
-                else if (bet.selection === 'MIDDLE' && n === 7) m = 5;
-                else if (bet.selection === 'UP' && n >= 8 && n <= 12) m = 2;
-                else if (parseInt(bet.selection) === n) m = 10;
-                payout += bet.amount * m;
+                let multiplier = 0;
+                if (bet.selection === 'DOWN' && n >= 2 && n <= 6) multiplier = 2;
+                else if (bet.selection === 'MIDDLE' && n === 7) multiplier = 5;
+                else if (bet.selection === 'UP' && n >= 8 && n <= 12) multiplier = 2;
+                else if (parseInt(bet.selection) === n) multiplier = 10;
+                totalPayout += bet.amount * multiplier;
             }
-            if (payout < minPayout) {
-                minPayout = payout;
-                bestNumber = n;
-            }
+            return { number: n, payout: totalPayout };
+        });
+
+        // Sort by payout ascending
+        payouts.sort((a, b) => a.payout - b.payout);
+
+        const minPayout = payouts[0].payout;
+        let candidates = payouts.filter(p => p.payout === minPayout).map(p => p.number);
+
+        // To avoid repeating the same number too often, filter out the last result if possible
+        const lastResult = this.history.length > 0 ? this.history[0].result : null;
+        if (candidates.length > 1 && lastResult !== null) {
+            candidates = candidates.filter(n => n !== lastResult);
         }
 
-        // Add some randomness so it's not always the absolute minimum if multiple are close
-        return bestNumber;
+        // Return a random number from the candidates
+        return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
     placeBet(userId, name, selection, amount) {

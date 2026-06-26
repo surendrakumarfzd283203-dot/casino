@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Indian Classic Spin Wheel | Solo Casino</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #ffc107; --bg: #064e3b; --poker-blue: #1e3a8a; --action-red: #ef4444; --action-green: #22c55e; }
@@ -23,22 +23,43 @@
         .wheel-container { position: relative; width: 340px; height: 340px; margin: 20px auto; display: flex; align-items: center; justify-content: center; }
 
         .wheel-outer {
-            width: 320px;
-            height: 320px;
+            width: 300px;
+            height: 300px;
             border-radius: 50%;
             position: relative;
-            overflow: hidden;
             transition: transform 4s cubic-bezier(.17,.67,.12,.99);
             box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            background: #000;
         }
 
         .wheel-img {
             width: 100%;
             height: 100%;
+            border-radius: 50%;
             display: block;
+            pointer-events: none;
         }
 
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 45px; z-index: 100; filter: drop-shadow(0 0 10px rgba(255,193,7,0.8)); }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 40px; z-index: 100; filter: drop-shadow(0 0 5px rgba(255,193,7,0.8)); }
+
+        .wheel-status-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85);
+            border: 2px solid var(--gold);
+            padding: 10px 20px;
+            border-radius: 12px;
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .status-icon { font-size: 24px; color: var(--gold); }
+        .status-text { font-size: 10px; font-weight: 900; color: white; text-transform: uppercase; white-space: nowrap; }
 
         .timer-box { background: rgba(0,0,0,0.5); padding: 10px; width: 80%; margin: 0 auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); text-align: center; }
         .timer-val { font-size: 20px; font-weight: 900; color: var(--gold); }
@@ -111,7 +132,11 @@
 
     <div class="wheel-container">
         <div class="wheel-outer" id="wheel">
-            <img src="images/wheel.png" class="wheel-img" alt="Wheel">
+            <img src="image/wheel.png" class="wheel-img" alt="Wheel">
+        </div>
+        <div class="wheel-status-overlay" id="statusOverlay">
+            <i class="fa-solid fa-lock status-icon"></i>
+            <span class="status-text">BETS LOCKED</span>
         </div>
         <img src="https://cdn-icons-png.flaticon.com/512/3602/3602513.png" class="pointer" alt="Pointer">
     </div>
@@ -252,14 +277,14 @@
         function updateUI(state) {
             document.getElementById("timer").innerText = state.timer;
             const bar = document.getElementById("timerBar");
-            bar.style.width = (state.timer / 20 * 100) + "%";
+            bar.style.width = (state.timer / 15 * 100) + "%";
 
-            const locked = document.getElementById("lockedMsg");
+            const statusOverlay = document.getElementById("statusOverlay");
             if (state.isSpinning) {
-                locked.style.display = "flex";
+                statusOverlay.style.display = "flex";
                 if (!isSpinning) startSpinAnimation(state.history[0].result);
             } else {
-                locked.style.display = "none";
+                statusOverlay.style.display = "none";
                 isSpinning = false;
                 if (state.roundId !== lastRoundId) {
                     clearBets();
