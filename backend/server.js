@@ -747,6 +747,16 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
         stats.spinState = spinState;
         stats.numberspinState = numberSpinState;
         stats.bigSmallState = bigSmallState;
+        stats.ludoState = {
+            activeGames: Object.values(ludoManager.rooms).map(r => ({
+                id: r.id,
+                players: r.players,
+                scores: r.scores,
+                gameState: r.gameState,
+                timer: r.timer,
+                turn: r.turn
+            }))
+        };
 
         stats.liveBets = {
             color: colorGameManager.getLiveBets(),
@@ -754,13 +764,13 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
             luckydraw: luckyDrawManager.bets,
             spin: spinGameManager.bets,
             numberspin: numberSpinManager.bets,
-            rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
-            ludo: Object.values(ludoManager.rooms).map(r => ({ id: r.id, players: Object.keys(r.players).length, scores: r.scores })),
+            rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players, pot: Object.values(t.players).reduce((a,b)=>a+b.betAmount,0) })),
+            ludo: stats.ludoState.activeGames,
             bigsmall: {
-                BIG: bigSmallState.activeBets.filter(b => b.prediction === 'BIG').reduce((a, b) => a + b.amount, 0),
-                SMALL: bigSmallState.activeBets.filter(b => b.prediction === 'SMALL').reduce((a, b) => a + b.amount, 0),
-                TRIPLE: bigSmallState.activeBets.filter(b => b.prediction === 'TRIPLE').reduce((a, b) => a + b.amount, 0),
-                bets: bigSmallState.activeBets
+                BIG: bigSmallState.BIG,
+                SMALL: bigSmallState.SMALL,
+                TRIPLE: bigSmallState.TRIPLE,
+                bets: bigSmallState.bets
             },
             teenpatti: teenPattiManager.getTables(null, true).map(t => ({ id: t.id, players: t.players, pot: t.pot })),
             aviator: activeBets.aviator

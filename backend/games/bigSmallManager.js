@@ -123,6 +123,7 @@ class BigSmallManager {
             roundId: this.roundId,
             timer: this.timer,
             history: this.history,
+            bets: this.bets, // Return full bets array
             activeBets: this.bets.length,
             BIG: stats.BIG,
             SMALL: stats.SMALL,
