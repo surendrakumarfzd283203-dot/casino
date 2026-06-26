@@ -509,7 +509,9 @@ let aviatorState = {
     isFlying: false,
     crashMultiplier: 2.0,
     history: [],
-    currentFakeCount: 50
+    currentFakeCount: 50,
+    flightTimeout: null,
+    cashoutBlocked: false
 };
 
 setInterval(() => {
@@ -532,6 +534,7 @@ setInterval(() => {
 
 async function startAviatorFlight() {
     aviatorState.isFlying = true;
+    aviatorState.cashoutBlocked = false; // Reset block on every flight
 
     // Choose crash multiplier (rigged or random)
     if (forcedAviatorMultiplier) {
@@ -546,30 +549,43 @@ async function startAviatorFlight() {
     // Flight duration based on multiplier
     const flightDuration = Math.floor(Math.log(aviatorState.crashMultiplier) / Math.log(1.1) * 1000);
 
-    setTimeout(async () => {
-        // Round Crashed
-        aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
-        if (aviatorState.history.length > 20) aviatorState.history.pop();
-
-        // Process losers (those who didn't cash out)
-        for (let bet of activeBets.aviator) {
-            if (!bet.cashedOut) {
-                await new Transaction({
-                    user_id: bet.userId,
-                    amount: -bet.betAmount,
-                    type: "game_aviator",
-                    details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
-                }).save();
-                await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
-            }
-        }
-
-        // Reset for next round
-        aviatorState.roundId = Date.now();
-        aviatorState.timer = 20; // 20 seconds gap
-        aviatorState.isFlying = false;
-        activeBets.aviator = [];
+    aviatorState.flightTimeout = setTimeout(() => {
+        resolveAviatorCrash();
     }, flightDuration);
+}
+
+async function resolveAviatorCrash(manualMultiplier = null) {
+    if (aviatorState.flightTimeout) {
+        clearTimeout(aviatorState.flightTimeout);
+        aviatorState.flightTimeout = null;
+    }
+
+    if (manualMultiplier) {
+        aviatorState.crashMultiplier = manualMultiplier;
+    }
+
+    // Round Crashed
+    aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
+    if (aviatorState.history.length > 20) aviatorState.history.pop();
+
+    // Process losers (those who didn't cash out)
+    for (let bet of activeBets.aviator) {
+        if (!bet.cashedOut) {
+            await new Transaction({
+                user_id: bet.userId,
+                amount: -bet.betAmount,
+                type: "game_aviator",
+                details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
+            }).save();
+            await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
+        }
+    }
+
+    // Reset for next round
+    aviatorState.roundId = Date.now();
+    aviatorState.timer = 15; // Shorter gap after manual or auto crash
+    aviatorState.isFlying = false;
+    activeBets.aviator = [];
 }
 
 app.get("/api/game/aviator/state", auth, (req, res) => {
@@ -628,6 +644,10 @@ app.post("/api/game/aviator/cancel", auth, async (req, res) => {
 
 app.post("/api/game/aviator/cashout", auth, async (req, res) => {
     try {
+        if (aviatorState.cashoutBlocked) {
+            return res.json({ success: false, message: "Cashout currently unavailable" });
+        }
+
         const { multiplier, slot } = req.body;
         const userId = req.user.id;
 
@@ -841,6 +861,19 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
         return res.json({ success: true, message: `Next Rummy winner set for Table ${tableId}` });
     }
     res.json({ success: false, message: "Invalid game" });
+});
+
+app.post("/api/admin/aviator/crash-now", adminAuth, (req, res) => {
+    const { multiplier } = req.body;
+    if (!aviatorState.isFlying) return res.json({ success: false, message: "Plane is not flying" });
+    resolveAviatorCrash(Number(multiplier) || 1.0);
+    res.json({ success: true, message: "Plane crashed manually!" });
+});
+
+app.post("/api/admin/aviator/toggle-cashout", adminAuth, (req, res) => {
+    const { blocked } = req.body;
+    aviatorState.cashoutBlocked = blocked;
+    res.json({ success: true, message: `Cashout ${blocked ? 'Blocked' : 'Allowed'}` });
 });
 
 app.post("/api/admin/teenpatti/force-cards", adminAuth, (req, res) => {

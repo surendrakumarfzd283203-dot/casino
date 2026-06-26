@@ -293,10 +293,17 @@
                     <h4><i class="fas fa-paper-plane"></i> Aviator Control</h4>
                     <div id="aviator-timer" style="font-size: 20px; font-weight: 800; text-align:center; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 15px;">...</div>
                     <div id="aviator-pot" style="font-size: 14px; font-weight: 700; color: var(--primary); text-align:center; margin-bottom: 15px;">LIVE POT: ₹0.00</div>
-                    <label style="font-size: 11px; color: var(--text-dim);">SET NEXT CRASH MULTIPLIER</label>
+
+                    <label style="font-size: 11px; color: var(--text-dim);">NEXT CRASH (BEFORE START)</label>
                     <div style="display: flex; gap: 10px; margin-top: 8px; margin-bottom: 15px;">
                         <input type="number" id="forceAviatorMult" value="1.5" step="0.1" class="input-dark">
                         <button class="action-btn btn-edit" onclick="forceAviator()">SET</button>
+                    </div>
+
+                    <label style="font-size: 11px; color: var(--text-dim);">LIVE CONTROL (WHILE FLYING)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                        <button class="action-btn btn-block" onclick="crashAviatorNow()">CRASH NOW</button>
+                        <button class="action-btn btn-edit" id="btn-toggle-cashout" onclick="toggleCashout(true)">BLOCK CASHOUT</button>
                     </div>
                     <div id="live-bets-aviator" class="live-bet-table"></div>
                 </div>
@@ -481,6 +488,19 @@
 
                         const pot = (s.liveBets.aviator || []).reduce((a, b) => a + b.betAmount, 0);
                         document.getElementById('aviator-pot').innerText = `LIVE POT: ₹${pot.toFixed(2)}`;
+
+                        const cashoutBtn = document.getElementById('btn-toggle-cashout');
+                        if (avi.cashoutBlocked) {
+                            cashoutBtn.innerText = "ALLOW CASHOUT";
+                            cashoutBtn.onclick = () => toggleCashout(false);
+                            cashoutBtn.classList.remove('btn-edit');
+                            cashoutBtn.classList.add('btn-unblock');
+                        } else {
+                            cashoutBtn.innerText = "BLOCK CASHOUT";
+                            cashoutBtn.onclick = () => toggleCashout(true);
+                            cashoutBtn.classList.add('btn-edit');
+                            cashoutBtn.classList.remove('btn-unblock');
+                        }
                     }
 
                     if (s.colorState) {
@@ -759,6 +779,48 @@
             });
             const data = await res.json();
             alert(data.message);
+        }
+
+        async function crashAviatorNow() {
+            if (!confirm("Crash Aviator plane immediately?")) return;
+            // We need to send the "current" multiplier if we want to crash exactly now,
+            // but the server can just use 1.0 or whatever it's currently at.
+            const res = await fetch(`${API_URL}/api/admin/aviator/crash-now`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ multiplier: 1.0 })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        let isCashoutBlocked = false;
+        async function toggleCashout(blocked) {
+            const res = await fetch(`${API_URL}/api/admin/aviator/toggle-cashout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ blocked })
+            });
+            const data = await res.json();
+            if (data.success) {
+                isCashoutBlocked = blocked;
+                const btn = document.getElementById('btn-toggle-cashout');
+                btn.innerText = blocked ? "ALLOW CASHOUT" : "BLOCK CASHOUT";
+                btn.onclick = () => toggleCashout(!blocked);
+            }
+            alert(data.message);
+        }
+
+        async function updateCoins(userId) {
+            const coins = document.getElementById(`coins-${userId}`).value;
+            const res = await fetch(`${API_URL}/api/admin/update-coins`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId, coins: Number(coins) })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchUsers();
         }
 
         function showSection(id) {
