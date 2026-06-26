@@ -32,6 +32,7 @@
             box-shadow: 0 0 25px rgba(255,193,7,.5);
             background: #001b33;
             transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+            transform: rotate(-16.36deg); /* Initial position: Sector 1 (7) at top */
         }
 
         .wheel-sector {
@@ -41,30 +42,36 @@
             left: 0;
             top: 0;
             transform-origin: 100% 100%;
-            border-right: 2px solid #fbbf24;
+            border-right: 1.5px solid #fbbf24;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .s1 { background: #c2410c; transform: rotate(0deg) skewY(-57deg); }
-        .s2 { background: #021a44; transform: rotate(32.72deg) skewY(-57deg); }
-        .s3 { background: #021a44; transform: rotate(65.44deg) skewY(-57deg); }
-        .s4 { background: #1e40af; transform: rotate(98.16deg) skewY(-57deg); }
-        .s5 { background: #021a44; transform: rotate(130.88deg) skewY(-57deg); }
-        .s6 { background: #1e40af; transform: rotate(163.60deg) skewY(-57deg); }
-        .s7 { background: #021a44; transform: rotate(196.32deg) skewY(-57deg); }
-        .s8 { background: #1e40af; transform: rotate(229.04deg) skewY(-57deg); }
-        .s9 { background: #1e40af; transform: rotate(261.76deg) skewY(-57deg); }
-        .s10 { background: #021a44; transform: rotate(294.48deg) skewY(-57deg); }
-        .s11 { background: #021a44; transform: rotate(327.20deg) skewY(-57deg); }
+        /* Sector Math for 11 sectors: Angle = 32.727deg, Skew = 90 - 32.727 = 57.273deg */
+        .s1 { background: #c2410c; transform: rotate(0deg) skewY(-57.27deg); }
+        .s2 { background: #021a44; transform: rotate(32.73deg) skewY(-57.27deg); }
+        .s3 { background: #021a44; transform: rotate(65.45deg) skewY(-57.27deg); }
+        .s4 { background: #1e40af; transform: rotate(98.18deg) skewY(-57.27deg); }
+        .s5 { background: #021a44; transform: rotate(130.91deg) skewY(-57.27deg); }
+        .s6 { background: #1e40af; transform: rotate(163.64deg) skewY(-57.27deg); }
+        .s7 { background: #021a44; transform: rotate(196.36deg) skewY(-57.27deg); }
+        .s8 { background: #1e40af; transform: rotate(229.09deg) skewY(-57.27deg); }
+        .s9 { background: #1e40af; transform: rotate(261.82deg) skewY(-57.27deg); }
+        .s10 { background: #021a44; transform: rotate(294.55deg) skewY(-57.27deg); }
+        .s11 { background: #021a44; transform: rotate(327.27deg) skewY(-57.27deg); }
 
         .sector-num {
             position: absolute;
             color: #ffe082;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 900;
-            transform: skewY(57deg) rotate(16deg) translateY(-105px);
+            width: 100px;
+            text-align: center;
+            /* Unskew by 57.27 and rotate by half-angle 16.36 to center text */
+            transform: skewY(57.27deg) rotate(16.36deg) translateY(-105px);
+            left: 30px;
+            top: 20px;
             text-shadow: 0 0 5px #000;
             font-family: serif;
         }
@@ -330,6 +337,8 @@
             }).join('');
         }
 
+        let currentRotation = -16.36; // Initial CSS rotation
+
         function startSpinAnimation(winningNumber) {
             isSpinning = true;
             const wheel = document.getElementById("wheel");
@@ -337,23 +346,30 @@
             const sectionAngle = 360 / sections.length;
             const winningIndex = sections.indexOf(winningNumber);
 
-            // Random number of full rotations + offset for the section
-            const baseRotations = 5;
-            // The wheel rotates clockwise. Sector 0 is at the top (0deg).
-            // To bring sector X to the top (under pointer), we need to rotate by -(X * angle)
-            const finalAngle = (baseRotations * 360) - (winningIndex * sectionAngle);
+            // Calculate target angle to bring winningIndex to the top
+            // Relative to 0deg (vertical), sector X center is at (X * angle + angle/2)
+            // But with our CSS rotations, sector 0 center is at 16.36deg.
+            // So to bring sector X to top, we need to rotate wheel by -(X * angle)
+            const targetOffset = -(winningIndex * sectionAngle);
+            const baseRotations = 8;
+
+            // Add to current rotation to keep it smooth (no reverse spin or snapping)
+            const targetRotation = currentRotation + (baseRotations * 360) + targetOffset - (currentRotation % 360);
 
             wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0, 0.15, 1)';
-            wheel.style.transform = `rotate(${finalAngle}deg)`;
+            wheel.style.transform = `rotate(${targetRotation}deg)`;
+            currentRotation = targetRotation;
 
             setTimeout(() => {
                 fetchBalance();
-                // Reset wheel position for next spin without visible jump
-                setTimeout(() => {
+                // After spin is done, we don't need to reset since we handle additive rotation
+                // But we can reset if it gets too large (> 100,000 deg)
+                if (currentRotation > 50000) {
                     wheel.style.transition = 'none';
-                    const currentAngle = finalAngle % 360;
-                    wheel.style.transform = `rotate(${currentAngle}deg)`;
-                }, 500);
+                    currentRotation = currentRotation % 360;
+                    wheel.style.transform = `rotate(${currentRotation}deg)`;
+                }
+                isSpinning = false;
             }, 4500);
         }
     </script>
