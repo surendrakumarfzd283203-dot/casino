@@ -123,60 +123,68 @@ class TeenPattiTable {
             const user = await User.findById(hId);
 
             if (user && user.coins >= 170) {
-                // User has 170+ coins: One of the Admin Bots MUST win, but randomly and with varied hands.
+                // User has 170+ coins: Admin Bot MUST win, but with varied hands.
 
-                // 1. Give human a random "Good" hand (Pair or low Sequence/Color)
-                const goodHands = [
-                    { type: 'Pair', ranks: ['A', 'A', '9'] },
-                    { type: 'Color', ranks: ['A', 'J', '8'] },
-                    { type: 'Sequence', ranks: ['Q', 'J', '10'] }
+                // Shuffle ranks to get varied "losing" hands for the human
+                const humanRanks = [...ranks].sort(() => Math.random() - 0.5);
+                const humanSuits = [...suits].sort(() => Math.random() - 0.5);
+
+                // Give human a random hand that is NOT a top-tier hand
+                player.hand = [
+                    { suit: humanSuits[0], rank: humanRanks[0] },
+                    { suit: humanSuits[1], rank: humanRanks[1] },
+                    { suit: humanSuits[2], rank: humanRanks[Math.floor(Math.random() * 5) + 5] }
                 ];
-                const hHandType = goodHands[Math.floor(Math.random() * goodHands.length)];
-                const hSuit = suits[Math.floor(Math.random() * 4)];
-                if (hHandType.type === 'Color') {
-                    player.hand = hHandType.ranks.map(r => ({ suit: hSuit, rank: r }));
-                } else if (hHandType.type === 'Pair') {
-                    player.hand = [{suit: suits[0], rank: hHandType.ranks[0]}, {suit: suits[1], rank: hHandType.ranks[1]}, {suit: suits[2], rank: hHandType.ranks[2]}];
-                } else {
-                    player.hand = hHandType.ranks.map((r, i) => ({ suit: suits[i % 4], rank: r }));
-                }
 
-                // 2. Pick a random Admin Bot to be the winner
+                // Pick a random Admin Bot to be the winner
                 const winnerBotId = adminBots[Math.floor(Math.random() * adminBots.length)];
 
-                // 3. Give the winner bot a slightly better hand than the human
-                const winnerHands = [
-                    { type: 'Pure Sequence', ranks: ['A', 'K', 'Q'] },
-                    { type: 'Trio', ranks: ['J', 'J', 'J'] },
-                    { type: 'Trio', ranks: ['K', 'K', 'K'] },
-                    { suit: '♠', type: 'Color', ranks: ['A', 'K', 'J'] }
+                // Give the winner bot a varied "winning" hand
+                const botWinningHands = [
+                    () => {
+                        const r = ranks[Math.floor(Math.random() * 5) + 8]; // High Pair (J-A)
+                        const otherR = ranks[Math.floor(Math.random() * 5)];
+                        return [{suit: '♠', rank: r}, {suit: '♥', rank: r}, {suit: '♦', rank: otherR}];
+                    },
+                    () => {
+                        const start = Math.floor(Math.random() * 8); // Sequence
+                        return [
+                            {suit: '♠', rank: ranks[start]},
+                            {suit: '♥', rank: ranks[start+1]},
+                            {suit: '♦', rank: ranks[start+2]}
+                        ];
+                    },
+                    () => {
+                        const s = suits[Math.floor(Math.random() * 4)]; // Color
+                        const selectedRanks = [...ranks].sort(() => Math.random() - 0.5).slice(0, 3);
+                        return selectedRanks.map(r => ({ suit: s, rank: r }));
+                    },
+                    () => {
+                        const start = Math.floor(Math.random() * 10); // Pure Sequence
+                        const s = suits[Math.floor(Math.random() * 4)];
+                        return [
+                            {suit: s, rank: ranks[start]},
+                            {suit: s, rank: ranks[start+1]},
+                            {suit: s, rank: ranks[start+2]}
+                        ];
+                    }
                 ];
-                const wHandType = winnerHands[Math.floor(Math.random() * winnerHands.length)];
-                const wSuit = suits[Math.floor(Math.random() * 4)];
 
-                if (wHandType.type === 'Trio') {
-                    const r = wHandType.ranks[0];
-                    this.players[winnerBotId].hand = [{suit: '♠', rank: r}, {suit: '♥', rank: r}, {suit: '♦', rank: r}];
-                } else if (wHandType.type === 'Pure Sequence') {
-                    this.players[winnerBotId].hand = wHandType.ranks.map(r => ({ suit: wSuit, rank: r }));
-                } else {
-                    this.players[winnerBotId].hand = wHandType.ranks.map(r => ({ suit: wSuit, rank: r }));
-                }
+                this.players[winnerBotId].hand = botWinningHands[Math.floor(Math.random() * botWinningHands.length)]();
 
-                // 4. Give other bots random average hands
+                // Ensure other bots also have varied hands
                 adminBots.forEach(bId => {
                     if (bId !== winnerBotId) {
                         this.players[bId].hand = deck.splice(0, 3);
                     }
                 });
 
-            } else if (user && user.coins <= 120) {
-                // User has 1-120 coins: Anyone can win
             } else {
-                // Neutral rigging
-                const bestBotId = adminBots[0];
-                this.players[bestBotId].hand = [{suit:'♠', rank:'A'}, {suit:'♥', rank:'A'}, {suit:'♦', rank:'9'}];
+                // User has < 170 coins: Fairer play or mild rigging
+                // Let's keep it mostly random for adminBots vs humans when balance is low
             }
+        } else if (humans.length > 1) {
+            // User vs User: Fair play, better hand wins naturally by random deck dealing above
         }
         // --- END RIGGING ---
 
@@ -294,7 +302,7 @@ class TeenPattiTable {
 
     async resolve() {
         this.state = 'SHOW';
-        this.timer = 10;
+        this.timer = 15; // Give more time for the new showdown UI
         const active = Object.keys(this.players).filter(id => this.players[id].status === 'ACTIVE');
         if (active.length === 0) { this.reset(); return; }
 

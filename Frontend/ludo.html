@@ -7,26 +7,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #2563eb; --secondary: #ef4444; --accent: #f59e0b; --bg: #0f172a; }
+        :root { --primary: #2563eb; --secondary: #ef4444; --accent: #f59e0b; --bg: #030a21; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        .header { background: rgba(30, 41, 59, 0.8); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .balance { background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; color: #22c55e; font-weight: 800; border: 1px solid #22c55e; }
+        .header { background: #001242; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002e8c; }
+        .balance { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; color: #22c55e; font-weight: 800; border: 1.5px solid #22c55e; }
 
-        .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
+        .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; background: #001242; position: relative; }
 
+        /* NEW LUDO BOARD CSS (Realistic) */
         .ludo-board {
-            width: 330px;
-            height: 330px;
-            background: #fff;
-            padding: 5px;
-            display: grid;
-            grid-template-columns: repeat(15, 1fr);
-            grid-template-rows: repeat(15, 1fr);
-            gap: 1px;
-            border: 5px solid #334155;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            border-radius: 4px;
+            width: 340px; height: 340px; background: #fff; padding: 5px; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); gap: 1px; border: 4px solid #1e293b; box-shadow: 0 0 50px rgba(0,0,0,0.8); border-radius: 8px; margin-top: 10px;
         }
         .cell { background: #f8fafc; border: 1px solid #e2e8f0; }
         .red { background: #ef4444 !important; }
@@ -34,70 +25,129 @@
         .blue { background: #3b82f6 !important; }
         .yellow { background: #eab308 !important; }
         .home { grid-column: span 6; grid-row: span 6; display: flex; align-items: center; justify-content: center; position: relative; }
-        .home-inner { width: 70%; height: 70%; background: #fff; border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; padding: 10px; }
-        .token-pos { background: rgba(0,0,0,0.1); border-radius: 50%; border: 2px dashed rgba(0,0,0,0.2); }
-        .center-home { grid-column: span 3; grid-row: span 3; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; }
+        .home-inner { width: 75%; height: 70%; background: #fff; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; padding: 12px; border: 2px solid rgba(0,0,0,0.1); }
+        .token-pos { background: rgba(0,0,0,0.1); border-radius: 50%; border: 2px dashed rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; }
+        .center-home { grid-column: span 3; grid-row: span 3; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .tri { position: absolute; width: 0; height: 0; border-style: solid; }
-        .tri-red { border-width: 33px 33px 0 33px; border-color: #ef4444 transparent transparent transparent; top: 0; }
-        .tri-green { border-width: 33px 0 33px 33px; border-color: transparent transparent transparent #22c55e; left: 0; }
-        .tri-blue { border-width: 0 33px 33px 33px; border-color: transparent transparent #3b82f6 transparent; bottom: 0; }
-        .tri-yellow { border-width: 33px 33px 33px 0; border-color: transparent #eab308 transparent transparent; right: 0; }
+        .tri-red { border-width: 34px 34px 0 34px; border-color: #ef4444 transparent transparent transparent; top: 0; }
+        .tri-green { border-width: 34px 0 34px 34px; border-color: transparent transparent transparent #22c55e; left: 0; }
+        .tri-blue { border-width: 0 34px 34px 34px; border-color: transparent transparent #3b82f6 transparent; bottom: 0; }
+        .tri-yellow { border-width: 34px 34px 34px 0; border-color: transparent #eab308 transparent transparent; right: 0; }
 
-        .score-board { width: 100%; max-width: 400px; display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .player-score { background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 15px; text-align: center; border: 1.5px solid rgba(255,255,255,0.1); width: 45%; }
-        .player-score.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent); }
-        .score-val { font-size: 24px; font-weight: 800; color: var(--accent); }
+        /* SEARCHING SCREEN */
+        #searchingScreen {
+            position: fixed; inset: 0; background: #001242 url('https://www.transparenttextures.com/patterns/dark-matter.png'); z-index: 1500; display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .vs-container { display: flex; align-items: center; gap: 40px; margin-bottom: 50px; position: relative; }
+        .search-avatar-box { text-align: center; }
+        .search-avatar { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #fde047; box-shadow: 0 0 30px rgba(253, 224, 71, 0.4); overflow: hidden; background: #1e293b; position: relative; margin-bottom: 10px; }
+        .search-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .vs-text { font-size: 64px; font-weight: 950; font-style: italic; color: #fff; text-shadow: 0 0 20px #f59e0b; font-family: 'serif'; }
+        .search-loader { position: absolute; inset: -10px; border: 4px solid transparent; border-top-color: #fde047; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .search-text { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
 
-        .dice-area { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .dice { width: 80px; height: 80px; background: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #333; box-shadow: 0 10px 20px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.1s; }
-        .dice:active { transform: scale(0.9); }
+        /* LOBBY UPGRADE */
+        #lobby { position: fixed; inset: 0; background: #001242; z-index: 1000; display: flex; flex-direction: column; align-items: center; padding-top: 40px; overflow-y: auto; }
+        .lobby-title-box { text-align: center; margin-bottom: 30px; }
+        .stake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 92%; max-width: 450px; padding-bottom: 50px; }
+        .stake-card { background: linear-gradient(145deg, #1e3a8a, #001242); padding: 20px 10px; border-radius: 20px; text-align: center; border: 2px solid #3b82f6; box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: 0.2s; }
+        .stake-card:active { transform: scale(0.95); }
+        .stake-card h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #60a5fa; }
+        .stake-card .amount { font-size: 28px; font-weight: 900; color: #fde047; margin: 10px 0; }
+        .btn-join { background: #f59e0b; color: #000; border: none; padding: 10px 0; border-radius: 12px; font-weight: 800; cursor: pointer; width: 85%; }
+
+        /* GAME TOP BAR */
+        .game-top-bar { width: 100%; background: #001e5d; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002e8c; z-index: 100; }
+        .prize-pool { background: #1e3a8a; padding: 5px 15px; border-radius: 10px; border: 1px solid #fde047; color: #fde047; font-weight: 900; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .game-timer { font-size: 18px; font-weight: 900; color: #22c55e; font-family: monospace; background: rgba(0,0,0,0.3); padding: 2px 10px; border-radius: 5px; }
+
+        .score-board { width: 100%; display: flex; justify-content: space-between; padding: 10px 20px; }
+        .player-score { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 12px; text-align: center; border: 1.5px solid rgba(255,255,255,0.1); width: 45%; position: relative; }
+        .player-score.active { border-color: #fde047; box-shadow: 0 0 15px #fde047; background: rgba(253, 224, 71, 0.1); }
+        .score-val { font-size: 22px; font-weight: 800; color: #fde047; }
+
+        .dice-area { margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .dice { width: 70px; height: 70px; background: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 36px; color: #333; box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.1s; position: relative; }
         .dice.rolling { animation: roll 0.5s infinite; }
-        @keyframes roll { 0% { transform: rotate(0deg); } 25% { transform: rotate(90deg) scale(1.1); } 50% { transform: rotate(180deg); } 75% { transform: rotate(270deg) scale(1.1); } 100% { transform: rotate(360deg); } }
+        @keyframes roll { 0% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(90deg) scale(1.1); } 50% { transform: rotate(180deg) scale(1); } 75% { transform: rotate(270deg) scale(1.1); } 100% { transform: rotate(360deg) scale(1); } }
+        .dice::after { content: "ROLL"; position: absolute; bottom: -20px; font-size: 10px; font-weight: 900; color: #fde047; letter-spacing: 1px; }
 
-        .move-count { margin-top: 10px; font-size: 14px; opacity: 0.8; }
-        .status-msg { margin-top: 15px; font-weight: 600; color: var(--accent); height: 24px; }
-
-        #lobby { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .stake-card { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 300px; margin-bottom: 20px; }
-        .stake-card h2 { margin: 0 0 10px; color: var(--accent); }
-        .btn-join { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 700; cursor: pointer; width: 100%; }
+        .move-count { margin-top: 25px; font-size: 12px; opacity: 0.9; font-weight: 700; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; }
+        .status-msg { margin-top: 10px; font-weight: 700; color: #fde047; font-size: 14px; text-transform: uppercase; }
 
         #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .res-card { background: #1e293b; padding: 40px; border-radius: 30px; border: 2px solid var(--accent); text-align: center; width: 100%; max-width: 400px; }
+        .res-card { background: #1e293b; padding: 40px; border-radius: 30px; border: 3px solid #fde047; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 0 50px rgba(253, 224, 71, 0.2); }
+
+        .emoji-bar { position: absolute; bottom: 85px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; padding: 5px; background: rgba(0,0,0,0.4); }
+        .emoji-item { font-size: 24px; cursor: pointer; transition: 0.2s; }
+        .emoji-item:active { transform: scale(1.3); }
     </style>
 </head>
 <body>
 
-    <div id="lobby">
-        <h1 style="color: var(--accent); font-size: 32px; margin-bottom: 5px;">LUDO TURBO</h1>
-        <p style="opacity: 0.7; margin-bottom: 30px;">25 Moves Match - Highest Score Wins</p>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 450px;">
-            <div class="stake-card" style="padding: 15px;"><h2>Bronze</h2><p>₹5</p><button class="btn-join" onclick="joinGame(5)">PLAY</button></div>
-            <div class="stake-card" style="padding: 15px;"><h2>Silver</h2><p>₹10</p><button class="btn-join" onclick="joinGame(10)">PLAY</button></div>
-            <div class="stake-card" style="padding: 15px;"><h2>Gold</h2><p>₹20</p><button class="btn-join" onclick="joinGame(20)">PLAY</button></div>
-            <div class="stake-card" style="padding: 15px;"><h2>Diamond</h2><p>₹50</p><button class="btn-join" onclick="joinGame(50)">PLAY</button></div>
-            <div class="stake-card" style="padding: 15px;"><h2>Platinum</h2><p>₹100</p><button class="btn-join" onclick="joinGame(100)">PLAY</button></div>
-            <div class="stake-card" style="padding: 15px;"><h2>Master</h2><p>₹500</p><button class="btn-join" onclick="joinGame(500)">PLAY</button></div>
-            <div class="stake-card" style="grid-column: span 2; padding: 15px;"><h2>Grand Master</h2><p>₹1000</p><button class="btn-join" onclick="joinGame(1000)">PLAY</button></div>
+    <div id="searchingScreen">
+        <div class="vs-container">
+            <div class="search-avatar-box">
+                <div class="search-avatar">
+                    <img id="mySearchAv" src="https://i.pravatar.cc/100?u=1" alt="Me">
+                    <div class="search-loader"></div>
+                </div>
+                <div id="mySearchName" style="font-weight:900; font-size:14px;">YOU</div>
+            </div>
+            <div class="vs-text">VS</div>
+            <div class="search-avatar-box">
+                <div class="search-avatar">
+                    <img id="oppSearchAv" src="https://www.transparenttextures.com/patterns/poker-qr.png" alt="Searching">
+                    <div class="search-loader"></div>
+                </div>
+                <div id="oppSearchName" style="font-weight:900; font-size:14px; color:#f59e0b;">SEARCHING...</div>
+            </div>
         </div>
-        <button onclick="location.href='dashboard.html'" style="background:transparent; border:none; color:white; opacity:0.6; margin-top:20px;">Exit to Dashboard</button>
+        <div class="search-text">Searching for players...</div>
+    </div>
+
+    <div id="lobby">
+        <div class="lobby-title-box">
+            <h1 style="color: #fde047; font-size: 36px; margin: 0; text-shadow: 0 0 20px rgba(253, 224, 71, 0.4);">LUDO TURBO</h1>
+            <p style="color: #60a5fa; font-weight: 700; letter-spacing: 1px;">Fast 25 Moves PvP Battle</p>
+        </div>
+
+        <div class="stake-grid">
+            <div class="stake-card"><h2>Bronze</h2><div class="amount">₹5</div><button class="btn-join" onclick="joinGame(5)">JOIN NOW</button></div>
+            <div class="stake-card"><h2>Silver</h2><div class="amount">₹10</div><button class="btn-join" onclick="joinGame(10)">JOIN NOW</button></div>
+            <div class="stake-card"><h2>Gold</h2><div class="amount">₹20</div><button class="btn-join" onclick="joinGame(20)">JOIN NOW</button></div>
+            <div class="stake-card"><h2>Diamond</h2><div class="amount">₹50</div><button class="btn-join" onclick="joinGame(50)">JOIN NOW</button></div>
+            <div class="stake-card"><h2>Platinum</h2><div class="amount">₹100</div><button class="btn-join" onclick="joinGame(100)">JOIN NOW</button></div>
+            <div class="stake-card"><h2>Master</h2><div class="amount">₹500</div><button class="btn-join" onclick="joinGame(500)">JOIN NOW</button></div>
+            <div class="stake-card" style="grid-column: span 2;"><h2>Grand Master</h2><div class="amount">₹1000</div><button class="btn-join" onclick="joinGame(1000)">JOIN NOW</button></div>
+        </div>
+        <button onclick="location.href='dashboard.html'" style="background:transparent; border:none; color:#60a5fa; font-weight:700; margin-bottom:30px;">← EXIT TO LOBBY</button>
     </div>
 
     <div class="header">
         <div onclick="location.href='dashboard.html'"><i class="fas fa-chevron-left"></i></div>
-        <div style="font-weight: 800; letter-spacing: 1px;">LUDO TURBO</div>
+        <div style="font-weight: 800; letter-spacing: 1px; color:#fde047;">LUDO TURBO</div>
         <div class="balance">₹<span id="balance">0.00</span></div>
     </div>
 
     <div class="game-container">
+        <div class="game-top-bar">
+            <div class="prize-pool">
+                <i class="fas fa-trophy"></i>
+                <span>Prize: ₹<span id="prizeVal">0.00</span></span>
+            </div>
+            <div class="game-timer" id="gameTimer">05:00</div>
+            <div style="width:40px;"></div>
+        </div>
+
         <div class="score-board">
             <div class="player-score" id="p1-card">
-                <div id="p1-name" style="font-size: 12px; margin-bottom: 5px; opacity: 0.8;">You</div>
+                <div id="p1-name" style="font-size: 11px; margin-bottom: 3px; font-weight:900;">YOU</div>
                 <div class="score-val" id="p1-score">0</div>
             </div>
             <div class="player-score" id="p2-card">
-                <div id="p2-name" style="font-size: 12px; margin-bottom: 5px; opacity: 0.8;">Waiting...</div>
+                <div id="p2-name" style="font-size: 11px; margin-bottom: 3px; font-weight:900;">WAITING...</div>
                 <div class="score-val" id="p2-score">0</div>
             </div>
         </div>
@@ -157,7 +207,7 @@
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        let myId = "", currentRoom = null, isRolling = false;
+        let myId = "", currentRoom = null, isRolling = false, searchInterval = null;
 
         async function init() {
             if (!token) { location.href = "login.html"; return; }
@@ -166,6 +216,8 @@
             if (data.success) {
                 myId = data.user.id;
                 document.getElementById("balance").innerText = data.user.coins.toFixed(2);
+                document.getElementById("mySearchAv").src = data.user.avatar && data.user.avatar.includes('.') ? `${API_URL}/${data.user.avatar}` : `https://i.pravatar.cc/100?u=${myId}`;
+                document.getElementById("mySearchName").innerText = data.user.name;
             }
         }
         init();
@@ -179,8 +231,32 @@
             if (data.success) {
                 currentRoom = data.roomId;
                 document.getElementById("lobby").style.display = "none";
-                startStateLoop();
+                document.getElementById("searchingScreen").style.display = "flex";
+                document.getElementById("prizeVal").innerText = (amount * 1.8).toFixed(2);
+                startSearchingLoop();
             } else alert(data.message);
+        }
+
+        function startSearchingLoop() {
+            searchInterval = setInterval(async () => {
+                if (!currentRoom) return;
+                const res = await fetch(`${API_URL}/api/game/ludo/state/${currentRoom}`, { headers: { authorization: token } });
+                const data = await res.json();
+                if (data.success) {
+                    const players = Object.values(data.state.players);
+                    if (players.length === 2 || data.state.gameState === 'PLAYING') {
+                        clearInterval(searchInterval);
+                        const opp = players.find(p => p.id !== myId);
+                        document.getElementById("oppSearchAv").src = opp.avatar && opp.avatar.includes('.') ? (opp.avatar.startsWith('http') ? opp.avatar : `${API_URL}/${opp.avatar}`) : `https://i.pravatar.cc/100?u=${opp.id}`;
+                        document.getElementById("oppSearchName").innerText = opp.name;
+
+                        setTimeout(() => {
+                            document.getElementById("searchingScreen").style.display = "none";
+                            startStateLoop();
+                        }, 2000);
+                    }
+                }
+            }, 1000);
         }
 
         function startStateLoop() {
@@ -194,16 +270,20 @@
 
         function updateUI(state) {
             const players = Object.values(state.players);
-            const me = state.players[myId];
             const opponent = players.find(p => p.id !== myId) || { name: "Waiting...", id: null };
 
-            document.getElementById("p1-name").innerText = me.name;
+            document.getElementById("p1-name").innerText = state.players[myId].name;
             document.getElementById("p2-name").innerText = opponent.name;
             document.getElementById("p1-score").innerText = state.scores[myId] || 0;
             if (opponent.id) document.getElementById("p2-score").innerText = state.scores[opponent.id] || 0;
 
             document.getElementById("p1-card").classList.toggle("active", state.turn === myId);
             document.getElementById("p2-card").classList.toggle("active", opponent.id && state.turn === opponent.id);
+
+            // Turn timer display (simplified)
+            const min = Math.floor(state.timer / 60);
+            const sec = state.timer % 60;
+            document.getElementById("gameTimer").innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 
             const movesPerPlayer = 25;
             const myMovesDone = state.history.filter(h => h.userId === myId).length;

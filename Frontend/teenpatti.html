@@ -268,19 +268,31 @@
         #sideShowOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 8000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .side-card { background: #1e293b; padding: 25px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; }
 
-        /* SHOWDOWN LABELS */
-        .showdown-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 900; text-transform: uppercase; text-shadow: 0 0 10px rgba(0,0,0,0.8); z-index: 500; padding: 5px 15px; border-radius: 10px; border: 2px solid #fff; }
-        .label-win { background: #22c55e; box-shadow: 0 0 20px #22c55e; }
-        .label-lose { background: #ef4444; opacity: 0.8; }
+        /* SHOWDOWN OVERLAY */
+        #showdownOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .showdown-card-box { display: flex; gap: 30px; align-items: center; margin-top: 40px; }
+        .player-hand-show { text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 2px solid var(--gold); box-shadow: 0 0 30px rgba(255, 193, 7, 0.2); }
+        .hand-name { color: var(--gold); font-size: 18px; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; }
+        .hand-rank-text { color: #fff; font-size: 14px; font-weight: 700; margin-top: 10px; }
+        .vs-showdown { font-size: 48px; font-weight: 950; font-style: italic; color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+
+        .winner-crown { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 40px; color: var(--gold); filter: drop-shadow(0 0 10px gold); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.2); } 100% { transform: translateX(-50%) scale(1); } }
 
         /* SIDESHOW OVERLAY */
         #sideShowOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 8000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .side-card { background: #1e293b; padding: 25px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 85%; }
 
-        /* SHOWDOWN LABELS */
-        .showdown-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 900; text-transform: uppercase; text-shadow: 0 0 10px rgba(0,0,0,0.8); z-index: 500; padding: 5px 15px; border-radius: 10px; border: 2px solid #fff; }
-        .label-win { background: #22c55e; box-shadow: 0 0 20px #22c55e; }
-        .label-lose { background: #ef4444; opacity: 0.8; }
+        /* SHOWDOWN OVERLAY */
+        #showdownOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .showdown-card-box { display: flex; gap: 30px; align-items: center; margin-top: 40px; }
+        .player-hand-show { text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 2px solid var(--gold); box-shadow: 0 0 30px rgba(255, 193, 7, 0.2); }
+        .hand-name { color: var(--gold); font-size: 18px; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; }
+        .hand-rank-text { color: #fff; font-size: 14px; font-weight: 700; margin-top: 10px; }
+        .vs-showdown { font-size: 48px; font-weight: 950; font-style: italic; color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+
+        .winner-crown { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 40px; color: var(--gold); filter: drop-shadow(0 0 10px gold); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.2); } 100% { transform: translateX(-50%) scale(1); } }
 
         /* RESULT */
         #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 7000; display: none; flex-direction: column; align-items: center; justify-content: center; }
@@ -388,6 +400,14 @@
                 <button class="btn-act btn-pack" onclick="respondSideShow(false)">REJECT</button>
             </div>
         </div>
+    </div>
+
+    <div id="showdownOverlay">
+        <h1 style="color: var(--gold); font-size: 32px; letter-spacing: 5px; margin-bottom: 0;">SHOWDOWN</h1>
+        <div class="showdown-card-box" id="showdownContent">
+            <!-- Hands injected here -->
+        </div>
+        <button class="btn-act btn-chaal" style="width: 200px; height: 50px; margin-top: 40px; font-size: 18px;" onclick="closeShowdown()">CONTINUE</button>
     </div>
 
     <div id="resultOverlay">
@@ -639,9 +659,39 @@
 
             if (t.state === 'SHOW' && lastState !== 'SHOW') {
                 document.getElementById('snd-show').play().catch(e=>{});
-                setTimeout(() => showResult(t), 1000);
+                showCustomShowdown(t);
             }
             lastState = t.state;
+        }
+
+        function showCustomShowdown(t) {
+            const overlay = document.getElementById("showdownOverlay");
+            const content = document.getElementById("showdownContent");
+            overlay.style.display = "flex";
+
+            const players = Object.values(t.players).filter(p => p.status === 'ACTIVE' || p.result);
+            // Sort by winner first
+            players.sort((a, b) => (a.result === 'WIN' ? -1 : 1));
+
+            // Only show top 2 participants
+            const participants = players.slice(0, 2);
+
+            content.innerHTML = participants.map((p, idx) => `
+                ${idx === 1 ? '<div class="vs-showdown">VS</div>' : ''}
+                <div class="player-hand-show" style="position:relative;">
+                    ${p.result === 'WIN' ? '<div class="winner-crown">👑</div>' : ''}
+                    <div class="hand-name">${p.name}</div>
+                    <div style="display:flex; gap:10px;">${renderBigCards(p.hand, false)}</div>
+                    <div class="hand-rank-text">${p.handRank || ''}</div>
+                    <div style="margin-top:10px; color:${p.result==='WIN'?'#22c55e':'#ef4444'}; font-weight:900;">
+                        ${p.result === 'WIN' ? 'WINNER!' : 'LOSER'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function closeShowdown() {
+            document.getElementById("showdownOverlay").style.display = "none";
         }
 
         function animateDealing(t) {

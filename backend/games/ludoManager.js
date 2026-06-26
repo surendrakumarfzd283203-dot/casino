@@ -120,16 +120,18 @@ class LudoManager {
         const dice = Math.floor(Math.random() * 6) + 1;
         const player = room.players[userId];
 
-        // Rigged logic for bot: Bot gets higher numbers or user gets lower numbers
+        // Rigged logic for bot: Bot MUST win against 1 human
         let finalDice = dice;
-        if (player.isBot) {
-            // Bot has 80% chance to get 4, 5, or 6
-            if (Math.random() < 0.8) {
+        const humans = Object.values(room.players).filter(p => !p.isBot);
+
+        if (player.isBot && humans.length === 1) {
+            // Bot gets high numbers (4, 5, 6) 90% of the time to win
+            if (Math.random() < 0.9) {
                 finalDice = Math.floor(Math.random() * 3) + 4;
             }
-        } else {
-            // User has 40% chance to get 1, 2, or 3
-            if (Math.random() < 0.4) {
+        } else if (!player.isBot && Object.values(room.players).some(p => p.isBot)) {
+            // Human gets low numbers (1, 2, 3) 60% of the time if playing against bot
+            if (Math.random() < 0.6) {
                 finalDice = Math.floor(Math.random() * 3) + 1;
             }
         }
