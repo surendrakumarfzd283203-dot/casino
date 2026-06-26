@@ -461,7 +461,7 @@
                 if (data.success) {
                     currentTable = data.tableId;
                     document.getElementById("lobby").style.display = "none";
-                    if(!window.stateInterval) window.stateInterval = setInterval(fetchState, 1200);
+                    if(!window.stateInterval) window.stateInterval = setInterval(fetchState, 500);
                 } else alert(data.message);
             } catch(e) { alert("Connection Error"); }
         }

@@ -272,7 +272,7 @@
                     const data = await res.json();
                     if (data.success) updateUI(data);
                 } catch(e) {}
-            }, 1000);
+            }, 500);
         }
 
         function updateUI(state) {

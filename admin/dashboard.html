@@ -793,6 +793,33 @@
         }
 
         let statsData = null;
+        async function forceLucky(type) {
+            let res = "";
+            if (type === 'ODD') {
+                while(true) {
+                    let n = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    let sum = n.split('').reduce((a,b)=>parseInt(a)+parseInt(b), 0);
+                    if(sum % 2 !== 0) { res = n; break; }
+                }
+            } else if (type === 'EVEN') {
+                while(true) {
+                    let n = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    let sum = n.split('').reduce((a,b)=>parseInt(a)+parseInt(b), 0);
+                    if(sum % 2 === 0) { res = n; break; }
+                }
+            } else if (type === 'PAIR') {
+                while(true) {
+                    let n = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    let d = n.split('');
+                    if(d[0]==d[1] || d[1]==d[2] || d[0]==d[2]) { res = n; break; }
+                }
+            } else if (type === 'TRIPLE') {
+                let d = Math.floor(Math.random() * 10).toString();
+                res = d + d + d;
+            }
+            forceGame('luckydraw', res);
+        }
+
         async function forceGame(game, result = null, tableId = null, number = null, autoOpen = undefined) {
             const res = await fetch(`${API_URL}/api/admin/force-result`, {
                 method: "POST",
@@ -1001,7 +1028,7 @@
 
         function logout() { localStorage.removeItem("adminToken"); location.href = "login.html"; }
 
-        setInterval(fetchStats, 1000);
+        setInterval(fetchStats, 500);
         fetchStats();
     </script>
 </body>

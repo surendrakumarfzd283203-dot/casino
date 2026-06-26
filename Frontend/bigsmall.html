@@ -446,7 +446,7 @@
             if (data.success) document.getElementById("balance").innerText = data.user.coins.toFixed(2);
         }
 
-        setInterval(fetchState, 1000);
+        setInterval(fetchState, 500);
         fetchBalance();
     </script>
 </body>

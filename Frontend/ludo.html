@@ -264,7 +264,7 @@
                         }, 200); // Super fast transition
                     }
                 }
-            }, 1000);
+            }, 500);
         }
 
         function startStateLoop() {
@@ -273,7 +273,7 @@
                 const res = await fetch(`${API_URL}/api/game/ludo/state/${currentRoom}`, { headers: { authorization: token } });
                 const data = await res.json();
                 if (data.success) updateUI(data.state);
-            }, 1000);
+            }, 500);
         }
 
         function updateUI(state) {
