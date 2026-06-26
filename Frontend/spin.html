@@ -15,9 +15,26 @@
         .wallet { background: #5d4037; padding: 5px 12px; border-radius: 20px; font-weight: 900; color: #ffeb3b; border: 1.5px solid #8d6e63; }
 
         /* WHEEL SECTION */
-        .wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; }
-        .wheel-img { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
-        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 30px; z-index: 10; filter: drop-shadow(0 0 10px rgba(255,0,0,0.5)); }
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 20px auto; display: flex; align-items: center; justify-content: center; }
+        .wheel-outer { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #1e293b; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5); position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .wheel-sector { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; color: white; text-shadow: 1px 1px 2px black; }
+        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 40px; z-index: 100; filter: drop-shadow(0 0 10px rgba(255,0,0,0.5)); }
+        .wheel-center { position: absolute; width: 40px; height: 40px; background: #1e293b; border: 4px solid var(--gold); border-radius: 50%; z-index: 50; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px black; }
+
+        /* Sector Colors and Positions */
+        .s1 { background: #b91c1c; transform: rotate(0deg) skewY(-57deg); }
+        .s2 { background: #1e3a8a; transform: rotate(32.7deg) skewY(-57deg); }
+        .s3 { background: #059669; transform: rotate(65.4deg) skewY(-57deg); }
+        .s4 { background: #b91c1c; transform: rotate(98.1deg) skewY(-57deg); }
+        .s5 { background: #1e3a8a; transform: rotate(130.8deg) skewY(-57deg); }
+        .s6 { background: #059669; transform: rotate(163.5deg) skewY(-57deg); }
+        .s7 { background: #78350f; transform: rotate(196.2deg) skewY(-57deg); }
+        .s8 { background: #1e3a8a; transform: rotate(228.9deg) skewY(-57deg); }
+        .s9 { background: #059669; transform: rotate(261.6deg) skewY(-57deg); }
+        .s10 { background: #b91c1c; transform: rotate(294.3deg) skewY(-57deg); }
+        .s11 { background: #1e3a8a; transform: rotate(327deg) skewY(-57deg); }
+
+        .sector-num { position: absolute; transform-origin: center; transform: skewY(57deg) rotate(16deg) translateY(-85px); }
 
         .timer-box { background: rgba(0,0,0,0.5); padding: 10px; width: 80%; margin: 0 auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); text-align: center; }
         .timer-val { font-size: 20px; font-weight: 900; color: var(--gold); }
@@ -89,7 +106,20 @@
     </div>
 
     <div class="wheel-container">
-        <img src="https://i.ibb.co/L9YmP2P/wheel-final.png" class="wheel-img" id="wheel" alt="Wheel">
+        <div class="wheel-outer" id="wheel">
+            <div class="wheel-sector s1"><span class="sector-num">7</span></div>
+            <div class="wheel-sector s2"><span class="sector-num">2</span></div>
+            <div class="wheel-sector s3"><span class="sector-num">8</span></div>
+            <div class="wheel-sector s4"><span class="sector-num">3</span></div>
+            <div class="wheel-sector s5"><span class="sector-num">9</span></div>
+            <div class="wheel-sector s6"><span class="sector-num">4</span></div>
+            <div class="wheel-sector s7"><span class="sector-num">10</span></div>
+            <div class="wheel-sector s8"><span class="sector-num">5</span></div>
+            <div class="wheel-sector s9"><span class="sector-num">11</span></div>
+            <div class="wheel-sector s10"><span class="sector-num">6</span></div>
+            <div class="wheel-sector s11"><span class="sector-num">12</span></div>
+        </div>
+        <div class="wheel-center"><i class="fas fa-star" style="color:var(--gold)"></i></div>
         <img src="https://cdn-icons-png.flaticon.com/512/3602/3602513.png" class="pointer" alt="Pointer">
     </div>
 
@@ -264,18 +294,21 @@
 
             // Random number of full rotations + offset for the section
             const baseRotations = 5;
-            const finalAngle = (baseRotations * 360) + (360 - (winningIndex * sectionAngle));
+            // The wheel rotates clockwise. Sector 0 is at the top (0deg).
+            // To bring sector X to the top (under pointer), we need to rotate by -(X * angle)
+            const finalAngle = (baseRotations * 360) - (winningIndex * sectionAngle);
 
+            wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0, 0.15, 1)';
             wheel.style.transform = `rotate(${finalAngle}deg)`;
 
             setTimeout(() => {
                 fetchBalance();
-                // Reset wheel for next spin without transition
+                // Reset wheel position for next spin without visible jump
                 setTimeout(() => {
                     wheel.style.transition = 'none';
-                    wheel.style.transform = `rotate(${finalAngle % 360}deg)`;
-                    setTimeout(() => wheel.style.transition = '', 50);
-                }, 1000);
+                    const currentAngle = finalAngle % 360;
+                    wheel.style.transform = `rotate(${currentAngle}deg)`;
+                }, 500);
             }, 4500);
         }
     </script>

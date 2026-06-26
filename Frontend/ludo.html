@@ -15,15 +15,33 @@
 
         .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
 
-        .ludo-board { width: 320px; height: 320px; background: white; border-radius: 10px; position: relative; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); box-shadow: 0 20px 50px rgba(0,0,0,0.5); overflow: hidden; }
-        .base { display: flex; align-items: center; justify-content: center; position: relative; }
-        .base-red { background: #ef4444; }
-        .base-blue { background: #2563eb; }
-        .base-green { background: #22c55e; }
-        .base-yellow { background: #eab308; }
-
-        .center-home { background: #f8fafc; display: flex; align-items: center; justify-content: center; border: 2px solid #cbd5e1; }
-        .home-triangle { width: 0; height: 0; position: absolute; }
+        .ludo-board {
+            width: 330px;
+            height: 330px;
+            background: #fff;
+            padding: 5px;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            gap: 1px;
+            border: 5px solid #334155;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border-radius: 4px;
+        }
+        .cell { background: #f8fafc; border: 1px solid #e2e8f0; }
+        .red { background: #ef4444 !important; }
+        .green { background: #22c55e !important; }
+        .blue { background: #3b82f6 !important; }
+        .yellow { background: #eab308 !important; }
+        .home { grid-column: span 6; grid-row: span 6; display: flex; align-items: center; justify-content: center; position: relative; }
+        .home-inner { width: 70%; height: 70%; background: #fff; border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; padding: 10px; }
+        .token-pos { background: rgba(0,0,0,0.1); border-radius: 50%; border: 2px dashed rgba(0,0,0,0.2); }
+        .center-home { grid-column: span 3; grid-row: span 3; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; }
+        .tri { position: absolute; width: 0; height: 0; border-style: solid; }
+        .tri-red { border-width: 33px 33px 0 33px; border-color: #ef4444 transparent transparent transparent; top: 0; }
+        .tri-green { border-width: 33px 0 33px 33px; border-color: transparent transparent transparent #22c55e; left: 0; }
+        .tri-blue { border-width: 0 33px 33px 33px; border-color: transparent transparent #3b82f6 transparent; bottom: 0; }
+        .tri-yellow { border-width: 33px 33px 33px 0; border-color: transparent #eab308 transparent transparent; right: 0; }
 
         .score-board { width: 100%; max-width: 400px; display: flex; justify-content: space-between; margin-bottom: 20px; }
         .player-score { background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 15px; text-align: center; border: 1.5px solid rgba(255,255,255,0.1); width: 45%; }
@@ -54,15 +72,14 @@
         <h1 style="color: var(--accent); font-size: 32px; margin-bottom: 5px;">LUDO TURBO</h1>
         <p style="opacity: 0.7; margin-bottom: 30px;">25 Moves Match - Highest Score Wins</p>
 
-        <div class="stake-card">
-            <h2>Classic</h2>
-            <p>Entry: ₹10</p>
-            <button class="btn-join" onclick="joinGame(10)">PLAY NOW</button>
-        </div>
-        <div class="stake-card">
-            <h2>Pro</h2>
-            <p>Entry: ₹50</p>
-            <button class="btn-join" onclick="joinGame(50)">PLAY NOW</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 450px;">
+            <div class="stake-card" style="padding: 15px;"><h2>Bronze</h2><p>₹5</p><button class="btn-join" onclick="joinGame(5)">PLAY</button></div>
+            <div class="stake-card" style="padding: 15px;"><h2>Silver</h2><p>₹10</p><button class="btn-join" onclick="joinGame(10)">PLAY</button></div>
+            <div class="stake-card" style="padding: 15px;"><h2>Gold</h2><p>₹20</p><button class="btn-join" onclick="joinGame(20)">PLAY</button></div>
+            <div class="stake-card" style="padding: 15px;"><h2>Diamond</h2><p>₹50</p><button class="btn-join" onclick="joinGame(50)">PLAY</button></div>
+            <div class="stake-card" style="padding: 15px;"><h2>Platinum</h2><p>₹100</p><button class="btn-join" onclick="joinGame(100)">PLAY</button></div>
+            <div class="stake-card" style="padding: 15px;"><h2>Master</h2><p>₹500</p><button class="btn-join" onclick="joinGame(500)">PLAY</button></div>
+            <div class="stake-card" style="grid-column: span 2; padding: 15px;"><h2>Grand Master</h2><p>₹1000</p><button class="btn-join" onclick="joinGame(1000)">PLAY</button></div>
         </div>
         <button onclick="location.href='dashboard.html'" style="background:transparent; border:none; color:white; opacity:0.6; margin-top:20px;">Exit to Dashboard</button>
     </div>
@@ -86,18 +103,36 @@
         </div>
 
         <div class="ludo-board">
-            <!-- Simplified Board Visualization -->
-            <div class="base base-red"></div>
-            <div class="path-v" style="background: #f1f5f9;"></div>
-            <div class="base base-green"></div>
-            <div class="path-h" style="background: #f1f5f9;"></div>
+            <!-- Green Home -->
+            <div class="home green" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
+            <!-- Path Green to Red -->
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <!-- Red Home -->
+            <div class="home red" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
+
+            <div class="cell" style="grid-column: 7; grid-row: 1;"></div><div class="cell" style="grid-column: 8; grid-row: 1;"></div><div class="cell" style="grid-column: 9; grid-row: 1;"></div>
+            <div class="cell" style="grid-column: 7; grid-row: 2;"></div><div class="cell red" style="grid-column: 8; grid-row: 2;"></div><div class="cell" style="grid-column: 9; grid-row: 2;"></div>
+            <div class="cell" style="grid-column: 7; grid-row: 3;"></div><div class="cell red" style="grid-column: 8; grid-row: 3;"></div><div class="cell" style="grid-column: 9; grid-row: 3;"></div>
+            <div class="cell green" style="grid-column: 7; grid-row: 4;"></div><div class="cell red" style="grid-column: 8; grid-row: 4;"></div><div class="cell" style="grid-column: 9; grid-row: 4;"></div>
+            <div class="cell" style="grid-column: 7; grid-row: 5;"></div><div class="cell red" style="grid-column: 8; grid-row: 5;"></div><div class="cell" style="grid-column: 9; grid-row: 5;"></div>
+            <div class="cell" style="grid-column: 7; grid-row: 6;"></div><div class="cell red" style="grid-column: 8; grid-row: 6;"></div><div class="cell" style="grid-column: 9; grid-row: 6;"></div>
+
+            <div class="cell" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div>
             <div class="center-home">
-                <img src="https://cdn-icons-png.flaticon.com/512/1041/1041849.png" width="40">
+                <div class="tri tri-red"></div><div class="tri tri-green"></div><div class="tri tri-blue"></div><div class="tri tri-yellow"></div>
+                <img src="https://cdn-icons-png.flaticon.com/512/1041/1041849.png" width="25" alt="Home">
             </div>
-            <div class="path-h" style="background: #f1f5f9;"></div>
-            <div class="base base-blue"></div>
-            <div class="path-v" style="background: #f1f5f9;"></div>
-            <div class="base base-yellow"></div>
+            <div class="cell" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div><div class="cell blue" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div>
+
+            <div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div>
+            <div class="cell" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div>
+
+            <div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div>
+            <div class="cell yellow" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div>
+
+            <div class="home blue" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
+            <div class="cell" style="grid-column: 7;"></div><div class="cell yellow" style="grid-column: 8;"></div><div class="cell" style="grid-column: 9;"></div>
+            <div class="home yellow" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
         </div>
 
         <div class="status-msg" id="statusMsg">Connecting...</div>
@@ -205,16 +240,21 @@
             const diceBtn = document.getElementById("diceBtn");
             diceBtn.classList.add("rolling");
 
-            // Call API
-            const res = await fetch(`${API_URL}/api/game/ludo/move`, {
-                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ roomId: currentRoom })
-            });
+            try {
+                const res = await fetch(`${API_URL}/api/game/ludo/move`, {
+                    method: "POST", headers: { "Content-Type": "application/json", authorization: token },
+                    body: JSON.stringify({ roomId: currentRoom })
+                });
+                const data = await res.json();
 
-            setTimeout(() => {
-                diceBtn.classList.remove("rolling");
+                setTimeout(() => {
+                    diceBtn.classList.remove("rolling");
+                    isRolling = false;
+                }, 800);
+            } catch(e) {
                 isRolling = false;
-            }, 600);
+                diceBtn.classList.remove("rolling");
+            }
         }
 
         function showResult(state) {
