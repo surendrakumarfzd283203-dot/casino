@@ -811,15 +811,20 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
         colorGameManager.forceNextResult(number);
         return res.json({ success: true, message: `Next Color Game number set to: ${number}` });
     } else if (game === 'luckydraw') {
-        luckyDrawManager.forceJackpot();
-        return res.json({ success: true, message: "Next Lucky Draw set to 777" });
+        luckyDrawManager.forceResult(result);
+        return res.json({ success: true, message: `Next Lucky Draw set to ${result}` });
     } else if (game === 'spin') {
         spinGameManager.forceResult(result);
         return res.json({ success: true, message: `Next Spin result index set to: ${result}` });
     } else if (game === 'numberspin') {
+        if (autoOpen !== undefined) {
+            numberSpinManager.toggleAutoMode(autoOpen);
+            return res.json({ success: true, message: `Auto Mode set to: ${autoOpen}` });
+        }
         numberSpinManager.forceResult(result);
         return res.json({ success: true, message: `Next Number Spin result set to: ${result}` });
-    } else if (game === 'ludo') {
+    }
+ else if (game === 'ludo') {
         return res.json({ success: true, message: "Ludo control updated" });
     } else if (game === 'rummy') {
         rummyManager.forceWinner(tableId, result); // result is winner userId

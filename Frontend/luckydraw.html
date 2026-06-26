@@ -12,14 +12,17 @@
             --gold: #f1c40f;
             --red: #ef4444;
         }
+        .payout-card.selected { border-color: var(--gold); background: rgba(241, 196, 15, 0.15); box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
 
         body {
-            background-color: var(--bg-dark);
+            background-color: #000;
+            background-image: url('https://img.freepik.com/free-vector/gradient-golden-luxury-background_23-2149021481.jpg');
+            background-size: cover;
+            background-position: center;
             color: white;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 10px;
-            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
         }
 
         .header {
@@ -27,6 +30,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -173,17 +178,25 @@
         </div>
 
         <div class="payout-grid">
-            <div class="payout-card"><b>10x</b> 777 Jackpot</div>
-            <div class="payout-card"><b>2x</b> Any Pair</div>
-            <div class="payout-card"><b>1.2x</b> Sum Even</div>
+            <div class="payout-card" id="card-ODD" onclick="selectPrediction('ODD')"><b>1.9x</b> SUM ODD</div>
+            <div class="payout-card" id="card-EVEN" onclick="selectPrediction('EVEN')"><b>1.9x</b> SUM EVEN</div>
+            <div class="payout-card" id="card-JACKPOT" onclick="selectPrediction('JACKPOT')"><b>50x</b> 777 JACKPOT</div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:15px; margin-bottom:15px; border:1px solid #333;">
+            <p style="margin:0 0 10px; font-size:12px; font-weight:800; color:var(--gold);">BET ON EXACT 3-DIGIT NUMBER (100x)</p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <input type="number" id="exactNum" placeholder="123" min="0" max="999" class="input-dark" style="width:100px; text-align:center; font-size:20px; padding:5px; background:#000; border:1.5px solid #444; color:#fff; border-radius:8px;">
+                <button class="btn-bet" style="width:120px; height:45px; font-size:14px;" onclick="placeExactBet()">BET NUM</button>
+            </div>
         </div>
 
         <div class="bet-input-box">
             <div class="input-row">
                 <span style="font-weight: 800;">Bet Amount</span>
-                <input type="number" id="betAmount" value="100">
+                <input type="number" id="betAmount" value="10">
             </div>
-            <button class="btn-bet" id="betBtn" onclick="placeBet()">CONFIRM BET</button>
+            <button class="btn-bet" id="betBtn" onclick="placeBet()">PLACE BET</button>
         </div>
 
         <div class="history-card">
@@ -201,6 +214,14 @@
         let isRolling = false;
         let lastRoundId = null;
         let currentBet = 0;
+        let selectedPrediction = 'ODD';
+
+        function selectPrediction(p) {
+            selectedPrediction = p;
+            document.querySelectorAll('.payout-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(`card-${p}`).classList.add('selected');
+        }
+        selectPrediction('ODD');
 
         async function fetchState() {
             try {
@@ -295,12 +316,31 @@
             const res = await fetch(`${API_URL}/api/game/luckydraw/bet`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ amount })
+                body: JSON.stringify({ amount, prediction: selectedPrediction })
             });
             const data = await res.json();
             if (data.success) {
                 currentBet = amount;
                 fetchBalance();
+                alert("Bet placed on " + selectedPrediction);
+            } else alert(data.message);
+        }
+
+        async function placeExactBet() {
+            const num = document.getElementById("exactNum").value;
+            if (num === "" || num < 0 || num > 999) return alert("Enter valid 3-digit number (000-999)");
+            const amount = parseInt(document.getElementById("betAmount").value);
+            const formattedNum = num.padStart(3, '0');
+            const res = await fetch(`${API_URL}/api/game/luckydraw/bet`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ amount, prediction: formattedNum })
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentBet = amount;
+                fetchBalance();
+                alert("Bet placed on number " + formattedNum);
             } else alert(data.message);
         }
 

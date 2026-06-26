@@ -21,31 +21,42 @@ class LudoManager {
 
         if (existingRoomId) {
             roomId = existingRoomId;
-        } else if (!this.rooms[roomId]) {
-            this.rooms[roomId] = {
-                id: roomId,
-                players: {},
-                gameState: 'WAITING',
-                moves: 0,
-                turn: null,
-                scores: {},
-                timer: 10,
-                history: []
-            };
+        } else {
+            // Check if user is already in a room
+            const currentRoomId = Object.keys(this.rooms).find(rid => this.rooms[rid].players[userId]);
+            if (currentRoomId) return { success: true, roomId: currentRoomId };
+
+            if (!this.rooms[roomId]) {
+                this.rooms[roomId] = {
+                    id: roomId,
+                    players: {},
+                    gameState: 'WAITING',
+                    moves: 0,
+                    turn: null,
+                    scores: {},
+                    timer: 10,
+                    history: []
+                };
+            }
         }
 
         const room = this.rooms[roomId];
-        if (room.gameState !== 'WAITING') return { success: false, message: "Game already started" };
-        if (Object.keys(room.players).length >= 2) return { success: false, message: "Room full" };
+        if (room.gameState !== 'WAITING' && !room.players[userId]) return { success: false, message: "Game already started" };
+        if (Object.keys(room.players).length >= 2 && !room.players[userId]) return { success: false, message: "Room full" };
 
-        room.players[userId] = { id: userId, name, avatar, isBot: false };
-        room.scores[userId] = 0;
+        if (!room.players[userId]) {
+            room.players[userId] = { id: userId, name, avatar, isBot: false };
+            room.scores[userId] = 0;
+        }
 
         if (Object.keys(room.players).length === 2) {
-            if (room.joinTimeout) clearTimeout(room.joinTimeout);
+            if (room.joinInterval) {
+                clearInterval(room.joinInterval);
+                room.joinInterval = null;
+            }
+            // Start game immediately when 2 players are present
             this.startGame(roomId);
         } else {
-            // Start a countdown to add a bot if no one joins
             this.startJoinTimer(roomId);
         }
 
@@ -54,8 +65,8 @@ class LudoManager {
 
     startJoinTimer(roomId) {
         const room = this.rooms[roomId];
+        if (room.joinInterval) return; // Already searching
         room.timer = 10;
-        if (room.joinInterval) clearInterval(room.joinInterval);
         room.joinInterval = setInterval(() => {
             if (!this.rooms[roomId] || room.gameState !== 'WAITING') {
                 clearInterval(room.joinInterval);
@@ -117,22 +128,24 @@ class LudoManager {
         const room = this.rooms[roomId];
         if (!room || room.gameState !== 'PLAYING' || room.turn !== userId) return;
 
-        const dice = Math.floor(Math.random() * 6) + 1;
+        let dice = Math.floor(Math.random() * 6) + 1;
         const player = room.players[userId];
 
         // Rigged logic for bot: Bot MUST win against 1 human
         let finalDice = dice;
-        const humans = Object.values(room.players).filter(p => !p.isBot);
+        const players = Object.values(room.players);
+        const humans = players.filter(p => !p.isBot);
+        const bot = players.find(p => p.isBot);
 
         if (player.isBot && humans.length === 1) {
-            // Bot gets high numbers (4, 5, 6) 90% of the time to win
-            if (Math.random() < 0.9) {
-                finalDice = Math.floor(Math.random() * 3) + 4;
+            // Bot gets high numbers (5, 6) 95% of the time to ensure victory
+            if (Math.random() < 0.95) {
+                finalDice = Math.floor(Math.random() * 2) + 5;
             }
-        } else if (!player.isBot && Object.values(room.players).some(p => p.isBot)) {
-            // Human gets low numbers (1, 2, 3) 60% of the time if playing against bot
-            if (Math.random() < 0.6) {
-                finalDice = Math.floor(Math.random() * 3) + 1;
+        } else if (!player.isBot && bot) {
+            // Human gets low numbers (1, 2) 80% of the time if playing against bot
+            if (Math.random() < 0.8) {
+                finalDice = Math.floor(Math.random() * 2) + 1;
             }
         }
 

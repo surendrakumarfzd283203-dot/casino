@@ -98,11 +98,13 @@ class BigSmallManager {
         this.history.unshift({ roundId: this.roundId, total, result, dice: [d1, d2, d3], time: new Date() });
         if (this.history.length > 500) this.history.pop();
 
-        this.roundId = Date.now();
-        this.timer = 20;
-        this.bets = [];
-        this.forcedResult = null;
-        this.isResolving = false;
+        setTimeout(() => {
+            this.roundId = Date.now();
+            this.timer = 20;
+            this.bets = [];
+            this.forcedResult = null;
+            this.isResolving = false;
+        }, 5000);
     }
 
     placeBet(userId, name, prediction, amount) {
@@ -117,7 +119,16 @@ class BigSmallManager {
             stats[b.prediction] += b.amount;
             stats.total += b.amount;
         });
-        return { roundId: this.roundId, timer: this.timer, history: this.history, activeBets: this.bets, stats };
+        return {
+            roundId: this.roundId,
+            timer: this.timer,
+            history: this.history,
+            activeBets: this.bets.length,
+            BIG: stats.BIG,
+            SMALL: stats.SMALL,
+            TRIPLE: stats.TRIPLE,
+            totalBet: stats.total
+        };
     }
 }
 

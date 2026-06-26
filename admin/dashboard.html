@@ -319,14 +319,24 @@
                 <div class="control-card">
                     <h4><i class="fas fa-dice"></i> Big Small</h4>
                     <div id="bigsmall-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <button class="action-btn btn-block" onclick="forceGame('bigsmall', 'SMALL')">FORCE SMALL</button>
-                        <button class="action-btn btn-unblock" onclick="forceGame('bigsmall', 'BIG')">FORCE BIG</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <button class="action-btn btn-block" onclick="forceGame('bigsmall', 'SMALL')">SMALL</button>
+                        <button class="action-btn btn-edit" style="background:#8b5cf6;" onclick="forceGame('bigsmall', 'TRIPLE')">TRIPLE</button>
+                        <button class="action-btn btn-unblock" onclick="forceGame('bigsmall', 'BIG')">BIG</button>
                     </div>
                     <div id="live-bets-bigsmall" class="live-bet-table"></div>
                 </div>
 
-                <!-- Teen Patti Control (Advanced) -->
+                <!-- Lucky Draw -->
+                <div class="control-card">
+                    <h4><i class="fas fa-star"></i> Lucky Draw</h4>
+                    <div id="lucky-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                        <input type="number" id="forceLuckyRes" placeholder="Result (100-999)" class="input-dark">
+                        <button class="action-btn btn-edit" onclick="forceGame('luckydraw', document.getElementById('forceLuckyRes').value)">SET</button>
+                    </div>
+                    <div id="live-bets-lucky" class="live-bet-table"></div>
+                </div>
                 <div class="control-card" style="grid-column: span 2;">
                     <h4><i class="fas fa-spade"></i> Advanced Teen Patti Control</h4>
                     <div id="tp-advanced-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
@@ -339,9 +349,13 @@
                     <h4><i class="fas fa-arrows-rotate"></i> Number Spin</h4>
                     <div id="numberspin-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
                     <label style="font-size: 11px; color: var(--text-dim);">FORCE NEXT NUMBER (2-12)</label>
-                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <div style="display: flex; gap: 10px; margin-top: 8px; margin-bottom: 15px;">
                         <input type="number" id="forceNumberSpin" placeholder="Num (2-12)" class="input-dark">
                         <button class="action-btn btn-edit" onclick="forceGame('numberspin', document.getElementById('forceNumberSpin').value)">SET</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="action-btn btn-unblock" style="flex:1" onclick="forceGame('numberspin', null, null, null, true)">AUTO ON</button>
+                        <button class="action-btn btn-block" style="flex:1" onclick="forceGame('numberspin', null, null, null, false)">AUTO OFF</button>
                     </div>
                     <div id="live-bets-numberspin" class="live-bet-table"></div>
                 </div>
@@ -349,6 +363,7 @@
                 <!-- Ludo Control -->
                 <div class="control-card">
                     <h4><i class="fas fa-gamepad"></i> Ludo Turbo</h4>
+                    <div id="ludo-active-games" style="font-size: 14px; margin-bottom: 10px;">Active Games: 0</div>
                     <div id="live-bets-ludo" class="live-bet-table"></div>
                 </div>
 
@@ -363,13 +378,7 @@
                     <div id="live-bets-spin" class="live-bet-table"></div>
                 </div>
 
-                <!-- Lucky Draw -->
-                <div class="control-card">
-                    <h4><i class="fas fa-star"></i> Lucky Draw</h4>
-                    <div id="lucky-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
-                    <button class="action-btn btn-unblock" style="width: 100%;" onclick="forceGame('luckydraw')">FORCE 777 NEXT</button>
-                    <div id="live-bets-lucky" class="live-bet-table"></div>
-                </div>
+                <!-- Lucky Draw (Replacement) -->
 
                 <!-- Rummy -->
                 <div class="control-card">
@@ -621,17 +630,62 @@
             if (game === 'bigsmall') {
                 const stats = statsData?.liveBets?.bigsmall;
                 if (!stats) return;
-                container.innerHTML = `<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span style="color:#34b4ff">BIG: ₹${stats.BIG}</span>
-                    <span style="color:#ef4444">SMALL: ₹${stats.SMALL}</span>
-                    <span style="color:#ffc107">TRIPLE: ₹${stats.TRIPLE}</span>
-                </div>
-                <div style="font-size:11px; color:var(--text-dim);">Bets: ${stats.bets.length}</div>`;
+                container.innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
+                    <div style="color:#34b4ff; text-align:center;">BIG<br><b>₹${stats.BIG}</b></div>
+                    <div style="color:#8b5cf6; text-align:center;">TRIPLE<br><b>₹${stats.TRIPLE}</b></div>
+                    <div style="color:#ef4444; text-align:center;">SMALL<br><b>₹${stats.SMALL}</b></div>
+                </div>`;
                 return;
             }
 
-            if (game === 'teenpatti' || game === 'rummy' || game === 'ludo') {
-                container.innerHTML = (bets || []).map(t => `<div style="padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);">Table ${t.id}: ${t.players} Players</div>`).join('') || "No active games";
+            if (game === 'lucky') {
+                const s = statsData?.luckyState;
+                if (!s) return;
+                container.innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
+                    <div style="color:#10b981; text-align:center;">ODD<br><b>₹${s.oddBets}</b></div>
+                    <div style="color:#f59e0b; text-align:center;">JACKPOT<br><b>₹${s.jackpotBets}</b></div>
+                    <div style="color:#3b82f6; text-align:center;">EVEN<br><b>₹${s.evenBets}</b></div>
+                </div>`;
+                return;
+            }
+
+            if (game === 'numberspin') {
+                const s = statsData?.numberspinState;
+                if (!s) return;
+                let html = `<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-bottom:10px; font-size:10px; text-align:center;">
+                    <div style="color:#ef4444">DWN:<br><b>₹${s.downBets || 0}</b></div>
+                    <div style="color:#ffc107">MID:<br><b>₹${s.midBets || 0}</b></div>
+                    <div style="color:#10b981">UP:<br><b>₹${s.upBets || 0}</b></div>
+                </div>`;
+                html += `<div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:4px; font-size:9px;">`;
+                const numBets = s.numBets || {};
+                [2,3,4,5,6,8,9,10,11,12].forEach(n => {
+                    html += `<div style="background:rgba(255,255,255,0.05); padding:3px; text-align:center; border-radius:4px;">${n}: <b>₹${numBets[n] || 0}</b></div>`;
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+                return;
+            }
+
+            if (game === 'ludo') {
+                const games = statsData?.ludoState?.activeGames || [];
+                document.getElementById('ludo-active-games').innerText = `Active Games: ${games.length}`;
+                container.innerHTML = games.map(g => `
+                    <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(255,152,0,0.05); margin-bottom:5px; border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px;">
+                            <span>Room: ${g.id}</span>
+                            <span style="color:#fde047">Pot: ₹${(Number(g.id.split('_')[0]) * 1.8).toFixed(2)}</span>
+                        </div>
+                        <div style="font-size:10px; margin-top:4px;">
+                            ${Object.values(g.players).map(p => `
+                                <div style="display:flex; justify-content:space-between; color:${p.isBot?'#fde047':'#fff'}">
+                                    <span>${p.name} ${p.isBot?'[BOT]':''}</span>
+                                    <span>Score: ${g.scores[p.id]}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('') || "No active games";
                 return;
             }
 
@@ -646,11 +700,11 @@
         }
 
         let statsData = null;
-        async function forceGame(game, result = null, tableId = null, number = null) {
+        async function forceGame(game, result = null, tableId = null, number = null, autoOpen = undefined) {
             const res = await fetch(`${API_URL}/api/admin/force-result`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ game, result, tableId, number })
+                body: JSON.stringify({ game, result, tableId, number, autoOpen })
             });
             const data = await res.json();
             alert(data.message);

@@ -12,7 +12,7 @@ class NumberSpinManager {
         this.bets = []; // { userId, name, selection, amount }
         this.history = [];
         this.forcedResult = null;
-        this.autoOpen = true;
+        this.autoMode = true; // Auto mode: picks result with minimum payout
 
         // Numbers on the wheel as per typical 2-dice sum distribution but image shows 2-12
         this.numbers = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -53,9 +53,12 @@ class NumberSpinManager {
         let result;
         if (this.forcedResult !== null) {
             result = this.forcedResult;
-        } else {
+        } else if (this.autoMode) {
             // Admin control: choose result with minimum payout
             result = this.getAdminControlledResult();
+        } else {
+            // Random result if autoMode is off and no forced result
+            result = this.numbers[Math.floor(Math.random() * this.numbers.length)];
         }
 
         const winningNumber = result;
@@ -136,6 +139,11 @@ class NumberSpinManager {
     }
 
     getGameState() {
+        const numBets = {};
+        [2,3,4,5,6,8,9,10,11,12].forEach(n => {
+            numBets[n] = this.bets.filter(b => b.selection === n.toString()).reduce((a, b) => a + b.amount, 0);
+        });
+
         return {
             roundId: this.roundId,
             timer: this.timer,
@@ -143,12 +151,20 @@ class NumberSpinManager {
             history: this.history,
             wheelSections: this.wheelSections,
             totalBet: this.bets.reduce((a, b) => a + b.amount, 0),
-            activeBets: this.bets.length
+            activeBets: this.bets.length,
+            downBets: this.bets.filter(b => b.selection === 'DOWN').reduce((a, b) => a + b.amount, 0),
+            midBets: this.bets.filter(b => b.selection === 'MIDDLE').reduce((a, b) => a + b.amount, 0),
+            upBets: this.bets.filter(b => b.selection === 'UP').reduce((a, b) => a + b.amount, 0),
+            numBets: numBets
         };
     }
 
     forceResult(number) {
         this.forcedResult = Number(number);
+    }
+
+    toggleAutoMode(mode) {
+        this.autoMode = !!mode;
     }
 }
 

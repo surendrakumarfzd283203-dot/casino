@@ -8,12 +8,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2563eb; --secondary: #ef4444; --accent: #f59e0b; --bg: #030a21; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #000;
+            background-image: url('https://img.freepik.com/free-vector/blue-curve-background_53876-113112.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
 
-        .header { background: #001242; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002e8c; }
-        .balance { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; color: #22c55e; font-weight: 800; border: 1.5px solid #22c55e; }
+        .header { background: rgba(0, 18, 66, 0.8); backdrop-filter: blur(10px); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002e8c; }
+        .balance { background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; color: #22c55e; font-weight: 800; border: 1.5px solid #22c55e; }
 
-        .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; background: #001242; position: relative; }
+        .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; background: transparent; position: relative; }
 
         /* NEW LUDO BOARD CSS (Realistic) */
         .ludo-board {

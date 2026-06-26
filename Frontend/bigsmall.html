@@ -16,12 +16,14 @@
         }
 
         body {
-            background-color: var(--bg-dark);
+            background-color: #000;
+            background-image: url('https://img.freepik.com/free-vector/gradient-dark-blue-background-with-abstract-shapes_23-2149117188.jpg');
+            background-size: cover;
+            background-position: center;
             color: white;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 15px;
-            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
         }
 
         .header {
@@ -29,6 +31,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -68,7 +72,16 @@
             font-size: 32px; font-weight: 900;
             box-shadow: 0 8px 15px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.1);
             transform: rotateZ(5deg);
+            transition: 0.3s;
         }
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(1); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .rolling-die { animation: diceRoll 0.15s infinite; }
 
         .prediction-section {
             display: grid;
@@ -278,15 +291,23 @@
 
             const confirmBtn = document.getElementById("confirmBtn");
             const cancelBtn = document.getElementById("cancelBtn");
+            const dice = document.querySelectorAll(".die");
 
             if (data.timer < 5) {
                 confirmBtn.disabled = true;
                 confirmBtn.innerText = "WAITING...";
+                dice.forEach(d => {
+                    d.classList.add("rolling-die");
+                    d.innerText = Math.floor(Math.random() * 6) + 1;
+                });
                 if(data.timer === 1) document.getElementById("sndDice").play().catch(e=>{});
-            } else if (!isBetPlaced) {
-                confirmBtn.disabled = false;
-                confirmBtn.innerText = "PLACE BET";
-                cancelBtn.style.display = "none";
+            } else {
+                dice.forEach(d => d.classList.remove("rolling-die"));
+                if (!isBetPlaced) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerText = "PLACE BET";
+                    cancelBtn.style.display = "none";
+                }
             }
 
             if (data.history && data.history.length > 0) {
@@ -340,6 +361,7 @@
         function renderResult(last) {
             const diceBox = document.getElementById("diceBox");
             diceBox.innerHTML = last.dice.map(d => `<div class="die">${d}</div>`).join('');
+            document.querySelectorAll(".die").forEach(d => d.classList.remove("rolling-die"));
         }
 
         function checkWin(last) {
