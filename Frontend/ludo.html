@@ -43,18 +43,26 @@
 
         /* SEARCHING SCREEN */
         #searchingScreen {
-            position: fixed; inset: 0; background: #001242 url('https://www.transparenttextures.com/patterns/dark-matter.png'); z-index: 1500; display: none; flex-direction: column; align-items: center; justify-content: center;
+            position: fixed; inset: 0;
+            background: #000 url('https://img.freepik.com/free-vector/dark-blue-gradient-background-with-abstract-shapes_23-2149117188.jpg') no-repeat center;
+            background-size: cover;
+            z-index: 1500; display: none; flex-direction: column; align-items: center; justify-content: center;
         }
-        .vs-container { display: flex; align-items: center; gap: 40px; margin-bottom: 50px; position: relative; }
-        .search-avatar-box { text-align: center; }
-        .search-avatar { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #fde047; box-shadow: 0 0 30px rgba(253, 224, 71, 0.4); overflow: hidden; background: #1e293b; position: relative; margin-bottom: 10px; }
+        .vs-container { display: flex; align-items: center; gap: 40px; margin-bottom: 50px; position: relative; z-index: 10; }
+        .vs-overlay-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1; }
+        .search-avatar-box { text-align: center; z-index: 20; }
+        .search-avatar {
+            width: 120px; height: 120px; border-radius: 50%; border: 4px solid #fde047;
+            box-shadow: 0 0 30px rgba(253, 224, 71, 0.6); overflow: hidden; background: #1e293b;
+            position: relative; margin-bottom: 15px; transition: 0.5s;
+        }
         .search-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .vs-text { font-size: 64px; font-weight: 950; font-style: italic; color: #fff; text-shadow: 0 0 20px #f59e0b; font-family: 'serif'; }
+        .vs-text { font-size: 80px; font-weight: 950; font-style: italic; color: #fff; text-shadow: 0 0 30px #f59e0b; font-family: 'serif'; z-index: 20; }
         .search-loader { position: absolute; inset: -10px; border: 4px solid transparent; border-top-color: #fde047; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .search-text { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+        .search-text { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: 3px; text-transform: uppercase; z-index: 20; text-shadow: 0 2px 10px black; }
 
-        /* LOBBY UPGRADE */
+        /* LOBBY */
         #lobby { position: fixed; inset: 0; background: #001242; z-index: 1000; display: flex; flex-direction: column; align-items: center; padding-top: 40px; overflow-y: auto; }
         .lobby-title-box { text-align: center; margin-bottom: 30px; }
         .stake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 92%; max-width: 450px; padding-bottom: 50px; }
@@ -85,10 +93,6 @@
 
         #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .res-card { background: #1e293b; padding: 40px; border-radius: 30px; border: 3px solid #fde047; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 0 50px rgba(253, 224, 71, 0.2); }
-
-        .emoji-bar { position: absolute; bottom: 85px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; padding: 5px; background: rgba(0,0,0,0.4); }
-        .emoji-item { font-size: 24px; cursor: pointer; transition: 0.2s; }
-        .emoji-item:active { transform: scale(1.3); }
     </style>
 </head>
 <body>
@@ -202,15 +206,6 @@
         </div>
     </div>
 
-    <div id="resultOverlay">
-        <div class="res-card">
-            <h1 id="resTitle" style="color: var(--accent); margin: 0;">YOU WIN!</h1>
-            <p id="resSub" style="font-size: 18px; margin: 15px 0;">Score: 124 vs 98</p>
-            <div id="resAmount" style="font-size: 32px; color: #22c55e; font-weight: 800; margin-bottom: 30px;">+₹18.00</div>
-            <button class="btn-join" onclick="location.reload()">PLAY AGAIN</button>
-        </div>
-    </div>
-
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
@@ -254,13 +249,13 @@
                     if (players.length === 2 || data.state.gameState === 'PLAYING') {
                         clearInterval(searchInterval);
                         const opp = players.find(p => p.id !== myId);
-                        document.getElementById("oppSearchAv").src = opp.avatar && opp.avatar.includes('.') ? (opp.avatar.startsWith('http') ? opp.avatar : `${API_URL}/${opp.avatar}`) : `https://i.pravatar.cc/100?u=${opp.id}`;
+                        document.getElementById("oppSearchAv").src = (opp.avatar && (opp.avatar.includes('.') || opp.avatar.startsWith('http'))) ? (opp.avatar.startsWith('http') ? opp.avatar : `${API_URL}/${opp.avatar}`) : `https://i.pravatar.cc/100?u=${opp.id}`;
                         document.getElementById("oppSearchName").innerText = opp.name;
 
                         setTimeout(() => {
                             document.getElementById("searchingScreen").style.display = "none";
                             startStateLoop();
-                        }, 2000);
+                        }, 2500);
                     }
                 }
             }, 1000);
@@ -287,7 +282,6 @@
             document.getElementById("p1-card").classList.toggle("active", state.turn === myId);
             document.getElementById("p2-card").classList.toggle("active", opponent.id && state.turn === opponent.id);
 
-            // Turn timer display (simplified)
             const min = Math.floor(state.timer / 60);
             const sec = state.timer % 60;
             document.getElementById("gameTimer").innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
@@ -305,11 +299,8 @@
                 document.getElementById("statusMsg").innerText = `${opponent.name}'s turn...`;
                 diceBtn.style.opacity = "0.5";
                 diceBtn.style.pointerEvents = "none";
-            } else if (state.gameState === 'WAITING') {
-                document.getElementById("statusMsg").innerText = "Waiting for opponent...";
             }
 
-            // Update last dice roll
             const lastMove = state.history[state.history.length - 1];
             if (lastMove && !isRolling) {
                 const icons = ["", "dice-one", "dice-two", "dice-three", "dice-four", "dice-five", "dice-six"];
@@ -328,32 +319,21 @@
             diceBtn.classList.add("rolling");
 
             try {
-                const res = await fetch(`${API_URL}/api/game/ludo/move`, {
+                await fetch(`${API_URL}/api/game/ludo/move`, {
                     method: "POST", headers: { "Content-Type": "application/json", authorization: token },
                     body: JSON.stringify({ roomId: currentRoom })
                 });
-                const data = await res.json();
-
-                setTimeout(() => {
-                    diceBtn.classList.remove("rolling");
-                    isRolling = false;
-                }, 800);
-            } catch(e) {
-                isRolling = false;
-                diceBtn.classList.remove("rolling");
-            }
+                setTimeout(() => { diceBtn.classList.remove("rolling"); isRolling = false; }, 800);
+            } catch(e) { isRolling = false; diceBtn.classList.remove("rolling"); }
         }
 
         function showResult(state) {
-            const overlay = document.getElementById("resultOverlay");
-            overlay.style.display = "flex";
+            document.getElementById("resultOverlay").style.display = "flex";
             const win = state.winner === myId;
             const opponentId = Object.keys(state.players).find(id => id !== myId);
-
             document.getElementById("resTitle").innerText = win ? "YOU WIN!" : "YOU LOSE";
             document.getElementById("resTitle").style.color = win ? "#22c55e" : "#ef4444";
             document.getElementById("resSub").innerText = `Score: ${state.scores[myId]} vs ${state.scores[opponentId] || 0}`;
-
             const entry = Number(currentRoom.split('_')[0]);
             document.getElementById("resAmount").innerText = win ? `+₹${(entry * 1.8).toFixed(2)}` : `-₹${entry.toFixed(2)}`;
             document.getElementById("resAmount").style.color = win ? "#22c55e" : "#ef4444";

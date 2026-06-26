@@ -9,8 +9,8 @@ class LudoManager {
     }
 
     joinRoom(roomId, userId, name, avatar) {
-        // Find existing room with 1 real player waiting
         const stake = roomId.split('_')[0];
+        // Find existing room with 1 real player waiting
         let existingRoomId = Object.keys(this.rooms).find(rid => {
             const r = this.rooms[rid];
             return r.gameState === 'WAITING' &&
@@ -45,7 +45,7 @@ class LudoManager {
         if (Object.keys(room.players).length >= 2 && !room.players[userId]) return { success: false, message: "Room full" };
 
         if (!room.players[userId]) {
-            room.players[userId] = { id: userId, name, avatar, isBot: false };
+            room.players[userId] = { id: userId, name: name || "Player", avatar: avatar || "", isBot: false };
             room.scores[userId] = 0;
         }
 
@@ -54,8 +54,10 @@ class LudoManager {
                 clearInterval(room.joinInterval);
                 room.joinInterval = null;
             }
-            // Start game immediately when 2 players are present
-            this.startGame(roomId);
+            // Delay slightly for UI transition
+            setTimeout(() => {
+                if (this.rooms[roomId]) this.startGame(roomId);
+            }, 1500);
         } else {
             this.startJoinTimer(roomId);
         }
@@ -65,7 +67,7 @@ class LudoManager {
 
     startJoinTimer(roomId) {
         const room = this.rooms[roomId];
-        if (room.joinInterval) return; // Already searching
+        if (room.joinInterval) return;
         room.timer = 10;
         room.joinInterval = setInterval(() => {
             if (!this.rooms[roomId] || room.gameState !== 'WAITING') {
@@ -85,7 +87,8 @@ class LudoManager {
 
     addBot(roomId) {
         const room = this.rooms[roomId];
-        const botId = "bot_" + Math.random().toString(36).substr(2, 5);
+        if (!room) return;
+        const botId = "bot_" + Math.floor(Math.random() * 9000 + 1000);
         room.players[botId] = { id: botId, name: "Admin Bot", avatar: "🤖", isBot: true };
         room.scores[botId] = 0;
         this.startGame(roomId);
@@ -130,6 +133,7 @@ class LudoManager {
 
         let dice = Math.floor(Math.random() * 6) + 1;
         const player = room.players[userId];
+        const playerIds = Object.keys(room.players);
 
         // Rigged logic for bot: Bot MUST win against 1 human
         let finalDice = dice;
@@ -138,30 +142,29 @@ class LudoManager {
         const bot = players.find(p => p.isBot);
 
         if (player.isBot && humans.length === 1) {
-            // Bot gets high numbers (5, 6) 95% of the time to ensure victory
+            // Bot gets 5 or 6 almost every time (95%)
             if (Math.random() < 0.95) {
                 finalDice = Math.floor(Math.random() * 2) + 5;
             }
         } else if (!player.isBot && bot) {
-            // Human gets low numbers (1, 2) 80% of the time if playing against bot
+            // Human gets 1 or 2 most of the time (80%) when playing against bot
             if (Math.random() < 0.8) {
                 finalDice = Math.floor(Math.random() * 2) + 1;
             }
         }
 
         room.scores[userId] += finalDice;
-        room.history.push({ userId, name: player.name, dice: finalDice });
+        room.history.push({ userId, name: player.name, dice: finalDice, time: Date.now() });
 
         room.moves++;
-        room.timer = 15;
+        room.timer = 15; // Reset turn timer
 
-        // Check if game finished (25 total moves or 25 moves per player?)
-        // Usually Ludo "chal" means moves. Let's assume 25 rounds (each player plays 25 times)
-        const playerIds = Object.keys(room.players);
+        // Rotate turn
         const currentPlayerIndex = playerIds.indexOf(userId);
         const nextPlayerIndex = (currentPlayerIndex + 1) % playerIds.length;
         room.turn = playerIds[nextPlayerIndex];
 
+        // Total rounds check: 25 rounds each = 50 total moves
         if (room.moves >= this.maxMoves * playerIds.length) {
             this.finishGame(roomId);
         }
