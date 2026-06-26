@@ -88,19 +88,38 @@
 
         .payout-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
             margin: 15px 0;
         }
         .payout-card {
             background: rgba(0,0,0,0.3);
-            padding: 10px;
+            padding: 12px;
             border-radius: 12px;
             font-size: 11px;
             border: 1px solid #333;
             text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
         }
         .payout-card b { color: #f1c40f; display: block; font-size: 14px; }
+        .payout-card.selected { border-color: var(--gold); background: rgba(241, 196, 15, 0.15); box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
+
+        .active-bets-container {
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #333;
+            text-align: left;
+        }
+        .active-bet-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+        }
 
         .bet-input-box {
             background: #1e293b;
@@ -179,23 +198,25 @@
         <div class="payout-grid">
             <div class="payout-card" id="card-ODD" onclick="selectPrediction('ODD')"><b>1.9x</b> SUM ODD</div>
             <div class="payout-card" id="card-EVEN" onclick="selectPrediction('EVEN')"><b>1.9x</b> SUM EVEN</div>
-            <div class="payout-card" id="card-JACKPOT" onclick="selectPrediction('JACKPOT')"><b>50x</b> 777 JACKPOT</div>
+            <div class="payout-card" id="card-PAIR" onclick="selectPrediction('PAIR')"><b>2.5x</b> ANY PAIR</div>
+            <div class="payout-card" id="card-TRIPLE" onclick="selectPrediction('TRIPLE')"><b>50x</b> ANY TRIPLE</div>
+            <div class="payout-card" id="card-JACKPOT" onclick="selectPrediction('JACKPOT')" style="grid-column: span 2;"><b>150x</b> 777 JACKPOT</div>
         </div>
 
-        <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:15px; margin-bottom:15px; border:1px solid #333;">
-            <p style="margin:0 0 10px; font-size:12px; font-weight:800; color:var(--gold);">BET ON EXACT 3-DIGIT NUMBER (100x)</p>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <input type="number" id="exactNum" placeholder="123" min="0" max="999" class="input-dark" style="width:100px; text-align:center; font-size:20px; padding:5px; background:#000; border:1.5px solid #444; color:#fff; border-radius:8px;">
-                <button class="btn-bet" style="width:120px; height:45px; font-size:14px;" onclick="placeExactBet()">BET NUM</button>
-            </div>
+        <div id="activeBets" class="active-bets-container" style="display: none;">
+            <div style="font-weight: 800; color: var(--gold); margin-bottom: 8px;">ACTIVE BETS</div>
+            <div id="activeBetsList"></div>
         </div>
 
         <div class="bet-input-box">
             <div class="input-row">
                 <span style="font-weight: 800;">Bet Amount</span>
-                <input type="number" id="betAmount" value="10">
+                <input type="number" id="betAmount" value="10" min="10">
             </div>
-            <button class="btn-bet" id="betBtn" onclick="placeBet()">PLACE BET</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-bet" id="betBtn" onclick="placeBet()" style="flex: 2;">PLACE BET</button>
+                <button class="btn-bet" id="cancelBtn" onclick="cancelLastBet()" style="flex: 1; background: #ef4444; box-shadow: 0 4px 0 #991b1b;">CANCEL</button>
+            </div>
         </div>
 
         <div class="history-card">
@@ -212,7 +233,7 @@
         const token = localStorage.getItem("token");
         let isRolling = false;
         let lastRoundId = null;
-        let currentBet = 0;
+        let myCurrentBets = [];
         let selectedPrediction = 'ODD';
 
         function selectPrediction(p) {
@@ -235,26 +256,30 @@
                     if (data.history && data.history.length > 0) {
                         const last = data.history[0];
                         if (last.roundId !== lastRoundId) {
-                            lastRoundId = last.roundId;
-                            if (currentBet > 0) {
+                            if (lastRoundId !== null && myCurrentBets.length > 0) {
                                 checkWin(last);
-                                currentBet = 0;
+                                myCurrentBets = [];
+                                renderActiveBets();
                             }
+                            lastRoundId = last.roundId;
                         }
                     }
 
                     if (data.timer < 5) {
                         startRolling();
                         document.getElementById("betBtn").disabled = true;
+                        document.getElementById("cancelBtn").disabled = true;
                         document.getElementById("betBtn").innerText = "DRAWING...";
-                    } else if (data.timer > 15) {
-                        stopRolling(data.history[0]?.result || "777");
-                        document.getElementById("betBtn").disabled = false;
-                        document.getElementById("betBtn").innerText = "CONFIRM BET";
                     } else {
                         isRolling = false;
                         document.getElementById("betBtn").disabled = false;
-                        document.getElementById("betBtn").innerText = "CONFIRM BET";
+                        document.getElementById("cancelBtn").disabled = false;
+                        document.getElementById("betBtn").innerText = "PLACE BET";
+
+                        // Sync result if round just ended
+                        if (data.timer > 15) {
+                            stopRolling(data.history[0]?.result || "777");
+                        }
                     }
                     renderHistory(data.history);
                 }
@@ -262,16 +287,43 @@
         }
 
         function checkWin(last) {
+            let totalWon = 0;
+            let count = 0;
+
+            const digits = last.result.split('').map(Number);
+            const sum = digits.reduce((a, b) => a + b, 0);
+            const isOdd = sum % 2 !== 0;
+            const counts = {};
+            digits.forEach(d => counts[d] = (counts[d] || 0) + 1);
+            const maxC = Math.max(...Object.values(counts));
+            const hasT = maxC === 3;
+            const hasP = maxC >= 2;
+
+            for(let bet of myCurrentBets) {
+                let win = false;
+                let mult = 0;
+                if (bet.prediction === 'ODD' && isOdd) { win = true; mult = 1.9; }
+                else if (bet.prediction === 'EVEN' && !isOdd) { win = true; mult = 1.9; }
+                else if (bet.prediction === 'PAIR' && hasP) { win = true; mult = 2.5; }
+                else if (bet.prediction === 'TRIPLE' && hasT) { win = true; mult = 50; }
+                else if (bet.prediction === 'JACKPOT' && last.result === "777") { win = true; mult = 150; }
+                else if (bet.prediction === last.result) { win = true; mult = 100; }
+
+                if (win) {
+                    totalWon += bet.amount * mult;
+                    count++;
+                }
+            }
+
             const msg = document.getElementById("resPopup");
             msg.style.display = "block";
 
-            const winAmount = last.winAmount || 0; // Assuming backend sends winAmount for the user if they won
-            if (winAmount > 0) {
-                msg.innerHTML = `<div>WIN!</div><div style="font-size:24px;">₹${winAmount.toFixed(2)}</div>`;
+            if (count > 0) {
+                msg.innerHTML = `<div style=\"font-size: 20px; opacity:0.8;\">RESULT: ${last.result}</div><div>WIN! ₹${totalWon.toFixed(2)}</div>`;
                 msg.style.background = "rgba(34, 197, 94, 0.95)";
                 new Audio('sound/win.mp3').play().catch(e=>{});
             } else {
-                msg.innerHTML = `<div>LOSE</div>`;
+                msg.innerHTML = `<div style=\"font-size: 20px; opacity:0.8;\">RESULT: ${last.result}</div><div>LOSE</div>`;
                 msg.style.background = "rgba(239, 68, 68, 0.95)";
                 new Audio('sound/lose.mp3').play().catch(e=>{});
             }
@@ -298,7 +350,6 @@
         }
 
         function stopRolling(res) {
-            if (!isRolling) return;
             isRolling = false;
             document.getElementById("d1").classList.remove("rolling");
             document.getElementById("d2").classList.remove("rolling");
@@ -306,41 +357,54 @@
             document.getElementById("d1").innerText = res[0];
             document.getElementById("d2").innerText = res[1];
             document.getElementById("d3").innerText = res[2];
-            // if (res === "777") document.getElementById("sndWin").play().catch(e=>{});
             fetchBalance();
         }
 
         async function placeBet() {
             const amount = parseInt(document.getElementById("betAmount").value);
+            if (amount < 10) return alert("Min bet is 10");
+
             const res = await fetch(`${API_URL}/api/game/luckydraw/bet`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ amount, prediction: selectedPrediction })
+                body: JSON.stringify({ amount, selection: selectedPrediction })
             });
             const data = await res.json();
             if (data.success) {
-                currentBet = amount;
+                myCurrentBets.push({ prediction: selectedPrediction, amount });
+                renderActiveBets();
                 fetchBalance();
-                alert("Bet placed on " + selectedPrediction);
             } else alert(data.message);
         }
 
-        async function placeExactBet() {
-            const num = document.getElementById("exactNum").value;
-            if (num === "" || num < 0 || num > 999) return alert("Enter valid 3-digit number (000-999)");
-            const amount = parseInt(document.getElementById("betAmount").value);
-            const formattedNum = num.padStart(3, '0');
-            const res = await fetch(`${API_URL}/api/game/luckydraw/bet`, {
+        async function cancelLastBet() {
+            const res = await fetch(`${API_URL}/api/game/luckydraw/cancel`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ amount, prediction: formattedNum })
+                headers: { authorization: token }
             });
             const data = await res.json();
             if (data.success) {
-                currentBet = amount;
+                myCurrentBets.pop();
+                renderActiveBets();
                 fetchBalance();
-                alert("Bet placed on number " + formattedNum);
+                alert("Last bet cancelled");
             } else alert(data.message);
+        }
+
+        function renderActiveBets() {
+            const container = document.getElementById("activeBets");
+            const list = document.getElementById("activeBetsList");
+            if (myCurrentBets.length === 0) {
+                container.style.display = "none";
+                return;
+            }
+            container.style.display = "block";
+            list.innerHTML = myCurrentBets.map(b => `
+                <div class="active-bet-item">
+                    <span>${b.prediction}</span>
+                    <span style="color: var(--gold); font-weight: 800;">₹${b.amount}</span>
+                </div>
+            `).join('');
         }
 
         function renderHistory(h) {

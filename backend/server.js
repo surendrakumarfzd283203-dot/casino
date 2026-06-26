@@ -415,6 +415,16 @@ app.post("/api/game/luckydraw/bet", auth, async (req, res) => {
     res.json(betRes);
 });
 
+app.post("/api/game/luckydraw/cancel", auth, async (req, res) => {
+    const user = await User.findById(req.user.id);
+    const result = luckyDrawManager.cancelLastBet(req.user.id);
+    if (result.success) {
+        user.coins += result.amount;
+        await user.save();
+    }
+    res.json(result);
+});
+
 app.get("/api/game/spin/state", auth, (req, res) => {
     res.json({ success: true, ...spinGameManager.getGameState() });
 });
