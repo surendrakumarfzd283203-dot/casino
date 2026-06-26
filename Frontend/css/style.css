@@ -226,7 +226,8 @@ input:focus {
     font-size: 12px;
     font-weight: 600;
 }
-.badge-pending { background: rgba(255, 152, 0, 0.1); color: var(--primary); }
+.badge-pending { background: rgba(244, 67, 54, 0.1); color: var(--accent-red); }
+.badge-completed { background: rgba(76, 175, 80, 0.1); color: var(--accent-green); }
 .badge-success { background: rgba(76, 175, 80, 0.1); color: var(--accent-green); }
 .badge-failed { background: rgba(244, 67, 54, 0.1); color: var(--accent-red); }
 

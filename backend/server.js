@@ -97,7 +97,7 @@ app.post("/api/register", async (req, res) => {
             name, email, password: hash,
             referral_code: referralCode,
             referred_by: referredBy,
-            coins: 0
+            coins: 10
         });
         await newUser.save();
 
@@ -1024,13 +1024,24 @@ app.post("/api/admin/approve-request", adminAuth, async (req, res) => {
 
         const user = await User.findById(txn.user_id);
         if (txn.type === 'deposit') {
-            user.coins += txn.amount;
+            let totalToAdd = txn.amount;
+
+            // First deposit logic
+            if (user.total_deposited === 0 && txn.amount >= 100) {
+                if (user.referred_by) {
+                    totalToAdd += 40; // 100 -> 140
+                } else {
+                    totalToAdd += 20; // 100 -> 120
+                }
+            }
+
+            user.coins += totalToAdd;
             user.total_deposited += txn.amount;
             await user.save();
-            await Admin.findOneAndUpdate({}, { $inc: { balance: -txn.amount } });
+            await Admin.findOneAndUpdate({}, { $inc: { balance: -totalToAdd } });
 
-            // Check Referral Reward
-            await checkReferralReward(user._id);
+            // Check Referral Reward for Referrer
+            await checkReferralReward(user._id, txn.amount);
         } else if (txn.type === 'withdraw') {
             await Admin.findOneAndUpdate({}, { $inc: { balance: txn.commission } });
         }
