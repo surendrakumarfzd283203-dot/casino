@@ -22,7 +22,10 @@
 }
 
 body {
-    background-color: var(--bg-dark);
+    background-color: #000;
+    background-image: url('https://img.freepik.com/free-vector/gradient-dark-blue-background-with-abstract-shapes_23-2149117188.jpg');
+    background-size: cover;
+    background-attachment: fixed;
     color: var(--text-main);
     line-height: 1.6;
     overflow-x: hidden;
