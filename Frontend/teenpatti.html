@@ -165,7 +165,21 @@
         .cards-status { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 2px; position: relative; }
         .status-tag { background: #000; color: white; font-size: 8px; font-weight: 900; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--gold); text-transform: uppercase; margin-bottom: 2px; z-index: 10; }
         .rank-tag { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: var(--gold); font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--gold); white-space: nowrap; z-index: 20; }
-        .packed-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); border-radius: 3px; z-index: 5; }
+        .packed-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            border-radius: 8px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 950;
+            color: #ef4444;
+            text-transform: uppercase;
+            border: 2px solid #ef4444;
+        }
 
         .mini-cards { display: flex; justify-content: center; transition: 0.3s; }
         .m-card {
@@ -551,11 +565,14 @@
                     avatarHtml = `<img src="${avatarUrl}">`;
                 }
 
+                const packedOverlay = p.status === 'PACKED' ? '<div class="packed-overlay">PACKED</div>' : '';
+
                 if (pos !== "me") {
                     seat.className = seatClasses;
                     seat.innerHTML = `
                         ${resultLabel}
                         <div class="cards-status">
+                            ${packedOverlay}
                             ${isShowdown && p.handRank ? `<div class="rank-tag">${p.handRank}</div>` : ''}
                             ${showCardsOnTable ? `<div class="status-tag" style="background:${status==='BLIND'?'#000':'#15803d'}">${status}</div>` : ''}
                             ${p.status === 'PACKED' ? `<div class="status-tag">PACKED</div>` : ''}
@@ -578,6 +595,7 @@
                     seat.innerHTML = `
                         ${resultLabel}
                         <div class="my-hand-grouped">
+                            ${packedOverlay}
                             ${renderBigCards(p.hand, p.blind && t.state !== 'SHOW')}
                             ${(!p.blind || isShowdown) && p.handRank ? `<div class="rank-label">${p.handRank}</div>` : ''}
                             ${(p.blind && (t.state === 'PLAYING' || t.state === 'DEALING')) ? `<div class="see-btn" onclick="event.stopPropagation(); handleMove('SEE')">SEE</div>` : ''}
@@ -597,9 +615,12 @@
                     ctrl.style.pointerEvents = isTurn ? "auto" : "none";
 
                     if (isTurn) {
-                        const active = uids.filter(id => t.players[id].status === 'ACTIVE').length;
+                        const activeCount = Object.keys(t.players).filter(id => t.players[id].status === 'ACTIVE').length;
                         const showBtn = document.getElementById("showBtn");
-                        showBtn.style.display = active === 2 ? "block" : "none";
+                        const sideshowBtn = document.querySelector(".btn-side");
+
+                        showBtn.style.display = activeCount === 2 ? "block" : "none";
+                        sideshowBtn.style.display = activeCount >= 3 ? "block" : "none";
 
                         if (nextBet < t.lastBet) nextBet = t.lastBet;
                         // document.getElementById("nextBetDisplay").innerText = `₹${nextBet}`; // bet stepper removed from UI but keeping logic

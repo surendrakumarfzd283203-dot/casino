@@ -24,6 +24,8 @@ const teenPattiManager = require("./games/teenPattiManager");
 const colorGameManager = require("./games/colorGameManager");
 const luckyDrawManager = require("./games/luckyDrawManager");
 const spinGameManager = require("./games/spinGameManager");
+const numberSpinManager = require("./games/numberSpinManager");
+const ludoManager = require("./games/ludoManager");
 const rummyManager = require("./games/rummyManager");
 
 const app = express();
@@ -410,6 +412,50 @@ app.post("/api/game/spin/bet", auth, async (req, res) => {
     res.json(betRes);
 });
 
+// --- NUMBER SPIN ROUTES ---
+app.get("/api/game/numberspin/state", auth, (req, res) => {
+    res.json({ success: true, ...numberSpinManager.getGameState() });
+});
+
+app.post("/api/game/numberspin/bet", auth, async (req, res) => {
+    const { selection, amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const betRes = numberSpinManager.placeBet(req.user.id, user.name, selection, amount);
+    if (betRes.success) {
+        user.coins -= amount;
+        await user.save();
+    }
+    res.json(betRes);
+});
+
+// --- LUDO ROUTES ---
+app.post("/api/game/ludo/join", auth, async (req, res) => {
+    const { amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
+
+    const roomId = `${amount}_${Date.now()}`;
+    const result = ludoManager.joinRoom(roomId, req.user.id, user.name, user.avatar);
+    if (result.success) {
+        user.coins -= amount;
+        await user.save();
+    }
+    res.json(result);
+});
+
+app.get("/api/game/ludo/state/:roomId", auth, (req, res) => {
+    const state = ludoManager.getRoomState(req.params.roomId, req.user.id);
+    res.json({ success: !!state, state });
+});
+
+app.post("/api/game/ludo/move", auth, async (req, res) => {
+    const { roomId } = req.body;
+    ludoManager.makeMove(req.user.id, roomId);
+    res.json({ success: true });
+});
+
 app.get("/api/game/rummy/tables", auth, (req, res) => {
     res.json({ success: true, tables: rummyManager.getTables() });
 });
@@ -693,11 +739,13 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
         const colorState = colorGameManager.getGameState();
         const luckyState = luckyDrawManager.getGameState();
         const spinState = spinGameManager.getGameState();
+        const numberSpinState = numberSpinManager.getGameState();
 
         stats.aviatorState = aviatorState;
         stats.colorState = colorState;
         stats.luckyState = luckyState;
         stats.spinState = spinState;
+        stats.numberspinState = numberSpinState;
         stats.bigSmallState = bigSmallState;
 
         stats.liveBets = {
@@ -705,7 +753,9 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
             colorStats: colorGameManager.getBetStats(),
             luckydraw: luckyDrawManager.bets,
             spin: spinGameManager.bets,
+            numberspin: numberSpinManager.bets,
             rummy: rummyManager.getTables().map(t => ({ id: t.id, players: t.players })),
+            ludo: Object.values(ludoManager.rooms).map(r => ({ id: r.id, players: Object.keys(r.players).length, scores: r.scores })),
             bigsmall: {
                 BIG: bigSmallState.activeBets.filter(b => b.prediction === 'BIG').reduce((a, b) => a + b.amount, 0),
                 SMALL: bigSmallState.activeBets.filter(b => b.prediction === 'SMALL').reduce((a, b) => a + b.amount, 0),
@@ -766,6 +816,11 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
     } else if (game === 'spin') {
         spinGameManager.forceResult(result);
         return res.json({ success: true, message: `Next Spin result index set to: ${result}` });
+    } else if (game === 'numberspin') {
+        numberSpinManager.forceResult(result);
+        return res.json({ success: true, message: `Next Number Spin result set to: ${result}` });
+    } else if (game === 'ludo') {
+        return res.json({ success: true, message: "Ludo control updated" });
     } else if (game === 'rummy') {
         rummyManager.forceWinner(tableId, result); // result is winner userId
         return res.json({ success: true, message: `Next Rummy winner set for Table ${tableId}` });

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ludo Turbo | Solo Casino</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --secondary: #ef4444; --accent: #f59e0b; --bg: #0f172a; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        .header { background: rgba(30, 41, 59, 0.8); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .balance { background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; color: #22c55e; font-weight: 800; border: 1px solid #22c55e; }
+
+        .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
+
+        .ludo-board { width: 320px; height: 320px; background: white; border-radius: 10px; position: relative; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); box-shadow: 0 20px 50px rgba(0,0,0,0.5); overflow: hidden; }
+        .base { display: flex; align-items: center; justify-content: center; position: relative; }
+        .base-red { background: #ef4444; }
+        .base-blue { background: #2563eb; }
+        .base-green { background: #22c55e; }
+        .base-yellow { background: #eab308; }
+
+        .center-home { background: #f8fafc; display: flex; align-items: center; justify-content: center; border: 2px solid #cbd5e1; }
+        .home-triangle { width: 0; height: 0; position: absolute; }
+
+        .score-board { width: 100%; max-width: 400px; display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .player-score { background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 15px; text-align: center; border: 1.5px solid rgba(255,255,255,0.1); width: 45%; }
+        .player-score.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent); }
+        .score-val { font-size: 24px; font-weight: 800; color: var(--accent); }
+
+        .dice-area { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .dice { width: 80px; height: 80px; background: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #333; box-shadow: 0 10px 20px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.1s; }
+        .dice:active { transform: scale(0.9); }
+        .dice.rolling { animation: roll 0.5s infinite; }
+        @keyframes roll { 0% { transform: rotate(0deg); } 25% { transform: rotate(90deg) scale(1.1); } 50% { transform: rotate(180deg); } 75% { transform: rotate(270deg) scale(1.1); } 100% { transform: rotate(360deg); } }
+
+        .move-count { margin-top: 10px; font-size: 14px; opacity: 0.8; }
+        .status-msg { margin-top: 15px; font-weight: 600; color: var(--accent); height: 24px; }
+
+        #lobby { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .stake-card { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 300px; margin-bottom: 20px; }
+        .stake-card h2 { margin: 0 0 10px; color: var(--accent); }
+        .btn-join { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 700; cursor: pointer; width: 100%; }
+
+        #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .res-card { background: #1e293b; padding: 40px; border-radius: 30px; border: 2px solid var(--accent); text-align: center; width: 100%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+    <div id="lobby">
+        <h1 style="color: var(--accent); font-size: 32px; margin-bottom: 5px;">LUDO TURBO</h1>
+        <p style="opacity: 0.7; margin-bottom: 30px;">25 Moves Match - Highest Score Wins</p>
+
+        <div class="stake-card">
+            <h2>Classic</h2>
+            <p>Entry: ₹10</p>
+            <button class="btn-join" onclick="joinGame(10)">PLAY NOW</button>
+        </div>
+        <div class="stake-card">
+            <h2>Pro</h2>
+            <p>Entry: ₹50</p>
+            <button class="btn-join" onclick="joinGame(50)">PLAY NOW</button>
+        </div>
+        <button onclick="location.href='dashboard.html'" style="background:transparent; border:none; color:white; opacity:0.6; margin-top:20px;">Exit to Dashboard</button>
+    </div>
+
+    <div class="header">
+        <div onclick="location.href='dashboard.html'"><i class="fas fa-chevron-left"></i></div>
+        <div style="font-weight: 800; letter-spacing: 1px;">LUDO TURBO</div>
+        <div class="balance">₹<span id="balance">0.00</span></div>
+    </div>
+
+    <div class="game-container">
+        <div class="score-board">
+            <div class="player-score" id="p1-card">
+                <div id="p1-name" style="font-size: 12px; margin-bottom: 5px; opacity: 0.8;">You</div>
+                <div class="score-val" id="p1-score">0</div>
+            </div>
+            <div class="player-score" id="p2-card">
+                <div id="p2-name" style="font-size: 12px; margin-bottom: 5px; opacity: 0.8;">Waiting...</div>
+                <div class="score-val" id="p2-score">0</div>
+            </div>
+        </div>
+
+        <div class="ludo-board">
+            <!-- Simplified Board Visualization -->
+            <div class="base base-red"></div>
+            <div class="path-v" style="background: #f1f5f9;"></div>
+            <div class="base base-green"></div>
+            <div class="path-h" style="background: #f1f5f9;"></div>
+            <div class="center-home">
+                <img src="https://cdn-icons-png.flaticon.com/512/1041/1041849.png" width="40">
+            </div>
+            <div class="path-h" style="background: #f1f5f9;"></div>
+            <div class="base base-blue"></div>
+            <div class="path-v" style="background: #f1f5f9;"></div>
+            <div class="base base-yellow"></div>
+        </div>
+
+        <div class="status-msg" id="statusMsg">Connecting...</div>
+
+        <div class="dice-area">
+            <div class="dice" id="diceBtn" onclick="rollDice()">
+                <i class="fas fa-dice-one"></i>
+            </div>
+            <div class="move-count">Moves Remaining: <span id="movesLeft">25</span></div>
+        </div>
+    </div>
+
+    <div id="resultOverlay">
+        <div class="res-card">
+            <h1 id="resTitle" style="color: var(--accent); margin: 0;">YOU WIN!</h1>
+            <p id="resSub" style="font-size: 18px; margin: 15px 0;">Score: 124 vs 98</p>
+            <div id="resAmount" style="font-size: 32px; color: #22c55e; font-weight: 800; margin-bottom: 30px;">+₹18.00</div>
+            <button class="btn-join" onclick="location.reload()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const token = localStorage.getItem("token");
+        let myId = "", currentRoom = null, isRolling = false;
+
+        async function init() {
+            if (!token) { location.href = "login.html"; return; }
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
+            const data = await res.json();
+            if (data.success) {
+                myId = data.user.id;
+                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
+            }
+        }
+        init();
+
+        async function joinGame(amount) {
+            const res = await fetch(`${API_URL}/api/game/ludo/join`, {
+                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentRoom = data.roomId;
+                document.getElementById("lobby").style.display = "none";
+                startStateLoop();
+            } else alert(data.message);
+        }
+
+        function startStateLoop() {
+            setInterval(async () => {
+                if (!currentRoom) return;
+                const res = await fetch(`${API_URL}/api/game/ludo/state/${currentRoom}`, { headers: { authorization: token } });
+                const data = await res.json();
+                if (data.success) updateUI(data.state);
+            }, 1000);
+        }
+
+        function updateUI(state) {
+            const players = Object.values(state.players);
+            const me = state.players[myId];
+            const opponent = players.find(p => p.id !== myId) || { name: "Waiting...", id: null };
+
+            document.getElementById("p1-name").innerText = me.name;
+            document.getElementById("p2-name").innerText = opponent.name;
+            document.getElementById("p1-score").innerText = state.scores[myId] || 0;
+            if (opponent.id) document.getElementById("p2-score").innerText = state.scores[opponent.id] || 0;
+
+            document.getElementById("p1-card").classList.toggle("active", state.turn === myId);
+            document.getElementById("p2-card").classList.toggle("active", opponent.id && state.turn === opponent.id);
+
+            const movesPerPlayer = 25;
+            const myMovesDone = state.history.filter(h => h.userId === myId).length;
+            document.getElementById("movesLeft").innerText = movesPerPlayer - myMovesDone;
+
+            const diceBtn = document.getElementById("diceBtn");
+            if (state.turn === myId && state.gameState === 'PLAYING') {
+                document.getElementById("statusMsg").innerText = "YOUR TURN! Roll the dice.";
+                diceBtn.style.opacity = "1";
+                diceBtn.style.pointerEvents = "auto";
+            } else if (state.gameState === 'PLAYING') {
+                document.getElementById("statusMsg").innerText = `${opponent.name}'s turn...`;
+                diceBtn.style.opacity = "0.5";
+                diceBtn.style.pointerEvents = "none";
+            } else if (state.gameState === 'WAITING') {
+                document.getElementById("statusMsg").innerText = "Waiting for opponent...";
+            }
+
+            // Update last dice roll
+            const lastMove = state.history[state.history.length - 1];
+            if (lastMove && !isRolling) {
+                const icons = ["", "dice-one", "dice-two", "dice-three", "dice-four", "dice-five", "dice-six"];
+                diceBtn.innerHTML = `<i class="fas fa-${icons[lastMove.dice]}"></i>`;
+            }
+
+            if (state.gameState === 'FINISHED') {
+                showResult(state);
+            }
+        }
+
+        async function rollDice() {
+            if (isRolling) return;
+            isRolling = true;
+            const diceBtn = document.getElementById("diceBtn");
+            diceBtn.classList.add("rolling");
+
+            // Call API
+            const res = await fetch(`${API_URL}/api/game/ludo/move`, {
+                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ roomId: currentRoom })
+            });
+
+            setTimeout(() => {
+                diceBtn.classList.remove("rolling");
+                isRolling = false;
+            }, 600);
+        }
+
+        function showResult(state) {
+            const overlay = document.getElementById("resultOverlay");
+            overlay.style.display = "flex";
+            const win = state.winner === myId;
+            const opponentId = Object.keys(state.players).find(id => id !== myId);
+
+            document.getElementById("resTitle").innerText = win ? "YOU WIN!" : "YOU LOSE";
+            document.getElementById("resTitle").style.color = win ? "#22c55e" : "#ef4444";
+            document.getElementById("resSub").innerText = `Score: ${state.scores[myId]} vs ${state.scores[opponentId] || 0}`;
+
+            const entry = Number(currentRoom.split('_')[0]);
+            document.getElementById("resAmount").innerText = win ? `+₹${(entry * 1.8).toFixed(2)}` : `-₹${entry.toFixed(2)}`;
+            document.getElementById("resAmount").style.color = win ? "#22c55e" : "#ef4444";
+        }
+    </script>
+</body>
+</html>

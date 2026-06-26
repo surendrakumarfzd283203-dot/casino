@@ -3,254 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spin & Win Royale | Solo Casino</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Indian Classic Spin Wheel | Solo Casino</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --gold: #f1c40f;
-            --red: #ef4444;
-            --blue: #3498db;
-        }
+        :root { --gold: #ffc107; --bg: #064e3b; --poker-blue: #1e3a8a; --action-red: #ef4444; --action-green: #22c55e; }
+        body { background: var(--bg); color: white; font-family: 'Roboto', sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
-        body {
-            background-color: var(--bg-dark);
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 10px;
-            overflow-x: hidden;
-            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
-        }
+        .header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo-text { font-size: 14px; color: var(--gold); font-weight: 900; line-height: 1.2; }
+        .wallet { background: #5d4037; padding: 5px 12px; border-radius: 20px; font-weight: 900; color: #ffeb3b; border: 1.5px solid #8d6e63; }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+        /* WHEEL SECTION */
+        .wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; }
+        .wheel-img { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 30px; z-index: 10; filter: drop-shadow(0 0 10px rgba(255,0,0,0.5)); }
 
-        .balance-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 15px;
-            border-radius: 20px;
-            color: var(--gold);
-            font-weight: 900;
-            border: 1px solid rgba(241, 196, 15, 0.2);
-        }
+        .timer-box { background: rgba(0,0,0,0.5); padding: 10px; width: 80%; margin: 0 auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); text-align: center; }
+        .timer-val { font-size: 20px; font-weight: 900; color: var(--gold); }
+        .progress-bar { height: 4px; background: #333; width: 100%; margin-top: 5px; border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #ef4444; width: 100%; transition: 1s linear; }
 
-        .wheel-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 30px auto;
-            border-radius: 50%;
-            border: 10px solid #2c3e50;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5), 0 0 20px var(--gold);
-        }
+        /* OUTCOMES */
+        .outcomes { padding: 15px; background: rgba(0,0,0,0.3); margin-top: 15px; }
+        .outcome-title { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .outcome-list { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+        .outcome-list::-webkit-scrollbar { display: none; }
+        .outcome-item { min-width: 45px; height: 35px; background: #1e3a8a; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; border: 1.5px solid rgba(255,255,255,0.2); }
+        .outcome-item.green { background: #059669; }
+        .outcome-item.red { background: #b91c1c; }
+        .outcome-tag { font-size: 6px; margin-top: -2px; }
 
-        .wheel-img {
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            transition: transform 3s cubic-bezier(0.1, 0, 0.1, 1);
-            background: conic-gradient(
-                #ef4444 0deg 30deg, #333 30deg 60deg,
-                #3498db 60deg 90deg, #333 90deg 120deg,
-                #ef4444 120deg 150deg, #333 150deg 180deg,
-                #f1c40f 180deg 210deg, #333 210deg 240deg,
-                #ef4444 240deg 270deg, #333 270deg 300deg,
-                #3498db 300deg 330deg, #333 330deg 360deg
-            );
-        }
+        /* BETTING GRID */
+        .betting-area { padding: 15px; flex: 1; }
+        .bet-main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .bet-box { background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px 5px; text-align: center; position: relative; cursor: pointer; transition: 0.1s; }
+        .bet-box:active { transform: scale(0.95); }
+        .bet-box.selected { border-color: var(--gold); box-shadow: inset 0 0 10px rgba(255,193,7,0.3); }
+        .bet-label { font-size: 18px; font-weight: 900; display: block; }
+        .bet-odds { font-size: 10px; opacity: 0.7; }
+        .bet-chip-indicator { position: absolute; top: 5px; right: 5px; background: var(--gold); color: black; font-size: 9px; padding: 1px 4px; border-radius: 10px; font-weight: 900; display: none; }
 
-        .pointer {
-            position: absolute;
-            top: -20px; left: 50%;
-            transform: translateX(-50%);
-            width: 40px; height: 40px;
-            background: var(--gold);
-            clip-path: polygon(50% 100%, 0 0, 100% 0);
-            z-index: 10;
-        }
+        .down-box { background: linear-gradient(145deg, #1e3a8a, #172554); }
+        .mid-box { background: linear-gradient(145deg, #78350f, #451a03); border-color: #f59e0b; }
+        .up-box { background: linear-gradient(145deg, #064e3b, #022c22); }
 
-        .timer-display {
-            font-size: 32px;
-            font-weight: 900;
-            color: var(--gold);
-            margin: 15px 0;
-            text-align: center;
-        }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .num-box { background: rgba(0,0,0,0.4); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 0; text-align: center; font-weight: 900; cursor: pointer; position: relative; }
+        .num-box.active { border-color: var(--gold); }
 
-        .bet-input-card {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 25px;
-            margin-top: 10px;
-            border: 1px solid #334155;
-            text-align: center;
-        }
+        /* CHIPS */
+        .chips-row { display: flex; justify-content: space-between; padding: 15px; gap: 5px; background: rgba(0,0,0,0.5); }
+        .chip { width: 45px; height: 45px; border-radius: 50%; border: 3px dashed white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.2s; }
+        .chip:active { transform: scale(0.8); }
+        .chip.active { transform: translateY(-10px) scale(1.1); border-style: solid; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
 
-        .btn-spin {
-            background: #22c55e; color: white; width: 100%; height: 60px;
-            border: none; border-radius: 15px; font-weight: 900;
-            font-size: 20px; cursor: pointer; box-shadow: 0 4px 0 #15803d;
-            margin-top: 15px;
-            text-transform: uppercase;
-        }
-        .btn-spin:disabled { opacity: 0.5; background: #444; box-shadow: none; }
+        .chip-10 { background: #3b82f6; }
+        .chip-50 { background: #ef4444; }
+        .chip-100 { background: #8b5cf6; }
+        .chip-500 { background: #10b981; }
+        .chip-1k { background: #f59e0b; }
+        .chip-5k { background: #64748b; }
 
-        .multiplier-list {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .mult-item {
-            background: rgba(0,0,0,0.3);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            border: 1px solid #333;
-            text-align: center;
-        }
-        .mult-item b { color: var(--gold); font-size: 16px; display: block; }
+        /* ACTION BAR */
+        .action-bar { display: flex; gap: 10px; padding: 10px 15px 20px; background: rgba(0,0,0,0.5); }
+        .act-btn { flex: 1; height: 45px; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); color: white; font-weight: 900; text-transform: uppercase; font-size: 11px; cursor: pointer; }
+        .btn-spin { background: linear-gradient(to bottom, #3b82f6, #1d4ed8); box-shadow: 0 4px 0 #1e3a8a; }
+        .btn-spin:disabled { opacity: 0.5; cursor: default; }
 
-        #resPopup {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 30px 50px;
-            border-radius: 30px;
-            font-weight: 900;
-            font-size: 32px;
-            z-index: 1000;
-            display: none;
-            text-align: center;
-            box-shadow: 0 0 100px rgba(0,0,0,1);
-            animation: zoomIn 0.3s;
-        }
-        @keyframes zoomIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } }
+        #lockedMsg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: none; align-items: center; justify-content: center; pointer-events: none; }
+        .locked-badge { background: rgba(0,0,0,0.8); border: 2px solid var(--gold); padding: 10px 20px; border-radius: 50px; font-weight: 900; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+        .spin-icon { animation: rotate 2s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body>
-    <div id="resPopup"></div>
-    <div class="header">
-        <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 24px;"><i class="fas fa-arrow-left"></i></button>
-        <div class="balance-box">₹ <span id="balance">0.00</span></div>
-    </div>
 
-    <div class="timer-display" id="timer">00:20</div>
+    <div class="header">
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div onclick="location.href='dashboard.html'"><i class="fas fa-arrow-left"></i></div>
+            <div class="logo-text">INDIAN CLASSIC<br>SPIN GAME</div>
+        </div>
+        <div class="wallet">₹<span id="balance">0.00</span></div>
+    </div>
 
     <div class="wheel-container">
-        <div class="pointer"></div>
-        <div class="wheel-img" id="wheel"></div>
+        <img src="https://i.ibb.co/L9YmP2P/wheel-final.png" class="wheel-img" id="wheel" alt="Wheel">
+        <img src="https://cdn-icons-png.flaticon.com/512/3602/3602513.png" class="pointer" alt="Pointer">
     </div>
 
-    <div class="container" style="max-width: 500px; margin: 0 auto;">
-        <div class="multiplier-list">
-            <div class="mult-item"><b>10x</b> GOLD</div>
-            <div class="mult-item"><b>5x</b> BLUE</div>
-            <div class="mult-item"><b>2x</b> RED</div>
-            <div class="mult-item"><b>0x</b> GRAY</div>
+    <div class="timer-box">
+        <div style="font-size: 10px; color: #aaa; text-transform: uppercase; margin-bottom: 2px;">
+            <i class="far fa-clock"></i> Place your bets
         </div>
+        <div class="timer-val"><span id="timer">0</span>s <span style="font-size: 12px; opacity: 0.7;">REMAINING</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="timerBar"></div></div>
+    </div>
 
-        <div class="bet-input-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <span style="font-weight: 800; font-size: 18px;">Bet Amount</span>
-                <input type="number" id="betAmount" value="100" style="background: #000; border: 2px solid #334155; color: var(--gold); padding: 10px; width: 120px; text-align: center; border-radius: 12px; font-size: 24px; font-weight: 900;">
+    <div class="outcomes">
+        <div class="outcome-title">
+            <span>Recent Outcomes</span>
+            <span>Last 10 Spins</span>
+        </div>
+        <div class="outcome-list" id="history">
+            <!-- <div class="outcome-item">5 <span class="outcome-tag">DWN</span></div> -->
+        </div>
+    </div>
+
+    <div class="betting-area">
+        <div class="bet-main-grid">
+            <div class="bet-box down-box" onclick="placeBetOn('DOWN')">
+                <span class="bet-label">2-6</span>
+                <span class="bet-odds">1:1 DOWN</span>
+                <div class="bet-chip-indicator" id="chip-DOWN">₹0</div>
             </div>
-            <button class="btn-spin" id="spinBtn" onclick="placeBet()">SPIN NOW</button>
+            <div class="bet-box mid-box" onclick="placeBetOn('MIDDLE')">
+                <span class="bet-label">7</span>
+                <span class="bet-odds">1:4 MIDDLE</span>
+                <div class="bet-chip-indicator" id="chip-MIDDLE">₹0</div>
+            </div>
+            <div class="bet-box up-box" onclick="placeBetOn('UP')">
+                <span class="bet-label">8-12</span>
+                <span class="bet-odds">1:1 UP</span>
+                <div class="bet-chip-indicator" id="chip-UP">₹0</div>
+            </div>
+        </div>
+
+        <div class="num-grid">
+            <div class="num-box" onclick="placeBetOn('2')">2 <div class="bet-chip-indicator" id="chip-2">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('3')">3 <div class="bet-chip-indicator" id="chip-3">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('4')">4 <div class="bet-chip-indicator" id="chip-4">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('5')">5 <div class="bet-chip-indicator" id="chip-5">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('6')">6 <div class="bet-chip-indicator" id="chip-6">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('8')">8 <div class="bet-chip-indicator" id="chip-8">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('9')">9 <div class="bet-chip-indicator" id="chip-9">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('10')">10 <div class="bet-chip-indicator" id="chip-10">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('11')">11 <div class="bet-chip-indicator" id="chip-11">₹0</div></div>
+            <div class="num-box" onclick="placeBetOn('12')">12 <div class="bet-chip-indicator" id="chip-12">₹0</div></div>
         </div>
     </div>
 
-    <audio id="sndSpin" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
-    <audio id="sndWin" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
+    <div style="text-align:center; font-size: 11px; opacity: 0.8; margin-bottom: 5px;">SELECT CHIP AMOUNT</div>
+    <div class="chips-row">
+        <div class="chip chip-10 active" onclick="selectChip(10)">₹10</div>
+        <div class="chip chip-50" onclick="selectChip(50)">₹50</div>
+        <div class="chip chip-100" onclick="selectChip(100)">₹100</div>
+        <div class="chip chip-500" onclick="selectChip(500)">₹500</div>
+        <div class="chip chip-1k" onclick="selectChip(1000)">₹1k</div>
+        <div class="chip chip-5k" onclick="selectChip(5000)">₹5k</div>
+    </div>
+
+    <div class="action-bar">
+        <button class="act-btn" onclick="clearBets()"><i class="fas fa-undo"></i><br>Clear</button>
+        <button class="act-btn"><i class="fas fa-times"></i><br>Double</button>
+        <button class="act-btn"><i class="fas fa-sync"></i><br>Repeat</button>
+        <button class="act-btn btn-spin" id="spinBtn" disabled>SPIN NOW</button>
+    </div>
+
+    <div id="lockedMsg">
+        <div class="locked-badge">
+            <i class="fas fa-spinner spin-icon"></i>
+            BETS LOCKED (चक्र घूम रहा है)
+        </div>
+    </div>
 
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        let isSpinning = false;
-        let lastRoundId = null;
-        let currentBet = 0;
+        let selectedChip = 10, myBets = {}, isSpinning = false, lastRoundId = null;
 
-        async function fetchState() {
-            try {
-                const res = await fetch(`${API_URL}/api/game/spin/state`, { headers: { authorization: token } });
-                const data = await res.json();
-                if (data.success) {
-                    const secs = data.timer;
-                    document.getElementById("timer").innerText = `Spinning In: ${secs}s`;
-                    if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
-                    else document.getElementById("timer").style.color = "var(--gold)";
-
-                    if (data.history && data.history.length > 0) {
-                        const last = data.history[0];
-                        if (last.roundId !== lastRoundId) {
-                            lastRoundId = last.roundId;
-                            if (currentBet > 0) {
-                                checkWin(last);
-                                currentBet = 0;
-                            }
-                        }
-                    }
-
-                    if (data.timer < 4) {
-                        startSpin(data.history[0]?.index || 0);
-                        document.getElementById("spinBtn").disabled = true;
-                        document.getElementById("spinBtn").innerText = "SPINNING...";
-                    } else {
-                        isSpinning = false;
-                        document.getElementById("spinBtn").disabled = false;
-                        document.getElementById("spinBtn").innerText = "SPIN NOW";
-                    }
-                }
-            } catch (e) {}
-        }
-
-        function startSpin(index) {
-            if (isSpinning) return;
-            isSpinning = true;
-            document.getElementById("sndSpin").play().catch(e=>{});
-            // Index 0 is yellow (10x), others... adjust conic-gradient if needed
-            const deg = 3600 - (index * 30);
-            document.getElementById("wheel").style.transform = `rotate(${deg}deg)`;
-        }
-
-        function checkWin(last) {
-            const msg = document.getElementById("resPopup");
-            msg.style.display = "block";
-
-            const winAmount = last.winAmount || 0;
-            if (winAmount > 0) {
-                msg.innerHTML = `<div>WIN!</div><div style="font-size:24px;">₹${winAmount.toFixed(2)}</div>`;
-                msg.style.background = "rgba(34, 197, 94, 0.95)";
-                new Audio('sound/win.mp3').play().catch(e=>{});
-            } else {
-                msg.innerHTML = `<div>LOSE</div>`;
-                msg.style.background = "rgba(239, 68, 68, 0.95)";
-                new Audio('sound/lose.mp3').play().catch(e=>{});
-            }
-            setTimeout(() => {
-                msg.style.display = "none";
-                fetchBalance();
-            }, 5000);
-        }
-
-        async function placeBet() {
-            const amount = parseInt(document.getElementById("betAmount").value);
-            const res = await fetch(`${API_URL}/api/game/spin/bet`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ amount })
-            });
+        async function init() {
+            if (!token) { location.href = "login.html"; return; }
+            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
             if (data.success) {
-                currentBet = amount;
-                fetchBalance();
-            } else alert(data.message);
+                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
+            }
+            startStateLoop();
         }
+        init();
+
+        function selectChip(amt) {
+            selectedChip = amt;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        async function placeBetOn(selection) {
+            if (isSpinning) return;
+            try {
+                const res = await fetch(`${API_URL}/api/game/numberspin/bet`, {
+                    method: "POST", headers: { "Content-Type": "application/json", authorization: token },
+                    body: JSON.stringify({ selection, amount: selectedChip })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    myBets[selection] = (myBets[selection] || 0) + selectedChip;
+                    const ind = document.getElementById(`chip-${selection}`);
+                    ind.innerText = `₹${myBets[selection]}`;
+                    ind.style.display = "block";
+                    fetchBalance();
+                } else alert(data.message);
+            } catch(e) {}
+        }
+
+        function clearBets() { myBets = {}; document.querySelectorAll('.bet-chip-indicator').forEach(i => i.style.display = 'none'); }
 
         async function fetchBalance() {
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
@@ -258,8 +216,68 @@
             if (data.success) document.getElementById("balance").innerText = data.user.coins.toFixed(2);
         }
 
-        setInterval(fetchState, 1000);
-        fetchBalance();
+        function startStateLoop() {
+            setInterval(async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/game/numberspin/state`, { headers: { authorization: token } });
+                    const data = await res.json();
+                    if (data.success) updateUI(data);
+                } catch(e) {}
+            }, 1000);
+        }
+
+        function updateUI(state) {
+            document.getElementById("timer").innerText = state.timer;
+            const bar = document.getElementById("timerBar");
+            bar.style.width = (state.timer / 20 * 100) + "%";
+
+            const locked = document.getElementById("lockedMsg");
+            if (state.isSpinning) {
+                locked.style.display = "flex";
+                if (!isSpinning) startSpinAnimation(state.history[0].result);
+            } else {
+                locked.style.display = "none";
+                isSpinning = false;
+                if (state.roundId !== lastRoundId) {
+                    clearBets();
+                    lastRoundId = state.roundId;
+                }
+            }
+
+            // History
+            const histDiv = document.getElementById("history");
+            histDiv.innerHTML = state.history.map(h => {
+                let tag = "MID";
+                if (h.result <= 6) tag = "DWN";
+                else if (h.result >= 8) tag = "UP";
+                const color = h.result === 7 ? 'green' : (h.result <= 6 ? 'red' : '');
+                return `<div class="outcome-item ${color}">${h.result} <span class="outcome-tag">${tag}</span></div>`;
+            }).join('');
+        }
+
+        function startSpinAnimation(winningNumber) {
+            isSpinning = true;
+            const wheel = document.getElementById("wheel");
+            const sections = [7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12];
+            const sectionAngle = 360 / sections.length;
+            const winningIndex = sections.indexOf(winningNumber);
+
+            // Random number of full rotations + offset for the section
+            const baseRotations = 5;
+            const finalAngle = (baseRotations * 360) + (360 - (winningIndex * sectionAngle));
+
+            wheel.style.transform = `rotate(${finalAngle}deg)`;
+
+            setTimeout(() => {
+                fetchBalance();
+                // Reset wheel for next spin without transition
+                setTimeout(() => {
+                    wheel.style.transition = 'none';
+                    wheel.style.transform = `rotate(${finalAngle % 360}deg)`;
+                    setTimeout(() => wheel.style.transition = '', 50);
+                }, 1000);
+            }, 4500);
+        }
     </script>
 </body>
 </html>
