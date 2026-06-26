@@ -10,17 +10,18 @@
         :root { --primary: #2563eb; --secondary: #ef4444; --accent: #f59e0b; --bg: #030a21; }
         body {
             font-family: 'Poppins', sans-serif;
-            background: #000;
-            background-image: url('https://img.freepik.com/free-vector/blue-curve-background_53876-113112.jpg');
+            background: #000 url('https://img.freepik.com/free-vector/gradient-dark-blue-background-with-abstract-shapes_23-2149117188.jpg') no-repeat center;
             background-size: cover;
-            background-position: center;
             color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
         .header { background: rgba(0, 18, 66, 0.8); backdrop-filter: blur(10px); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002e8c; }
         .balance { background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; color: #22c55e; font-weight: 800; border: 1.5px solid #22c55e; }
 
-        .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; background: transparent; position: relative; }
+        .game-container {
+            flex: 1; display: flex; flex-direction: column; align-items: center; background: transparent; position: relative;
+            background: rgba(0,0,0,0.2);
+        }
 
         /* NEW LUDO BOARD CSS (Realistic) */
         .ludo-board {
@@ -44,7 +45,7 @@
         /* SEARCHING SCREEN */
         #searchingScreen {
             position: fixed; inset: 0;
-            background: #000 url('https://img.freepik.com/free-vector/dark-blue-gradient-background-with-abstract-shapes_23-2149117188.jpg') no-repeat center;
+            background: #000 url('https://img.freepik.com/free-vector/gradient-dark-blue-background-with-abstract-shapes_23-2149117188.jpg') no-repeat center;
             background-size: cover;
             z-index: 1500; display: none; flex-direction: column; align-items: center; justify-content: center;
         }
@@ -255,7 +256,7 @@
                         setTimeout(() => {
                             document.getElementById("searchingScreen").style.display = "none";
                             startStateLoop();
-                        }, 2500);
+                        }, 200); // Super fast transition
                     }
                 }
             }, 1000);

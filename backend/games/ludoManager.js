@@ -68,7 +68,7 @@ class LudoManager {
     startJoinTimer(roomId) {
         const room = this.rooms[roomId];
         if (room.joinInterval) return;
-        room.timer = 10;
+        room.timer = 1; // Direct bot join if no player found in 1 second
         room.joinInterval = setInterval(() => {
             if (!this.rooms[roomId] || room.gameState !== 'WAITING') {
                 clearInterval(room.joinInterval);
