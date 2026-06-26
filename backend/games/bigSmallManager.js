@@ -109,8 +109,22 @@ class BigSmallManager {
 
     placeBet(userId, name, prediction, amount) {
         if (this.timer < 3) return { success: false, message: "Round starting" };
-        this.bets.push({ userId, name, prediction: prediction.toUpperCase(), amount: Number(amount) });
+        const betAmount = Number(amount);
+        if (betAmount < 10) return { success: false, message: "Minimum bet is 10" };
+        if (betAmount > 5000) return { success: false, message: "Maximum bet is 5000" };
+        this.bets.push({ userId, name, prediction: prediction.toUpperCase(), amount: betAmount });
         return { success: true };
+    }
+
+    cancelLastBet(userId) {
+        if (this.timer < 3) return { success: false, message: "Round starting, cannot cancel" };
+        const lastIndex = [...this.bets].reverse().findIndex(b => b.userId.toString() === userId.toString());
+        if (lastIndex === -1) return { success: false, message: "No bet to cancel" };
+
+        const actualIndex = this.bets.length - 1 - lastIndex;
+        const bet = this.bets[actualIndex];
+        this.bets.splice(actualIndex, 1);
+        return { success: true, amount: bet.amount };
     }
 
     getGameState() {

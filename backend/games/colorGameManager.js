@@ -138,8 +138,22 @@ class ColorGameManager {
 
     placeBet(userId, name, type, value, amount) {
         if (this.timer <= 9) return { success: false, message: "Round closing" };
-        this.bets.push({ userId, name, type, value, amount: Number(amount) });
+        const betAmount = Number(amount);
+        if (betAmount < 10) return { success: false, message: "Minimum bet is 10" };
+        this.bets.push({ userId, name, type, value, amount: betAmount });
         return { success: true };
+    }
+
+    cancelLastBet(userId) {
+        if (this.timer <= 9) return { success: false, message: "Round closing, cannot cancel" };
+        // Find last bet from this user
+        const lastIndex = [...this.bets].reverse().findIndex(b => b.userId.toString() === userId.toString());
+        if (lastIndex === -1) return { success: false, message: "No bet to cancel" };
+
+        const actualIndex = this.bets.length - 1 - lastIndex;
+        const bet = this.bets[actualIndex];
+        this.bets.splice(actualIndex, 1);
+        return { success: true, amount: bet.amount };
     }
 
     getGameState() {

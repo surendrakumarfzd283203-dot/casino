@@ -210,9 +210,12 @@
     <div class="bet-input-card">
         <div class="bet-row">
             <span style="font-weight: 800;">Bet Amount</span>
-            <input type="number" id="betAmount" value="100">
+            <input type="number" id="betAmount" value="100" min="10">
         </div>
-        <button id="confirmBtn" class="btn-confirm" onclick="placeBet()">PLACE BET</button>
+        <div style="display: flex; gap: 10px;">
+            <button id="confirmBtn" class="btn-confirm" onclick="placeBet()" style="flex: 2;">PLACE BET</button>
+            <button id="cancelBtn" class="btn-confirm" onclick="cancelLastBet()" style="flex: 1; background: #ef4444; box-shadow: 0 4px 0 #991b1b;">CANCEL</button>
+        </div>
     </div>
 
     <div id="activeBetsList" class="active-bets" style="display: none;">
@@ -320,6 +323,20 @@
                 selectedType = "";
                 selectedValue = "";
                 document.querySelectorAll(".num-btn, .color-btn, .size-btn").forEach(b => b.classList.remove("selected"));
+            } else alert(data.message);
+        }
+
+        async function cancelLastBet() {
+            const res = await fetch(`${API_URL}/api/game/color/cancel`, {
+                method: "POST",
+                headers: { authorization: token }
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentBets.pop();
+                renderActiveBets();
+                fetchBalance();
+                alert("Last bet cancelled");
             } else alert(data.message);
         }
 

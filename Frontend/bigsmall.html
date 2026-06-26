@@ -157,6 +157,21 @@
             cursor: pointer;
         }
 
+        .active-bets-container {
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        .active-bet-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+        }
+
         .action-row { display: flex; gap: 10px; }
         .btn-main {
             flex: 1;
@@ -245,7 +260,7 @@
     <div class="bet-input-card">
         <div class="input-group">
             <span style="font-weight: 800;">Amount</span>
-            <input type="number" id="betAmount" value="100" min="10">
+            <input type="number" id="betAmount" value="100" min="10" max="5000">
         </div>
         <div class="quick-amounts">
             <button class="amt-btn" onclick="setAmt(100)">100</button>
@@ -254,9 +269,14 @@
             <button class="amt-btn" onclick="setAmt(5000)">5000</button>
         </div>
         <div class="action-row">
-            <button id="cancelBtn" class="btn-main btn-cancel" onclick="cancelBet()">CANCEL</button>
+            <button id="cancelBtn" class="btn-main btn-cancel" style="display: block; background: #ef4444; box-shadow: 0 4px 0 #991b1b;" onclick="cancelLastBet()">CANCEL LAST</button>
             <button id="confirmBtn" class="btn-main btn-confirm" onclick="placeBet()">PLACE BET</button>
         </div>
+    </div>
+
+    <div id="activeBets" class="active-bets-container" style="display: none;">
+        <div style="font-weight: 800; color: var(--gold); margin-bottom: 8px;">ACTIVE BETS</div>
+        <div id="activeBetsList"></div>
     </div>
 
     <div class="res-overlay" id="resultBox"></div>
@@ -271,7 +291,7 @@
     <script>
         const token = localStorage.getItem("token");
         let selectedValue = null;
-        let isBetPlaced = false;
+        let myCurrentBets = [];
         let lastRoundId = null;
 
         async function fetchState() {
@@ -295,6 +315,7 @@
             if (data.timer < 5) {
                 confirmBtn.disabled = true;
                 confirmBtn.innerText = "WAITING...";
+                cancelBtn.disabled = true;
                 dice.forEach(d => {
                     d.classList.add("rolling-die");
                     d.innerText = Math.floor(Math.random() * 6) + 1;
@@ -302,30 +323,28 @@
                 if(data.timer === 1) document.getElementById("sndDice").play().catch(e=>{});
             } else {
                 dice.forEach(d => d.classList.remove("rolling-die"));
-                if (!isBetPlaced) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerText = "PLACE BET";
-                    cancelBtn.style.display = "none";
-                }
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "PLACE BET";
+                cancelBtn.disabled = false;
             }
 
             if (data.history && data.history.length > 0) {
                 const last = data.history[0];
                 if (last.roundId !== lastRoundId) {
+                    if (lastRoundId !== null && myCurrentBets.length > 0) {
+                        checkWin(last);
+                        myCurrentBets = [];
+                        renderActiveBets();
+                    }
                     lastRoundId = last.roundId;
                     renderResult(last);
                     fetchBalance();
-                    if (isBetPlaced) {
-                        checkWin(last);
-                        isBetPlaced = false;
-                    }
                 }
                 renderHistory(data.history);
             }
         }
 
         function selectPred(val) {
-            if (isBetPlaced) return;
             selectedValue = val;
             document.querySelectorAll(".pred-btn").forEach(b => b.classList.remove("selected"));
             document.getElementById(`pred-${val}`).classList.add("selected");
@@ -333,7 +352,9 @@
 
         async function placeBet() {
             if (!selectedValue) return alert("Select BIG, SMALL or TRIPLE");
-            const amount = document.getElementById("betAmount").value;
+            const amount = parseInt(document.getElementById("betAmount").value);
+            if (amount < 10 || amount > 5000) return alert("Bet must be between 10 and 5000");
+
             const res = await fetch(`${API_URL}/api/game/bigsmall/bet`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
@@ -341,20 +362,41 @@
             });
             const data = await res.json();
             if (data.success) {
-                isBetPlaced = true;
-                document.getElementById("confirmBtn").innerText = "BET PLACED";
-                document.getElementById("confirmBtn").disabled = true;
-                document.getElementById("cancelBtn").style.display = "block";
+                myCurrentBets.push({ prediction: selectedValue, amount });
+                renderActiveBets();
                 fetchBalance();
+                // alert("Bet Placed!");
             } else alert(data.message);
         }
 
-        function cancelBet() {
-            isBetPlaced = false;
-            document.getElementById("confirmBtn").disabled = false;
-            document.getElementById("confirmBtn").innerText = "PLACE BET";
-            document.getElementById("cancelBtn").style.display = "none";
-            fetchBalance();
+        async function cancelLastBet() {
+            const res = await fetch(`${API_URL}/api/game/bigsmall/cancel`, {
+                method: "POST",
+                headers: { authorization: token }
+            });
+            const data = await res.json();
+            if (data.success) {
+                myCurrentBets.pop();
+                renderActiveBets();
+                fetchBalance();
+                alert("Last bet cancelled");
+            } else alert(data.message);
+        }
+
+        function renderActiveBets() {
+            const container = document.getElementById("activeBets");
+            const list = document.getElementById("activeBetsList");
+            if (myCurrentBets.length === 0) {
+                container.style.display = "none";
+                return;
+            }
+            container.style.display = "block";
+            list.innerHTML = myCurrentBets.map(b => `
+                <div class="active-bet-item">
+                    <span>${b.prediction}</span>
+                    <span style="color: var(--gold); font-weight: 800;">₹${b.amount}</span>
+                </div>
+            `).join('');
         }
 
         function renderResult(last) {
@@ -364,16 +406,22 @@
         }
 
         function checkWin(last) {
+            let totalWon = 0;
+            let count = 0;
+
+            for (let bet of myCurrentBets) {
+                if (bet.prediction === last.result) {
+                    const mult = last.result === 'TRIPLE' ? 24 : 1.95;
+                    totalWon += bet.amount * mult;
+                    count++;
+                }
+            }
+
             const resBox = document.getElementById("resultBox");
             resBox.style.display = "block";
-            const isWin = last.result === selectedValue;
 
-            const betAmount = parseFloat(document.getElementById("betAmount").value);
-            let mult = selectedValue === 'TRIPLE' ? 24 : 1.95;
-            let winAmount = (betAmount * mult).toFixed(2);
-
-            if (isWin) {
-                resBox.innerHTML = `<div>WIN!</div><div style="font-size: 24px;">₹${winAmount}</div>`;
+            if (count > 0) {
+                resBox.innerHTML = `<div>WIN!</div><div style="font-size: 24px;">₹${totalWon.toFixed(2)}</div>`;
                 resBox.style.background = "rgba(40, 167, 69, 0.95)";
                 new Audio('sound/win.mp3').play().catch(e=>{});
             } else {

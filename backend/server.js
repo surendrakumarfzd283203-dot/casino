@@ -361,6 +361,16 @@ app.post("/api/game/bigsmall/bet", auth, async (req, res) => {
     res.json(betRes);
 });
 
+app.post("/api/game/bigsmall/cancel", auth, async (req, res) => {
+    const user = await User.findById(req.user.id);
+    const result = bigSmallManager.cancelLastBet(req.user.id);
+    if (result.success) {
+        user.coins += result.amount;
+        await user.save();
+    }
+    res.json(result);
+});
+
 app.get("/api/game/color/state", auth, (req, res) => {
     res.json({ success: true, ...colorGameManager.getGameState() });
 });
@@ -376,6 +386,16 @@ app.post("/api/game/color/bet", auth, async (req, res) => {
         await user.save();
     }
     res.json(betRes);
+});
+
+app.post("/api/game/color/cancel", auth, async (req, res) => {
+    const user = await User.findById(req.user.id);
+    const result = colorGameManager.cancelLastBet(req.user.id);
+    if (result.success) {
+        user.coins += result.amount;
+        await user.save();
+    }
+    res.json(result);
 });
 
 app.get("/api/game/luckydraw/state", auth, (req, res) => {
