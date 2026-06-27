@@ -1124,8 +1124,13 @@
             sndFly.play().then(() => { sndFly.pause(); }).catch(() => {});
             sndWin.play().then(() => { sndWin.pause(); }).catch(() => {});
             sndCrash.play().then(() => { sndCrash.pause(); }).catch(() => {});
+            if (sndLose) sndLose.play().then(() => { sndLose.pause(); }).catch(() => {});
+            if (sndTick) sndTick.play().then(() => { sndTick.pause(); }).catch(() => {});
 
             if (label === "BET") {
+                // Play tick sound for betting
+                if (sndTick) { sndTick.currentTime = 0; sndTick.play().catch(()=>{}); }
+
                 // Optimistic UI for immediate feel
                 activeBets[i] = { placed: true, amount };
                 updateButtonsWaiting(0);
