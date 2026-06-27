@@ -403,11 +403,11 @@ app.get("/api/game/luckydraw/state", auth, (req, res) => {
 });
 
 app.post("/api/game/luckydraw/bet", auth, async (req, res) => {
-    const { amount } = req.body;
+    const { amount, selection } = req.body;
     const user = await User.findById(req.user.id);
     if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
 
-    const betRes = luckyDrawManager.placeBet(req.user.id, user.name, amount);
+    const betRes = luckyDrawManager.placeBet(req.user.id, user.name, amount, selection);
     if (betRes.success) {
         user.coins -= amount;
         await user.save();

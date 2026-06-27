@@ -153,6 +153,7 @@ class LuckyDrawManager {
     }
 
     getGameState() {
+        const categories = ['ODD', 'EVEN', 'PAIR', 'TRIPLE', 'JACKPOT'];
         return {
             roundId: this.roundId,
             timer: this.timer,
@@ -164,6 +165,7 @@ class LuckyDrawManager {
             pairBets: this.bets.filter(b => b.selection === 'PAIR').reduce((a, b) => a + b.amount, 0),
             tripleBets: this.bets.filter(b => b.selection === 'TRIPLE').reduce((a, b) => a + b.amount, 0),
             jackpotBets: this.bets.filter(b => b.selection === 'JACKPOT').reduce((a, b) => a + b.amount, 0),
+            otherBets: this.bets.filter(b => !categories.includes(b.selection)).reduce((a, b) => a + b.amount, 0),
             bets: this.bets
         };
     }
