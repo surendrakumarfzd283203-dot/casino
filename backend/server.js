@@ -585,7 +585,7 @@ async function startAviatorFlight() {
 
         aviatorState.isFlying = true;
         aviatorState.isCrashed = false;
-        aviatorState.startTime = Date.now();
+        aviatorState.startTime = Date.now() + 500; // 500ms delay to ensure client sees taking off
         aviatorState.cashoutBlocked = false;
 
         if (forcedAviatorMultiplier) {
@@ -593,14 +593,24 @@ async function startAviatorFlight() {
             forcedAviatorMultiplier = null;
         } else {
             const rand = Math.random();
-            if (rand < 0.1) aviatorState.crashMultiplier = 1.01 + Math.random() * 0.1; // 10% very low
-            else if (rand < 0.5) aviatorState.crashMultiplier = 1.5 + Math.random() * 2.0; // 40% mid
-            else if (rand < 0.8) aviatorState.crashMultiplier = 3.5 + Math.random() * 5.0; // 30% good
-            else aviatorState.crashMultiplier = 8.5 + Math.random() * 20.0; // 20% high
+            if (rand < 0.15) {
+                // 15% instant crash (1.00x - 1.10x)
+                aviatorState.crashMultiplier = 1.00 + Math.random() * 0.1;
+            } else if (rand < 0.6) {
+                // 45% low-mid (1.2x - 2.5x)
+                aviatorState.crashMultiplier = 1.2 + Math.random() * 1.3;
+            } else if (rand < 0.85) {
+                // 25% mid-high (3.0x - 10.0x)
+                aviatorState.crashMultiplier = 3.0 + Math.random() * 7.0;
+            } else {
+                // 15% super high (10x - 100x)
+                aviatorState.crashMultiplier = 10.0 + Math.random() * 90.0;
+            }
         }
 
-        const durationSeconds = Math.log(aviatorState.crashMultiplier) / Math.log(1.1);
-        const flightDuration = Math.max(100, Math.floor(durationSeconds * 1000));
+        // Multiplier formula: m = 1.1^t -> t = log(m)/log(1.1)
+        const durationSeconds = Math.log(Math.max(1.001, aviatorState.crashMultiplier)) / Math.log(1.1);
+        const flightDuration = Math.floor(durationSeconds * 1000) + 500; // Add the 500ms delay to timeout
 
         aviatorState.flightTimeout = setTimeout(() => {
             resolveAviatorCrash();

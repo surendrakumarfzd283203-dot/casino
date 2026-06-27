@@ -119,12 +119,49 @@
             z-index: 1;
         }
 
+        .sunburst::before {
+            content: '';
+            position: absolute;
+            top: 15%; left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 40%;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/d/d0/UFC_Logo.svg') no-repeat center;
+            background-size: contain;
+            opacity: 0.12;
+            z-index: 1;
+            filter: grayscale(1) invert(1);
+        }
+
+        .spribe-badge {
+            position: absolute;
+            top: 60%; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 5;
+            opacity: 0.6;
+        }
+        .spribe-badge img { width: 14px; filter: invert(1); }
+        .spribe-badge span { font-size: 10px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+
         .sunburst::after {
             content: '';
             position: absolute;
             top: -50%; left: -50%; width: 200%; height: 200%;
-            background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.02) 0deg 10deg, transparent 10deg 20deg);
-            z-index: 1;
+            background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.015) 0deg 10deg, transparent 10deg 20deg);
+            z-index: 0;
+            animation: rotateSun 60s linear infinite;
+        }
+
+        @keyframes rotateSun {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .fun-mode-banner {
@@ -154,12 +191,12 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: clamp(40px, 15vw, 80px);
+            font-size: clamp(60px, 20vw, 120px);
             font-weight: 950;
             z-index: 10;
-            text-shadow: 0 0 40px rgba(0,0,0,0.8);
+            text-shadow: 0 0 30px rgba(0,0,0,0.8);
             color: white;
-            letter-spacing: -2px;
+            letter-spacing: -3px;
         }
 
         .player-count-capsule {
@@ -528,6 +565,10 @@
     <div class="game-area">
         <div class="fun-mode-banner">Fun Mode</div>
         <div class="sunburst"></div>
+        <div class="spribe-badge">
+            <i class="fas fa-certificate" style="color:#28a745; font-size:12px;"></i>
+            <span>SPRIBE OFFICIAL GAME</span>
+        </div>
         <div class="canvas-container">
             <canvas id="gameCanvas"></canvas>
             <div id="multiplier">1.00x</div>
@@ -906,58 +947,69 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const margin = 40;
-            const graphWidth = canvas.width - margin * 2;
-            const graphHeight = canvas.height - margin * 2;
+            const graphWidth = canvas.width - margin * 1.5;
+            const graphHeight = canvas.height - margin * 1.5;
 
-            const x = Math.min(elapsed * 50, graphWidth);
-            const y = Math.min(Math.pow(elapsed, 1.4) * 15, graphHeight);
+            // Adjusted scaling for steeper curve like screenshot
+            const x = Math.min(elapsed * 60, graphWidth);
+            const y = Math.min(Math.pow(elapsed, 1.6) * 20, graphHeight);
 
             const startX = margin;
             const startY = canvas.height - margin;
             let endX = margin + x;
             let endY = canvas.height - margin - y;
 
-            // Draw Area under curve
+            // Draw Area under curve (Red Gradient)
             ctx.beginPath();
             ctx.moveTo(startX, startY);
-            ctx.quadraticCurveTo(startX + x * 0.5, startY, endX, endY);
+            // Cubic curve for smoother "Aviator" look
+            ctx.bezierCurveTo(startX + x * 0.4, startY, startX + x * 0.7, startY + (endY - startY) * 0.1, endX, endY);
             ctx.lineTo(endX, startY);
             ctx.closePath();
 
             const grad = ctx.createLinearGradient(startX, endY, startX, startY);
-            grad.addColorStop(0, 'rgba(209, 2, 20, 0.4)');
+            grad.addColorStop(0, 'rgba(209, 2, 20, 0.6)');
             grad.addColorStop(1, 'rgba(209, 2, 20, 0)');
             ctx.fillStyle = grad;
             ctx.fill();
 
-            // Draw Path Line
+            // Draw Path Line (Thick Red)
             ctx.beginPath();
             ctx.moveTo(startX, startY);
-            ctx.quadraticCurveTo(startX + x * 0.5, startY, endX, endY);
-            ctx.strokeStyle = 'var(--primary-red)';
-            ctx.lineWidth = 4;
+            ctx.bezierCurveTo(startX + x * 0.4, startY, startX + x * 0.7, startY + (endY - startY) * 0.1, endX, endY);
+            ctx.strokeStyle = '#d10214';
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
             ctx.stroke();
 
             if (crashElapsed > 0) {
-                endX += crashElapsed * 600;
-                endY -= crashElapsed * 300;
-                ctx.fillStyle = "var(--primary-red)";
-                ctx.font = "bold 30px Inter";
+                // Plane flies off screen
+                endX += crashElapsed * 800;
+                endY -= crashElapsed * 400;
+
+                ctx.save();
+                ctx.fillStyle = "rgba(209, 2, 20, " + Math.max(0, 1 - crashElapsed) + ")";
+                ctx.font = "900 40px Inter";
                 ctx.textAlign = "center";
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "black";
                 ctx.fillText("FLEW AWAY!", canvas.width/2, canvas.height/2 + 80);
+                ctx.restore();
             }
 
             // Draw Plane
             if (planeImg.complete) {
-                const pW = 200;
-                const pH = 100;
+                const pW = 120; // Slightly smaller plane for better scale
+                const pH = 60;
                 ctx.save();
                 ctx.translate(endX, endY);
-                const rotation = elapsed > 0 ? -Math.atan2(y, x * 0.5) * 0.5 : 0;
+
+                // Rotation based on curve slope
+                const rotation = elapsed > 0 ? -Math.atan2(y, x * 0.8) * 0.6 : 0;
                 ctx.rotate(rotation);
 
-                ctx.shadowBlur = isFlying ? 25 : 15;
-                ctx.shadowColor = "var(--primary-red)";
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = "#d10214";
 
                 ctx.drawImage(planeImg, -pW/2, -pH/2, pW, pH);
                 ctx.restore();
