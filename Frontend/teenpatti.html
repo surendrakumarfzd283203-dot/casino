@@ -148,15 +148,33 @@
             flex-direction: column;
             align-items: center;
         }
-        .seat-me { bottom: 15%; left: 50%; transform: translateX(-50%) scale(1.2); z-index: 200; }
-        .seat-2 { left: 5%; bottom: 35%; }
-        .seat-3 { left: 15%; top: 15%; transform: scale(0.9); }
-        .seat-4 { right: 15%; top: 15%; transform: scale(0.9); }
-        .seat-5 { right: 5%; bottom: 35%; }
+        .seat-me { bottom: 15%; left: 50%; transform: translateX(-50%) scale(1.1); z-index: 200; }
+        .seat-2 { left: 4%; bottom: 32%; }
+        .seat-3 { left: 12%; top: 12%; transform: scale(0.85); }
+        .seat-4 { right: 12%; top: 12%; transform: scale(0.85); }
+        .seat-5 { right: 4%; bottom: 32%; }
 
-        .avatar-group { position: relative; width: 60px; height: 60px; margin-top: 5px; }
-        .avatar { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--gold); overflow: hidden; background: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.6); position: relative; }
+        .avatar-group { position: relative; width: 64px; height: 64px; margin-top: 5px; display: flex; align-items: center; justify-content: center; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--gold); overflow: hidden; background: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.6); position: relative; z-index: 2; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-emoji { font-size: 32px; display: flex; align-items: center; justify-content: center; height: 100%; background: #222; }
+
+        .turn-timer-text {
+            position: absolute;
+            z-index: 10;
+            font-size: 24px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 10px #000, 0 0 20px #f00;
+            pointer-events: none;
+            background: rgba(0,0,0,0.4);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
 
         .active-turn-ring { position: absolute; inset: -5px; border: 4px solid #fde047; border-radius: 50%; opacity: 0; z-index: 1; pointer-events: none; }
         .active-turn .active-turn-ring { opacity: 1; animation: ring-spin 2s linear infinite; }
@@ -240,14 +258,14 @@
         .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 10px; height: 100%; }
         .btn-col { display: flex; flex-direction: column; gap: 4px; }
 
-        .btn-act { flex: 1; min-height: 40px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); font-weight: 950; font-size: 11px; color: white; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.1s; background: rgba(255,255,255,0.1); }
-        .btn-act:active { transform: scale(0.96); background: rgba(255,255,255,0.2); }
+        .btn-act { flex: 1; min-height: 42px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2); font-weight: 950; font-size: 13px; color: white; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.1s; background: rgba(255,255,255,0.1); box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
+        .btn-act:active { transform: translateY(2px); box-shadow: none; background: rgba(255,255,255,0.2); }
 
-        .btn-pack { border-color: #ef4444; color: #ef4444; }
-        .btn-side { border-color: #64748b; color: #cbd5e1; }
-        .btn-chaal { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.1); }
-        .btn-show { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1); }
-        .btn-sub { font-size: 9px; opacity: 0.9; margin-top: 1px; font-weight: 900; }
+        .btn-pack { border-color: #ef4444; color: #fff; background: linear-gradient(to bottom, #ef4444, #991b1b); }
+        .btn-side { border-color: #f59e0b; color: #fff; background: linear-gradient(to bottom, #f59e0b, #92400e); }
+        .btn-chaal { border-color: #22c55e; color: #fff; background: linear-gradient(to bottom, #22c55e, #15803d); }
+        .btn-show { border-color: #3b82f6; color: #fff; background: linear-gradient(to bottom, #3b82f6, #1d4ed8); }
+        .btn-sub { font-size: 10px; opacity: 0.9; margin-top: 2px; font-weight: 900; background: rgba(0,0,0,0.2); padding: 1px 6px; border-radius: 4px; }
 
         .bet-stepper-side { position: absolute; right: 15px; bottom: 110px; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 1000; }
         .step-btn { width: 36px; height: 36px; border-radius: 50%; background: #334155; border: 1.5px solid var(--gold); color: white; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 #1e293b; display: flex; align-items: center; justify-content: center; }
@@ -274,11 +292,14 @@
 
         /* SHOWDOWN OVERLAY */
         #showdownOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .showdown-card-box { display: flex; gap: 30px; align-items: center; margin-top: 40px; }
-        .player-hand-show { text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 2px solid var(--gold); box-shadow: 0 0 30px rgba(255, 193, 7, 0.2); }
-        .hand-name { color: var(--gold); font-size: 18px; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; }
-        .hand-rank-text { color: #fff; font-size: 14px; font-weight: 700; margin-top: 10px; }
-        .vs-showdown { font-size: 48px; font-weight: 950; font-style: italic; color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .showdown-card-box { display: flex; gap: 20px; align-items: center; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+        .player-hand-show { text-align: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; border: 2px solid var(--gold); box-shadow: 0 0 30px rgba(255, 193, 7, 0.2); transition: 0.5s; animation: showdownPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes showdownPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .hand-name { color: var(--gold); font-size: 16px; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; }
+        .hand-rank-text { color: #fff; font-size: 13px; font-weight: 700; margin-top: 8px; }
+        .vs-showdown { font-size: 32px; font-weight: 950; font-style: italic; color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+
+        .btn-small { width: 140px !important; height: 38px !important; font-size: 14px !important; margin-top: 20px !important; }
 
         .winner-crown { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 40px; color: var(--gold); filter: drop-shadow(0 0 10px gold); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.2); } 100% { transform: translateX(-50%) scale(1); } }
@@ -289,11 +310,14 @@
 
         /* SHOWDOWN OVERLAY */
         #showdownOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .showdown-card-box { display: flex; gap: 30px; align-items: center; margin-top: 40px; }
-        .player-hand-show { text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 2px solid var(--gold); box-shadow: 0 0 30px rgba(255, 193, 7, 0.2); }
-        .hand-name { color: var(--gold); font-size: 18px; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; }
-        .hand-rank-text { color: #fff; font-size: 14px; font-weight: 700; margin-top: 10px; }
-        .vs-showdown { font-size: 48px; font-weight: 950; font-style: italic; color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .showdown-card-box { display: flex; gap: 20px; align-items: center; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+        .player-hand-show { text-align: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; border: 2px solid var(--gold); box-shadow: 0 0 30px rgba(255, 193, 7, 0.2); transition: 0.5s; animation: showdownPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes showdownPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .hand-name { color: var(--gold); font-size: 16px; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; }
+        .hand-rank-text { color: #fff; font-size: 13px; font-weight: 700; margin-top: 8px; }
+        .vs-showdown { font-size: 32px; font-weight: 950; font-style: italic; color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+
+        .btn-small { width: 140px !important; height: 38px !important; font-size: 14px !important; margin-top: 20px !important; }
 
         .winner-crown { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 40px; color: var(--gold); filter: drop-shadow(0 0 10px gold); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.2); } 100% { transform: translateX(-50%) scale(1); } }
@@ -375,14 +399,14 @@
             </div>
             <div class="btn-col">
                 <button class="btn-act btn-chaal" id="chaalBtn" onclick="handleMove('CHAAL')">
-                    <span>Chaal</span><span class="btn-sub" id="chaalAmt">₹0</span>
+                    <span>CHAAL</span><span class="btn-sub" id="chaalAmt">₹0</span>
                 </button>
-                <button class="btn-act btn-chaal" id="plusBtn" onclick="handlePlusMove()" style="background: linear-gradient(to bottom, #eab308, #a16207);">
-                    <span>Raise 2x</span><span class="btn-sub" id="plusAmt">₹0</span>
+                <button class="btn-act btn-chaal" id="plusBtn" onclick="handlePlusMove()" style="background: linear-gradient(to bottom, #f59e0b, #92400e); border-color: #fbbf24;">
+                    <span>RAISE 2X</span><span class="btn-sub" id="plusAmt">₹0</span>
                 </button>
             </div>
-            <button class="btn-act btn-show" id="showBtn" onclick="handleMove('SHOW')" style="display: none;">
-                <span>Show</span><span class="btn-sub" id="showAmt">₹0</span>
+            <button class="btn-act btn-show" id="showBtn" onclick="handleMove('SHOW')" style="display: none; background: linear-gradient(to bottom, #3b82f6, #1d4ed8); border-color: #60a5fa;">
+                <span>SHOW</span><span class="btn-sub" id="showAmt">₹0</span>
             </button>
         </div>
     </div>
@@ -407,19 +431,19 @@
     </div>
 
     <div id="showdownOverlay">
-        <h1 style="color: var(--gold); font-size: 32px; letter-spacing: 5px; margin-bottom: 0;">SHOWDOWN</h1>
+        <h1 style="color: var(--gold); font-size: 24px; letter-spacing: 3px; margin-bottom: 0;">SHOWDOWN</h1>
         <div class="showdown-card-box" id="showdownContent">
             <!-- Hands injected here -->
         </div>
-        <button class="btn-act btn-chaal" style="width: 200px; height: 50px; margin-top: 40px; font-size: 18px;" onclick="closeShowdown()">CONTINUE</button>
+        <button class="btn-act btn-chaal btn-small" onclick="closeShowdown()">CONTINUE</button>
     </div>
 
     <div id="resultOverlay">
         <div class="res-card">
-            <h1 id="resTitle" style="margin: 0; color: var(--gold); font-size: 36px;">YOU WIN!</h1>
-            <div id="resHand" style="display: flex; justify-content: center; gap: 8px; margin: 25px 0;"></div>
-            <div id="resAmount" style="font-size: 32px; color: #22c55e; font-weight: 900; margin-bottom: 25px;">+₹0</div>
-            <button class="btn-act btn-chaal" style="width: 100%; font-size: 18px;" onclick="closeRes()">CONTINUE</button>
+            <h1 id="resTitle" style="margin: 0; color: var(--gold); font-size: 28px;">YOU WIN!</h1>
+            <div id="resHand" style="display: flex; justify-content: center; gap: 8px; margin: 15px 0;"></div>
+            <div id="resAmount" style="font-size: 24px; color: #22c55e; font-weight: 900; margin-bottom: 15px;">+₹0</div>
+            <button class="btn-act btn-chaal btn-small" style="width: 100%;" onclick="closeRes()">CLOSE</button>
         </div>
     </div>
 
@@ -700,11 +724,17 @@
                     <div class="hand-name">${p.name}</div>
                     <div style="display:flex; gap:10px;">${renderBigCards(p.hand, false)}</div>
                     <div class="hand-rank-text">${p.handRank || ''}</div>
-                    <div style="margin-top:10px; color:${p.result==='WIN'?'#22c55e':'#ef4444'}; font-weight:900;">
+                    <div style="margin-top:10px; color:${p.result==='WIN'?'#22c55e':'#ef4444'}; font-weight:900; font-size: 12px;">
                         ${p.result === 'WIN' ? 'WINNER!' : 'LOSER'}
                     </div>
                 </div>
             `).join('');
+
+            // Auto-close showdown after 2.5 seconds
+            if (window.showdownTimeout) clearTimeout(window.showdownTimeout);
+            window.showdownTimeout = setTimeout(() => {
+                closeShowdown();
+            }, 2500);
         }
 
         function closeShowdown() {

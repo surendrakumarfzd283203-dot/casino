@@ -190,7 +190,7 @@ class TeenPattiTable {
 
         this.state = 'PLAYING';
         this.currentTurn = activeUids[0];
-        this.timer = 15;
+        this.timer = 10;
         this.checkBotTurn();
     }
 
@@ -260,7 +260,7 @@ class TeenPattiTable {
 
             this.sideShowRequester = userId;
             this.sideShowTarget = targetId;
-            this.timer = 15; // Time for target to respond
+            this.timer = 10; // Time for target to respond
 
             if (this.players[targetId].isBot) {
                 setTimeout(() => this.respondSideShow(targetId, true), 2000);
@@ -296,7 +296,7 @@ class TeenPattiTable {
         }
         const idx = active.indexOf(this.currentTurn);
         this.currentTurn = active[(idx + 1) % active.length];
-        this.timer = 15;
+        this.timer = 10;
         this.checkBotTurn();
     }
 
