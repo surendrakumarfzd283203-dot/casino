@@ -746,6 +746,14 @@
                     previousBets = [...window.lastBets];
                 }
                 lastRoundId = data.roundId;
+                // Reset local state for new round
+                if (!data.isFlying) {
+                    isFlying = false;
+                    isCrashed = false;
+                    currentMult = 1.0;
+                    document.getElementById("multiplier").style.color = "white";
+                    document.getElementById("multiplier").innerText = "1.00x";
+                }
             }
 
             // Persistence: Restore user active bets from state
@@ -763,14 +771,22 @@
 
             if (data.isFlying) {
                 if (data.isCrashed) {
-                    if (isFlying) endFlight();
+                    if (isFlying || !isCrashed) {
+                        endFlight();
+                        // If it was already crashed when we fetched, make sure we show the right multiplier
+                        lastElapsed = Math.log(data.crashMultiplier) / Math.log(1.1);
+                        currentMult = data.crashMultiplier;
+                        document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
+                        document.getElementById("multiplier").style.color = "var(--primary-red)";
+                        drawGame(lastElapsed, 0.1); // Small crash offset to show "Flew Away"
+                    }
                     isFlying = false;
                     isCrashed = true;
-                    crashStartTime = Date.now();
                 } else {
                     if (!isFlying) {
                         isFlying = true;
                         isCrashed = false;
+                        document.getElementById("multiplier").style.color = "white";
                         // Calculate client-side startTime adjusted for server offset
                         const serverNow = data.serverTime || Date.now();
                         const clientNow = Date.now();
@@ -794,6 +810,7 @@
             } else {
                 if (isFlying) endFlight();
                 isFlying = false;
+                isCrashed = false;
                 banner.innerText = `WAITING FOR NEXT ROUND IN ${data.timer}s`;
                 banner.style.background = "#f5a623";
                 updateButtonsWaiting(data.timer);
@@ -874,7 +891,10 @@
 
 
         function animate() {
-            if (!isFlying && !isCrashed) return;
+            if (!isFlying && !isCrashed) {
+                animFrame = null;
+                return;
+            }
 
             if (isFlying) {
                 lastElapsed = Math.max(0, (Date.now() - startTime) / 1000);
@@ -882,13 +902,9 @@
                 document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
                 drawGame(lastElapsed);
             } else if (isCrashed) {
-                const crashElapsed = (Date.now() - crashStartTime) / 1000;
-                if (crashElapsed > 2.5) {
-                    isCrashed = false;
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    return;
-                }
-                drawGame(lastElapsed, crashElapsed);
+                // Keep showing the crash multiplier and the Flew Away message
+                document.getElementById("multiplier").style.color = "var(--primary-red)";
+                drawGame(lastElapsed, 0.1);
             }
 
             animFrame = requestAnimationFrame(animate);

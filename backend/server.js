@@ -535,7 +535,7 @@ updateAviatorFakeUsers();
 // --- AVIATOR AUTOMATION (10 SECOND BETTING GAP) ---
 let aviatorState = {
     roundId: Date.now(),
-    timer: 10, // 10 seconds betting time
+    timer: 10,
     isFlying: false,
     isCrashed: false,
     crashMultiplier: 2.0,
@@ -546,87 +546,129 @@ let aviatorState = {
     cashoutBlocked: false
 };
 
+function resetAviator() {
+    console.log("Resetting Aviator Round");
+    aviatorState.roundId = Date.now();
+    aviatorState.timer = 10;
+    aviatorState.isFlying = false;
+    aviatorState.isCrashed = false;
+    aviatorState.startTime = null;
+    aviatorState.cashoutBlocked = false;
+    activeBets.aviator = [];
+    if (aviatorState.flightTimeout) clearTimeout(aviatorState.flightTimeout);
+    aviatorState.flightTimeout = null;
+}
+
 setInterval(() => {
-    if (aviatorState.timer > 0) {
-        aviatorState.timer--;
-        if (aviatorState.timer === 9) {
-            updateAviatorFakeUsers();
-            aviatorState.currentFakeCount = Math.floor(Math.random() * 120) + 80;
+    try {
+        if (aviatorState.isFlying) {
+            // If flying but crashed more than 10 seconds ago and not reset, force reset
+            if (aviatorState.isCrashed && aviatorState.flightTimeout === null && !aviatorState.isResetting) {
+                aviatorState.isResetting = true;
+                setTimeout(() => { resetAviator(); aviatorState.isResetting = false; }, 3000);
+            }
+            return;
         }
-        // Fluctuate a bit during betting phase
-        if (!aviatorState.isFlying && aviatorState.timer < 8) {
-             aviatorState.currentFakeCount += Math.floor(Math.random() * 3);
+
+        if (aviatorState.timer > 0) {
+            aviatorState.timer--;
+            if (aviatorState.timer === 9) {
+                updateAviatorFakeUsers();
+                aviatorState.currentFakeCount = Math.floor(Math.random() * 120) + 80;
+            }
+            if (aviatorState.timer < 8) {
+                 aviatorState.currentFakeCount += Math.floor(Math.random() * 3);
+            }
+        } else {
+            // Timer is 0, start flight
+            startAviatorFlight().catch(err => {
+                console.error("Async Start Aviator Error:", err);
+                resetAviator();
+            });
         }
-    } else {
-        if (!aviatorState.isFlying) {
-            startAviatorFlight();
-        }
+    } catch (e) {
+        console.error("Aviator Tick Error:", e);
     }
 }, 1000);
 
 async function startAviatorFlight() {
-    aviatorState.isFlying = true;
-    aviatorState.isCrashed = false;
-    aviatorState.startTime = Date.now();
-    aviatorState.cashoutBlocked = false; // Reset block on every flight
+    try {
+        if (aviatorState.isFlying) return;
 
-    // Choose crash multiplier (rigged or random)
-    if (forcedAviatorMultiplier) {
-        aviatorState.crashMultiplier = Number(forcedAviatorMultiplier);
-        forcedAviatorMultiplier = null;
-    } else {
-        const rand = Math.random();
-        if (rand < 0.7) aviatorState.crashMultiplier = 1.0 + Math.random() * 1.5;
-        else aviatorState.crashMultiplier = 1.5 + Math.random() * 5.0;
+        aviatorState.isFlying = true;
+        aviatorState.isCrashed = false;
+        aviatorState.startTime = Date.now();
+        aviatorState.cashoutBlocked = false;
+
+        if (forcedAviatorMultiplier) {
+            aviatorState.crashMultiplier = Number(forcedAviatorMultiplier);
+            forcedAviatorMultiplier = null;
+        } else {
+            const rand = Math.random();
+            if (rand < 0.7) aviatorState.crashMultiplier = 1.01 + Math.random() * 0.5; // 70% crash low
+            else if (rand < 0.9) aviatorState.crashMultiplier = 1.5 + Math.random() * 2.0; // 20% mid
+            else aviatorState.crashMultiplier = 3.5 + Math.random() * 15.0; // 10% high
+        }
+
+        // Pre-calculate flight duration (in ms)
+        // Using same formula as client: multiplier = 1.1^seconds
+        // seconds = log(multiplier) / log(1.1)
+        const flightDuration = Math.max(100, Math.floor(Math.log(aviatorState.crashMultiplier) / Math.log(1.1) * 1000));
+
+        aviatorState.flightTimeout = setTimeout(() => {
+            resolveAviatorCrash();
+        }, flightDuration);
+    } catch (e) {
+        console.error("Start Aviator Error:", e);
+        resetAviator();
     }
-
-    // Flight duration based on multiplier
-    // Ensure minimum flight time of 100ms so clients can register the state change
-    const flightDuration = Math.max(100, Math.floor(Math.log(aviatorState.crashMultiplier) / Math.log(1.1) * 1000));
-
-    aviatorState.flightTimeout = setTimeout(() => {
-        resolveAviatorCrash();
-    }, flightDuration);
 }
 
 async function resolveAviatorCrash(manualMultiplier = null) {
-    if (aviatorState.flightTimeout) {
-        clearTimeout(aviatorState.flightTimeout);
-        aviatorState.flightTimeout = null;
-    }
+    try {
+        if (aviatorState.isCrashed) return; // Already resolved
 
-    if (manualMultiplier) {
-        aviatorState.crashMultiplier = manualMultiplier;
-    }
-
-    aviatorState.isCrashed = true;
-    // Round Crashed
-    aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
-    if (aviatorState.history.length > 20) aviatorState.history.pop();
-
-    // Process losers (those who didn't cash out)
-    for (let bet of activeBets.aviator) {
-        if (!bet.cashedOut) {
-            await new Transaction({
-                user_id: bet.userId,
-                amount: -bet.betAmount,
-                type: "game_aviator",
-                details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
-            }).save();
-            await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
+        if (aviatorState.flightTimeout) {
+            clearTimeout(aviatorState.flightTimeout);
+            aviatorState.flightTimeout = null;
         }
-    }
 
-    // Delay the reset slightly so users see the "Crashed" result on screen
-    setTimeout(() => {
-        // Reset for next round
-        aviatorState.roundId = Date.now();
-        aviatorState.timer = 10; // 10 seconds gap
-        aviatorState.isFlying = false;
-        aviatorState.isCrashed = false;
-        aviatorState.startTime = null;
-        activeBets.aviator = [];
-    }, 3000); // 3 seconds delay to show result
+        if (manualMultiplier) {
+            aviatorState.crashMultiplier = Number(manualMultiplier);
+        }
+
+        aviatorState.isCrashed = true;
+        aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
+        if (aviatorState.history.length > 20) aviatorState.history.pop();
+
+        // Process losing bets
+        const losingBets = activeBets.aviator.filter(b => !b.cashedOut);
+        if (losingBets.length > 0) {
+            // Bulk update admin balance instead of multiple individual updates if possible,
+            // but here we also need transactions.
+            for (let bet of losingBets) {
+                try {
+                    await new Transaction({
+                        user_id: bet.userId,
+                        amount: -bet.betAmount,
+                        type: "game_aviator",
+                        details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
+                    }).save();
+                    await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
+                } catch (err) {
+                    console.error("Error processing losing aviator bet:", err);
+                }
+            }
+        }
+
+        // Show crash result for 3 seconds, then reset
+        setTimeout(() => {
+            resetAviator();
+        }, 3000);
+    } catch (e) {
+        console.error("Resolve Aviator Error:", e);
+        resetAviator();
+    }
 }
 
 app.get("/api/game/aviator/state", auth, (req, res) => {
