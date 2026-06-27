@@ -964,9 +964,10 @@
             const graphWidth = canvas.width - margin * 1.5;
             const graphHeight = canvas.height - margin * 1.5;
 
-            // Smoother and more visible takeoff scaling
-            const x = Math.min(elapsed * 70, graphWidth);
-            const y = Math.min(Math.pow(elapsed, 1.65) * 22, graphHeight);
+            // Faster movement for small elapsed times to ensure takeoff is seen
+            // Standard Aviator scaling
+            const x = Math.min(elapsed * 80, graphWidth);
+            const y = Math.min(Math.pow(elapsed, 1.6) * 25, graphHeight);
 
             const startX = margin;
             const startY = canvas.height - margin;
@@ -1202,6 +1203,20 @@
 
         setInterval(fetchState, 200);
         fetchBalance();
+
+        // Sound Unlock Overlay
+        const unlocker = document.createElement('div');
+        unlocker.style = "position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; cursor:pointer;";
+        unlocker.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.8); padding:20px; border-radius:10px; border:1px solid #d10214; text-align:center;">' +
+            '<i class="fas fa-volume-up" style="font-size:30px; color:#d10214; margin-bottom:10px;"></i><br>' +
+            '<span style="font-weight:900;">TAP TO START GAME</span></div>';
+        document.body.appendChild(unlocker);
+        unlocker.onclick = () => {
+            sndFly.play().then(() => { sndFly.pause(); }).catch(() => {});
+            sndWin.play().then(() => { sndWin.pause(); }).catch(() => {});
+            sndCrash.play().then(() => { sndCrash.pause(); }).catch(() => {});
+            unlocker.remove();
+        };
     </script>
 </body>
 </html>
