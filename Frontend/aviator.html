@@ -1120,13 +1120,6 @@
             const label = btn.querySelector('.label').innerText;
             const autoCashOut = parseFloat(document.getElementById(`autoVal${i}`).value);
 
-            // User interaction: Unlock audio
-            sndFly.play().then(() => { sndFly.pause(); }).catch(() => {});
-            sndWin.play().then(() => { sndWin.pause(); }).catch(() => {});
-            sndCrash.play().then(() => { sndCrash.pause(); }).catch(() => {});
-            if (sndLose) sndLose.play().then(() => { sndLose.pause(); }).catch(() => {});
-            if (sndTick) sndTick.play().then(() => { sndTick.pause(); }).catch(() => {});
-
             if (label === "BET") {
                 // Play tick sound for betting
                 if (sndTick) { sndTick.currentTime = 0; sndTick.play().catch(()=>{}); }
@@ -1167,7 +1160,13 @@
 
                 // Fast Cashout UI: Don't wait for server to play sound and update UI
                 activeBets[i].placed = false;
-                sndWin.play().catch(e=>{});
+
+                // Play Win Sound
+                if (sndWin) {
+                    sndWin.currentTime = 0;
+                    sndWin.play().catch(e=>{});
+                }
+
                 updateButtonsFlying();
                 showResult('win', winAmt);
 
