@@ -792,27 +792,36 @@
                     currentMult = 1.0;
                     document.getElementById("multiplier").style.color = "white";
                     document.getElementById("multiplier").innerText = "1.00x";
+                    // Reset local bet status for new round
+                    activeBets[1].placed = false;
+                    activeBets[2].placed = false;
                 }
             }
 
             if (currentUser && data.activeBets) {
                 const myBets = data.activeBets.filter(b => b.userId === currentUser._id || b.userId === currentUser.id);
-                if (myBets.length > 0) {
-                    activeBets[1].placed = !myBets[0].cashedOut;
-                    activeBets[1].amount = myBets[0].betAmount;
-                    if (myBets.length > 1) {
-                        activeBets[2].placed = !myBets[1].cashedOut;
-                        activeBets[2].amount = myBets[1].betAmount;
+
+                // Sync slots correctly
+                [1, 2].forEach(slot => {
+                    const serverBet = myBets.find(b => b.slot === slot);
+                    if (serverBet) {
+                        activeBets[slot].placed = !serverBet.cashedOut;
+                        activeBets[slot].amount = serverBet.betAmount;
+                    } else {
+                        // If round is flying and server has no bet for us in this slot, it's gone
+                        if (data.isFlying && !data.isCrashed) {
+                            activeBets[slot].placed = false;
+                        }
                     }
-                }
+                });
             }
 
             if (data.isFlying) {
                 if (data.isCrashed) {
                     if (!isCrashed) {
                         endFlight();
-                        // Sync final crash multiplier
-                        lastElapsed = Math.log(data.crashMultiplier) / Math.log(1.1);
+                        // Get the exact crash time based on the multiplier
+                        lastElapsed = Math.log(Math.max(1, data.crashMultiplier)) / Math.log(1.1);
                         currentMult = data.crashMultiplier;
                         document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
                     }
@@ -821,10 +830,13 @@
                         isFlying = true;
                         isCrashed = false;
                         document.getElementById("multiplier").style.color = "white";
+
+                        // Critical Sync: Adjust client startTime with server offset
                         const serverNow = data.serverTime || Date.now();
                         const clientNow = Date.now();
                         const offset = clientNow - serverNow;
-                        startTime = (data.startTime || serverNow) + offset;
+                        // Synchronize perfectly with server's startTime
+                        startTime = data.startTime + offset;
 
                         sndFly.play().catch(e=>{});
                         animate();
@@ -1092,6 +1104,11 @@
             const label = btn.querySelector('.label').innerText;
             const autoCashOut = parseFloat(document.getElementById(`autoVal${i}`).value);
 
+            // User interaction: Unlock audio
+            sndFly.play().then(() => { sndFly.pause(); }).catch(() => {});
+            sndWin.play().then(() => { sndWin.pause(); }).catch(() => {});
+            sndCrash.play().then(() => { sndCrash.pause(); }).catch(() => {});
+
             if (label === "BET") {
                 // Optimistic UI for immediate feel
                 activeBets[i] = { placed: true, amount };
@@ -1115,7 +1132,8 @@
 
                 const res = await fetch(`${API_URL}/api/game/aviator/cancel`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", authorization: token }
+                    headers: { "Content-Type": "application/json", authorization: token },
+                    body: JSON.stringify({ slot: i })
                 });
                 const data = await res.json();
                 if (data.success) { fetchBalance(); }
@@ -1180,7 +1198,7 @@
             inp.value = Math.max(2, Math.min(1000, val)).toFixed(2);
         }
 
-        setInterval(fetchState, 500);
+        setInterval(fetchState, 200);
         fetchBalance();
     </script>
 </body>

@@ -585,7 +585,8 @@ async function startAviatorFlight() {
 
         aviatorState.isFlying = true;
         aviatorState.isCrashed = false;
-        aviatorState.startTime = Date.now() + 500; // 500ms delay to ensure client sees taking off
+        // startTime must be exactly when the server starts the flight timer
+        aviatorState.startTime = Date.now();
         aviatorState.cashoutBlocked = false;
 
         if (forcedAviatorMultiplier) {
@@ -593,28 +594,28 @@ async function startAviatorFlight() {
             forcedAviatorMultiplier = null;
         } else {
             const rand = Math.random();
-            if (rand < 0.15) {
-                // 15% instant crash (1.00x - 1.10x)
-                aviatorState.crashMultiplier = 1.00 + Math.random() * 0.1;
-            } else if (rand < 0.6) {
-                // 45% low-mid (1.2x - 2.5x)
-                aviatorState.crashMultiplier = 1.2 + Math.random() * 1.3;
-            } else if (rand < 0.85) {
-                // 25% mid-high (3.0x - 10.0x)
-                aviatorState.crashMultiplier = 3.0 + Math.random() * 7.0;
+            if (rand < 0.1) {
+                // 10% instant crash (1.00x - 1.05x)
+                aviatorState.crashMultiplier = 1.00 + Math.random() * 0.05;
+            } else if (rand < 0.5) {
+                // 40% low (1.1x - 2.0x)
+                aviatorState.crashMultiplier = 1.1 + Math.random() * 0.9;
+            } else if (rand < 0.8) {
+                // 30% mid (2.0x - 10.0x)
+                aviatorState.crashMultiplier = 2.0 + Math.random() * 8.0;
             } else {
-                // 15% super high (10x - 100x)
+                // 20% high (10x - 100x)
                 aviatorState.crashMultiplier = 10.0 + Math.random() * 90.0;
             }
         }
 
         // Multiplier formula: m = 1.1^t -> t = log(m)/log(1.1)
-        const durationSeconds = Math.log(Math.max(1.001, aviatorState.crashMultiplier)) / Math.log(1.1);
-        const flightDuration = Math.floor(durationSeconds * 1000) + 500; // Add the 500ms delay to timeout
+        const flightTimeSeconds = Math.log(Math.max(1.001, aviatorState.crashMultiplier)) / Math.log(1.1);
+        const flightDurationMs = Math.floor(flightTimeSeconds * 1000);
 
         aviatorState.flightTimeout = setTimeout(() => {
             resolveAviatorCrash();
-        }, flightDuration);
+        }, flightDurationMs);
     } catch (e) {
         console.error("Start Aviator Error:", e);
         resetAviator();
@@ -635,26 +636,34 @@ async function resolveAviatorCrash(manualMultiplier = null) {
         }
 
         aviatorState.isCrashed = true;
+        // Broadcast crash immediately
         aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
         if (aviatorState.history.length > 20) aviatorState.history.pop();
 
-        for (let bet of activeBets.aviator) {
-            if (!bet.cashedOut) {
-                try {
-                    await new Transaction({
-                        user_id: bet.userId,
-                        amount: -bet.betAmount,
-                        type: "game_aviator",
-                        details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
-                    }).save();
-                    await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
-                } catch (err) {}
-            }
-        }
+        // Use a separate variable to track which bets were active at crash
+        const currentBets = [...activeBets.aviator];
 
+        // Background processing for transactions to not block the loop
+        (async () => {
+            for (let bet of currentBets) {
+                if (!bet.cashedOut) {
+                    try {
+                        await new Transaction({
+                            user_id: bet.userId,
+                            amount: -bet.betAmount,
+                            type: "game_aviator",
+                            details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
+                        }).save();
+                        await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
+                    } catch (err) {}
+                }
+            }
+        })();
+
+        // Display crash for 4 seconds
         setTimeout(() => {
             resetAviator();
-        }, 3500);
+        }, 4000);
     } catch (e) {
         console.error("Resolve Aviator Error:", e);
         resetAviator();
@@ -704,8 +713,12 @@ app.post("/api/play/aviator", auth, async (req, res) => {
 
 app.post("/api/game/aviator/cancel", auth, async (req, res) => {
     try {
+        const { slot } = req.body;
         const userId = req.user.id;
-        const index = activeBets.aviator.findIndex(b => b.userId.toString() === userId.toString());
+        const index = activeBets.aviator.findIndex(b =>
+            b.userId.toString() === userId.toString() &&
+            (slot === undefined || b.slot === slot)
+        );
         if (index === -1) return res.json({ success: false, message: "Bet not found" });
 
         const bet = activeBets.aviator[index];
