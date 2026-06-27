@@ -533,6 +533,7 @@ function updateAviatorFakeUsers() {
 updateAviatorFakeUsers();
 
 // --- AVIATOR AUTOMATION (10 SECOND BETTING GAP) ---
+let aviatorFlightTimeout = null;
 let aviatorState = {
     roundId: Date.now(),
     timer: 10,
@@ -542,7 +543,6 @@ let aviatorState = {
     startTime: null,
     history: [],
     currentFakeCount: 50,
-    flightTimeout: null,
     cashoutBlocked: false
 };
 
@@ -554,8 +554,8 @@ function resetAviator() {
     aviatorState.startTime = null;
     aviatorState.cashoutBlocked = false;
     activeBets.aviator = [];
-    if (aviatorState.flightTimeout) clearTimeout(aviatorState.flightTimeout);
-    aviatorState.flightTimeout = null;
+    if (aviatorFlightTimeout) clearTimeout(aviatorFlightTimeout);
+    aviatorFlightTimeout = null;
 }
 
 setInterval(() => {
@@ -615,7 +615,7 @@ async function startAviatorFlight() {
         const flightTimeSeconds = Math.log(Math.max(1.001, aviatorState.crashMultiplier)) / Math.log(1.1);
         const flightDurationMs = Math.floor(flightTimeSeconds * 1000) + 300;
 
-        aviatorState.flightTimeout = setTimeout(() => {
+        aviatorFlightTimeout = setTimeout(() => {
             resolveAviatorCrash();
         }, flightDurationMs);
     } catch (e) {
@@ -628,9 +628,9 @@ async function resolveAviatorCrash(manualMultiplier = null) {
     try {
         if (!aviatorState.isFlying || aviatorState.isCrashed) return;
 
-        if (aviatorState.flightTimeout) {
-            clearTimeout(aviatorState.flightTimeout);
-            aviatorState.flightTimeout = null;
+        if (aviatorFlightTimeout) {
+            clearTimeout(aviatorFlightTimeout);
+            aviatorFlightTimeout = null;
         }
 
         if (manualMultiplier) {
