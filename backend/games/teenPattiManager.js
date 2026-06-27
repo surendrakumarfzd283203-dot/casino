@@ -369,6 +369,28 @@ setInterval(async () => {
     try {
         for (let id in tables) {
             const t = tables[id];
+
+            // Reconnection/Disconnect Logic: Cleanup players disconnected for more than 10 seconds
+            for (let uid in t.players) {
+                const p = t.players[uid];
+                if (p.disconnectedAt && !p.isBot) {
+                    const diff = (Date.now() - p.disconnectedAt) / 1000;
+                    // If round is playing and it's their turn, give them their turn time or 10s min
+                    const gracePeriod = (t.state === 'PLAYING' && t.currentTurn === uid) ? Math.max(10, t.timer) : 10;
+
+                    if (diff > gracePeriod) {
+                        delete t.players[uid];
+
+                        // If everyone left, cleanup bots and reset
+                        const humans = Object.keys(t.players).filter(hid => !t.players[hid].isBot);
+                        if (humans.length === 0) {
+                            for (let botId in t.players) if (t.players[botId].isBot) delete t.players[botId];
+                            t.reset();
+                        }
+                    }
+                }
+            }
+
             if (t.timer > 0) t.timer--;
             else {
                 if (t.state === 'WAITING') await t.start();
@@ -417,27 +439,13 @@ module.exports = {
             sideShowRequester: t.sideShowRequester, sideShowTarget: t.sideShowTarget
         };
     }),
-    leaveTable: (userId) => {
+    leaveTable(userId) {
         for (let id in tables) {
             const t = tables[id];
             const p = t.players[userId];
             if (p) {
-                // If it's a human player and it's their turn, don't remove yet
-                // Allow them to return before their 15s turn timer ends
-                if (t.state === 'PLAYING' && t.currentTurn === userId) {
-                    p.pendingExit = true;
-                } else {
-                    delete t.players[userId];
-
-                    // Bot cleanup if table empty
-                    const humans = Object.keys(t.players).filter(uid => !t.players[uid].isBot);
-                    if (humans.length === 0) {
-                        for (let uid in t.players) {
-                            if (t.players[uid].isBot) delete t.players[uid];
-                        }
-                        t.reset();
-                    }
-                }
+                // Keep the player for 10 seconds grace period to allow reconnection
+                p.disconnectedAt = Date.now();
                 return { success: true };
             }
         }
@@ -446,6 +454,13 @@ module.exports = {
     joinTable: (tableId, userId, name, avatar) => {
         const t = tables[tableId];
         if (!t) return { success: false, message: "Table not found" };
+
+        // Handle reconnection
+        if (t.players[userId]) {
+            t.players[userId].disconnectedAt = null;
+            return { success: true, tableId };
+        }
+
         if (Object.keys(t.players).length >= 6) return { success: false, message: "Table full" };
         // Remove from any other table first
         for(let id in tables) if (tables[id].players[userId]) delete tables[id].players[userId];
@@ -453,6 +468,14 @@ module.exports = {
         return { success: true, tableId };
     },
     joinByBoot: (bootAmount, userId, name, avatar) => {
+        // First check if user is already at a table (reconnection)
+        for (let id in tables) {
+            if (tables[id].players[userId] && tables[id].bootAmount == bootAmount) {
+                tables[id].players[userId].disconnectedAt = null;
+                return { success: true, tableId: id };
+            }
+        }
+
         const bootTables = Object.values(tables).filter(t => t.bootAmount == bootAmount);
         let targetTable = bootTables.find(t => Object.keys(t.players).length < 5);
         if (!targetTable) return { success: false, message: "All tables full" };
