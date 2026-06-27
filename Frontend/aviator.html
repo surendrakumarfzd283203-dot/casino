@@ -740,13 +740,11 @@
         function syncUI(data) {
             const banner = document.querySelector(".fun-mode-banner");
 
-            // Save previous round bets when round ID changes
             if (data.roundId !== lastRoundId) {
                 if (lastRoundId !== null && (window.lastBets && window.lastBets.length > 0)) {
                     previousBets = [...window.lastBets];
                 }
                 lastRoundId = data.roundId;
-                // Reset local state for new round
                 if (!data.isFlying) {
                     isFlying = false;
                     isCrashed = false;
@@ -756,7 +754,6 @@
                 }
             }
 
-            // Persistence: Restore user active bets from state
             if (currentUser && data.activeBets) {
                 const myBets = data.activeBets.filter(b => b.userId === currentUser._id || b.userId === currentUser.id);
                 if (myBets.length > 0) {
@@ -771,23 +768,18 @@
 
             if (data.isFlying) {
                 if (data.isCrashed) {
-                    if (isFlying || !isCrashed) {
+                    if (!isCrashed) {
                         endFlight();
-                        // If it was already crashed when we fetched, make sure we show the right multiplier
+                        // Sync final crash multiplier
                         lastElapsed = Math.log(data.crashMultiplier) / Math.log(1.1);
                         currentMult = data.crashMultiplier;
                         document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
-                        document.getElementById("multiplier").style.color = "var(--primary-red)";
-                        drawGame(lastElapsed, 0.1); // Small crash offset to show "Flew Away"
                     }
-                    isFlying = false;
-                    isCrashed = true;
                 } else {
                     if (!isFlying) {
                         isFlying = true;
                         isCrashed = false;
                         document.getElementById("multiplier").style.color = "white";
-                        // Calculate client-side startTime adjusted for server offset
                         const serverNow = data.serverTime || Date.now();
                         const clientNow = Date.now();
                         const offset = clientNow - serverNow;
@@ -796,11 +788,10 @@
                         sndFly.play().catch(e=>{});
                         animate();
                     }
-                    // Auto Cash Out Logic
                     for (let i = 1; i <= 2; i++) {
                         if (activeBets[i].placed && document.getElementById(`autoEnabled${i}`).checked) {
                             const target = parseFloat(document.getElementById(`autoVal${i}`).value);
-                            if (currentMult >= target) handleBtn(i); // Trigger cashout
+                            if (currentMult >= target) handleBtn(i);
                         }
                     }
                 }
@@ -902,9 +893,10 @@
                 document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
                 drawGame(lastElapsed);
             } else if (isCrashed) {
-                // Keep showing the crash multiplier and the Flew Away message
                 document.getElementById("multiplier").style.color = "var(--primary-red)";
-                drawGame(lastElapsed, 0.1);
+                // Let the plane fly away animation finish for a bit
+                const crashElapsed = (Date.now() - crashStartTime) / 1000;
+                drawGame(lastElapsed, crashElapsed);
             }
 
             animFrame = requestAnimationFrame(animate);
@@ -996,8 +988,9 @@
             sndCrash.play().catch(e=>{});
             document.getElementById("multiplier").style.color = "var(--primary-red)";
 
-            // Play lose sound if user had active bets
-            if (activeBets[1].placed || activeBets[2].placed) {
+            // Play lose sound ONLY if user had active bets and hasn't cashed out
+            const hadActiveBet = (activeBets[1].placed || activeBets[2].placed);
+            if (hadActiveBet) {
                 new Audio('sound/lose.mp3').play().catch(e=>{});
                 showResult('lose', 0);
             }

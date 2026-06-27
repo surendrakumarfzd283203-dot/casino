@@ -547,7 +547,6 @@ let aviatorState = {
 };
 
 function resetAviator() {
-    console.log("Resetting Aviator Round");
     aviatorState.roundId = Date.now();
     aviatorState.timer = 10;
     aviatorState.isFlying = false;
@@ -561,14 +560,7 @@ function resetAviator() {
 
 setInterval(() => {
     try {
-        if (aviatorState.isFlying) {
-            // If flying but crashed more than 10 seconds ago and not reset, force reset
-            if (aviatorState.isCrashed && aviatorState.flightTimeout === null && !aviatorState.isResetting) {
-                aviatorState.isResetting = true;
-                setTimeout(() => { resetAviator(); aviatorState.isResetting = false; }, 3000);
-            }
-            return;
-        }
+        if (aviatorState.isFlying) return;
 
         if (aviatorState.timer > 0) {
             aviatorState.timer--;
@@ -580,11 +572,7 @@ setInterval(() => {
                  aviatorState.currentFakeCount += Math.floor(Math.random() * 3);
             }
         } else {
-            // Timer is 0, start flight
-            startAviatorFlight().catch(err => {
-                console.error("Async Start Aviator Error:", err);
-                resetAviator();
-            });
+            startAviatorFlight();
         }
     } catch (e) {
         console.error("Aviator Tick Error:", e);
@@ -605,15 +593,14 @@ async function startAviatorFlight() {
             forcedAviatorMultiplier = null;
         } else {
             const rand = Math.random();
-            if (rand < 0.7) aviatorState.crashMultiplier = 1.01 + Math.random() * 0.5; // 70% crash low
-            else if (rand < 0.9) aviatorState.crashMultiplier = 1.5 + Math.random() * 2.0; // 20% mid
-            else aviatorState.crashMultiplier = 3.5 + Math.random() * 15.0; // 10% high
+            if (rand < 0.1) aviatorState.crashMultiplier = 1.01 + Math.random() * 0.1; // 10% very low
+            else if (rand < 0.5) aviatorState.crashMultiplier = 1.5 + Math.random() * 2.0; // 40% mid
+            else if (rand < 0.8) aviatorState.crashMultiplier = 3.5 + Math.random() * 5.0; // 30% good
+            else aviatorState.crashMultiplier = 8.5 + Math.random() * 20.0; // 20% high
         }
 
-        // Pre-calculate flight duration (in ms)
-        // Using same formula as client: multiplier = 1.1^seconds
-        // seconds = log(multiplier) / log(1.1)
-        const flightDuration = Math.max(100, Math.floor(Math.log(aviatorState.crashMultiplier) / Math.log(1.1) * 1000));
+        const durationSeconds = Math.log(aviatorState.crashMultiplier) / Math.log(1.1);
+        const flightDuration = Math.max(100, Math.floor(durationSeconds * 1000));
 
         aviatorState.flightTimeout = setTimeout(() => {
             resolveAviatorCrash();
@@ -626,7 +613,7 @@ async function startAviatorFlight() {
 
 async function resolveAviatorCrash(manualMultiplier = null) {
     try {
-        if (aviatorState.isCrashed) return; // Already resolved
+        if (!aviatorState.isFlying || aviatorState.isCrashed) return;
 
         if (aviatorState.flightTimeout) {
             clearTimeout(aviatorState.flightTimeout);
@@ -641,12 +628,8 @@ async function resolveAviatorCrash(manualMultiplier = null) {
         aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
         if (aviatorState.history.length > 20) aviatorState.history.pop();
 
-        // Process losing bets
-        const losingBets = activeBets.aviator.filter(b => !b.cashedOut);
-        if (losingBets.length > 0) {
-            // Bulk update admin balance instead of multiple individual updates if possible,
-            // but here we also need transactions.
-            for (let bet of losingBets) {
+        for (let bet of activeBets.aviator) {
+            if (!bet.cashedOut) {
                 try {
                     await new Transaction({
                         user_id: bet.userId,
@@ -655,16 +638,13 @@ async function resolveAviatorCrash(manualMultiplier = null) {
                         details: `Crashed at ${aviatorState.crashMultiplier.toFixed(2)}x`
                     }).save();
                     await Admin.findOneAndUpdate({}, { $inc: { balance: bet.betAmount } });
-                } catch (err) {
-                    console.error("Error processing losing aviator bet:", err);
-                }
+                } catch (err) {}
             }
         }
 
-        // Show crash result for 3 seconds, then reset
         setTimeout(() => {
             resetAviator();
-        }, 3000);
+        }, 3500);
     } catch (e) {
         console.error("Resolve Aviator Error:", e);
         resetAviator();
