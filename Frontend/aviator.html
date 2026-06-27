@@ -762,7 +762,14 @@
             }
 
             if (data.isFlying) {
-                if (!isFlying) startFlight();
+                if (!isFlying) {
+                    isFlying = true;
+                    isCrashed = false;
+                    const timeOffset = Date.now() - (data.serverTime || Date.now());
+                    startTime = (data.startTime || Date.now()) + timeOffset;
+                    sndFly.play().catch(e=>{});
+                    animate();
+                }
                 banner.innerText = "";
                 banner.style.background = "transparent";
                 updateButtonsFlying();
@@ -856,13 +863,6 @@
             document.getElementById("betProgress").style.width = Math.min(100, progress) + "%";
         }
 
-        function startFlight() {
-            isFlying = true;
-            isCrashed = false;
-            startTime = Date.now();
-            sndFly.play().catch(e=>{});
-            animate();
-        }
 
         function animate() {
             if (!isFlying && !isCrashed) return;

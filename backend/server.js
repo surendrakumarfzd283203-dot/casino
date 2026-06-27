@@ -532,12 +532,13 @@ function updateAviatorFakeUsers() {
 }
 updateAviatorFakeUsers();
 
-// --- AVIATOR AUTOMATION (20 SECOND BETTING GAP) ---
+// --- AVIATOR AUTOMATION (10 SECOND BETTING GAP) ---
 let aviatorState = {
     roundId: Date.now(),
-    timer: 20, // 20 seconds betting time
+    timer: 10, // 10 seconds betting time
     isFlying: false,
     crashMultiplier: 2.0,
+    startTime: null,
     history: [],
     currentFakeCount: 50,
     flightTimeout: null,
@@ -547,12 +548,12 @@ let aviatorState = {
 setInterval(() => {
     if (aviatorState.timer > 0) {
         aviatorState.timer--;
-        if (aviatorState.timer === 19) {
+        if (aviatorState.timer === 9) {
             updateAviatorFakeUsers();
             aviatorState.currentFakeCount = Math.floor(Math.random() * 120) + 80;
         }
         // Fluctuate a bit during betting phase
-        if (!aviatorState.isFlying && aviatorState.timer < 18) {
+        if (!aviatorState.isFlying && aviatorState.timer < 8) {
              aviatorState.currentFakeCount += Math.floor(Math.random() * 3);
         }
     } else {
@@ -564,6 +565,7 @@ setInterval(() => {
 
 async function startAviatorFlight() {
     aviatorState.isFlying = true;
+    aviatorState.startTime = Date.now();
     aviatorState.cashoutBlocked = false; // Reset block on every flight
 
     // Choose crash multiplier (rigged or random)
@@ -613,8 +615,9 @@ async function resolveAviatorCrash(manualMultiplier = null) {
 
     // Reset for next round
     aviatorState.roundId = Date.now();
-    aviatorState.timer = 15; // Shorter gap after manual or auto crash
+    aviatorState.timer = 10; // 10 seconds gap
     aviatorState.isFlying = false;
+    aviatorState.startTime = null;
     activeBets.aviator = [];
 }
 
@@ -622,6 +625,7 @@ app.get("/api/game/aviator/state", auth, (req, res) => {
     res.json({
         success: true,
         ...aviatorState,
+        serverTime: Date.now(),
         activeBets: activeBets.aviator,
         fakeUsers: aviatorFakeUsers.slice(0, aviatorState.currentFakeCount)
     });

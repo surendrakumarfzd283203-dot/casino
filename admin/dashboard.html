@@ -523,7 +523,16 @@
 
                     if (s.aviatorState) {
                         const avi = s.aviatorState;
-                        const timerText = avi.isFlying ? "FLYING" : `BETTING: ${avi.timer}s`;
+                        let timerText = avi.isFlying ? "FLYING" : `BETTING: ${avi.timer}s`;
+
+                        if (avi.isFlying && avi.startTime) {
+                            const timeOffset = Date.now() - (s.serverTime || Date.now());
+                            const startTime = (avi.startTime || Date.now()) + timeOffset;
+                            const elapsed = (Date.now() - startTime) / 1000;
+                            const currentMult = Math.pow(1.1, elapsed).toFixed(2);
+                            timerText = `FLYING: ${currentMult}x`;
+                        }
+
                         document.getElementById('aviator-timer').innerText = timerText;
                         document.getElementById('aviator-timer').style.color = avi.isFlying ? "#ef4444" : "#10b981";
 
