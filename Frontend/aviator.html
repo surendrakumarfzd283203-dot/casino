@@ -814,8 +814,11 @@
                         activeBets[slot].placed = !serverBet.cashedOut;
                         activeBets[slot].amount = serverBet.betAmount;
                     } else {
-                        // If round is flying and server has no bet for us in this slot, it's gone
-                        if (data.isFlying && !data.isCrashed) {
+                        // If server doesn't see the bet, and it's not a round transition
+                        // (which is handled above), then the bet is either cancelled or not placed.
+                        // We only set it to false if the round is not flying yet (waiting period)
+                        // or if it's already flying and server doesn't have it.
+                        if (!data.isFlying || (data.isFlying && !data.isCrashed)) {
                             activeBets[slot].placed = false;
                         }
                     }
@@ -1150,7 +1153,11 @@
                     body: JSON.stringify({ slot: i })
                 });
                 const data = await res.json();
-                if (data.success) { fetchBalance(); }
+                if (data.success) {
+                    fetchBalance();
+                    // Explicitly update UI to ensure "BET" is shown
+                    updateButtonsWaiting(0);
+                }
                 else {
                     activeBets[i].placed = true;
                     updateButtonsWaiting(0);
