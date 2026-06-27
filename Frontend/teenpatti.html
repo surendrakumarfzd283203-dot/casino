@@ -433,6 +433,7 @@
     <script>
         const token = localStorage.getItem("token");
         let myId = "", currentTable = null, isFetching = false, lastState = "", lastTurn = "", nextBet = 0, maxBetUnit = 0, selectedTargetId = null;
+        let lastBalanceFetch = 0;
 
         async function init() {
             if (!token) { alert("Please login first"); location.href = "login.html"; return; }
@@ -462,6 +463,7 @@
                     currentTable = data.tableId;
                     document.getElementById("lobby").style.display = "none";
                     if(!window.stateInterval) window.stateInterval = setInterval(fetchState, 500);
+                    fetchBalance();
                 } else alert(data.message);
             } catch(e) { alert("Connection Error"); }
         }
@@ -482,6 +484,7 @@
             if (data.success) {
                 currentTable = data.tableId;
                 fetchState();
+                fetchBalance();
             }
         }
 
@@ -506,6 +509,12 @@
                 if (data.success) {
                     const t = data.tables.find(x => x.id == currentTable);
                     if (t) updateUI(t);
+                }
+
+                // Periodically sync balance (every 5 seconds)
+                if (Date.now() - lastBalanceFetch > 5000) {
+                    fetchBalance();
+                    lastBalanceFetch = Date.now();
                 }
             } catch(e) {} finally { isFetching = false; }
         }
@@ -664,6 +673,7 @@
             if (t.state === 'SHOW' && lastState !== 'SHOW') {
                 document.getElementById('snd-show').play().catch(e=>{});
                 showCustomShowdown(t);
+                fetchBalance();
             }
             lastState = t.state;
         }
@@ -672,6 +682,9 @@
             const overlay = document.getElementById("showdownOverlay");
             const content = document.getElementById("showdownContent");
             overlay.style.display = "flex";
+
+            // Also update balance when showdown starts
+            fetchBalance();
 
             const players = Object.values(t.players).filter(p => p.status === 'ACTIVE' || p.result);
             // Sort by winner first
@@ -696,6 +709,7 @@
 
         function closeShowdown() {
             document.getElementById("showdownOverlay").style.display = "none";
+            fetchBalance();
         }
 
         function animateDealing(t) {
@@ -770,6 +784,7 @@
                 }
             }
             fetchState();
+            fetchBalance();
         }
 
         async function handlePlusMove() {
@@ -782,6 +797,7 @@
                 body: JSON.stringify({ tableId: currentTable, accepted })
             });
             fetchState();
+            fetchBalance();
         }
 
         function openEmojiPopup(targetUid) {
