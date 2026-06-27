@@ -723,18 +723,24 @@
             if (game === 'lucky') {
                 const s = statsData?.luckyState;
                 if (!s) return;
-                let html = `<div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:4px; margin-bottom:10px; font-size:9px; text-align:center;\">
-                    <div style=\"color:#10b981\">ODD:<br>₹${s.oddBets || 0}</div>
-                    <div style=\"color:#3b82f6\">EVEN:<br>₹${s.evenBets || 0}</div>
-                    <div style=\"color:#9d50bb\">PAIR:<br>₹${s.pairBets || 0}</div>
-                    <div style=\"color:#c017b2\">TRI:<br>₹${s.tripleBets || 0}</div>
-                    <div style=\"color:#f59e0b\">JKP:<br>₹${s.jackpotBets || 0}</div>
-                    <div style=\"color:#64748b\">OTH:<br>₹${s.otherBets || 0}</div>
+                let html = `<div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-bottom:15px; font-size:12px; text-align:center;\">
+                    <div style=\"color:#10b981; background:rgba(16,185,129,0.1); padding:5px; border-radius:8px;\">ODD<br><b style=\"font-size:14px;\">₹${s.oddBets || 0}</b></div>
+                    <div style=\"color:#3b82f6; background:rgba(59,130,246,0.1); padding:5px; border-radius:8px;\">EVEN<br><b style=\"font-size:14px;\">₹${s.evenBets || 0}</b></div>
+                    <div style=\"color:#9d50bb; background:rgba(157,80,187,0.1); padding:5px; border-radius:8px;\">PAIR<br><b style=\"font-size:14px;\">₹${s.pairBets || 0}</b></div>
+                    <div style=\"color:#c017b2; background:rgba(192,23,178,0.1); padding:5px; border-radius:8px;\">TRI<br><b style=\"font-size:14px;\">₹${s.tripleBets || 0}</b></div>
+                    <div style=\"color:#f59e0b; background:rgba(245,158,11,0.1); padding:5px; border-radius:8px;\">JKP<br><b style=\"font-size:14px;\">₹${s.jackpotBets || 0}</b></div>
+                    <div style=\"color:#94a3b8; background:rgba(148,163,184,0.1); padding:5px; border-radius:8px;\">OTH<br><b style=\"font-size:14px;\">₹${s.otherBets || 0}</b></div>
                 </div>`;
-                html += `<div style=\"max-height:120px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;\">
-                    ${(s.bets || []).map(b => `<div style=\"font-size:10px; opacity:0.7; margin-bottom:3px;\">
-                        <b>${b.name}</b>: ₹${b.amount}
-                        <span class=\"badge\" style=\"background:rgba(255,152,0,0.1); color:#ff9800; padding:2px 5px; font-size:8px;\">${b.selection}</span>
+                html += `<div style=\"max-height:200px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;\">
+                    ${(s.bets || []).map(b => `<div style=\"font-size:13px; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(255,255,255,0.02);\">
+                        <div>
+                            <b style=\"color:#fff;\">${b.name}</b>
+                            <div style=\"font-size:10px; opacity:0.5;\">Selection</div>
+                        </div>
+                        <div style=\"text-align:right;\">
+                            <b style=\"color:#fde047; font-size:15px;\">₹${b.amount}</b>
+                            <br><span class=\"badge\" style=\"background:rgba(255,152,0,0.15); color:#ff9800; padding:2px 8px; font-size:10px; border:1px solid rgba(255,152,0,0.2);\">${b.selection}</span>
+                        </div>
                     </div>`).join('')}
                 </div>`;
                 container.innerHTML = html;
