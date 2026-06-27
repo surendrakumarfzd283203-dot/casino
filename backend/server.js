@@ -585,7 +585,6 @@ async function startAviatorFlight() {
 
         aviatorState.isFlying = true;
         aviatorState.isCrashed = false;
-        // startTime must be exactly when the server starts the flight timer
         aviatorState.startTime = Date.now();
         aviatorState.cashoutBlocked = false;
 
@@ -595,21 +594,21 @@ async function startAviatorFlight() {
         } else {
             const rand = Math.random();
             if (rand < 0.1) {
-                // 10% instant crash (1.00x - 1.05x)
-                aviatorState.crashMultiplier = 1.00 + Math.random() * 0.05;
+                // 10% instant crash (1.10x - 1.15x) - Minimum flight guaranteed
+                aviatorState.crashMultiplier = 1.10 + Math.random() * 0.05;
             } else if (rand < 0.5) {
-                // 40% low (1.1x - 2.0x)
-                aviatorState.crashMultiplier = 1.1 + Math.random() * 0.9;
+                // 40% low (1.2x - 2.5x)
+                aviatorState.crashMultiplier = 1.2 + Math.random() * 1.3;
             } else if (rand < 0.8) {
-                // 30% mid (2.0x - 10.0x)
-                aviatorState.crashMultiplier = 2.0 + Math.random() * 8.0;
+                // 30% mid (3.0x - 10.0x)
+                aviatorState.crashMultiplier = 3.0 + Math.random() * 7.0;
             } else {
                 // 20% high (10x - 100x)
                 aviatorState.crashMultiplier = 10.0 + Math.random() * 90.0;
             }
         }
 
-        // Multiplier formula: m = 1.1^t -> t = log(m)/log(1.1)
+        // Formula: m = 1.1^t -> t = log(m)/log(1.1)
         const flightTimeSeconds = Math.log(Math.max(1.001, aviatorState.crashMultiplier)) / Math.log(1.1);
         const flightDurationMs = Math.floor(flightTimeSeconds * 1000);
 
