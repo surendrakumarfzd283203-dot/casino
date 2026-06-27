@@ -179,7 +179,7 @@
         .canvas-container {
             flex: 1;
             position: relative;
-            z-index: 2;
+            z-index: 20;
         }
 
         #gameCanvas {
@@ -193,10 +193,11 @@
             transform: translate(-50%, -50%);
             font-size: clamp(60px, 20vw, 120px);
             font-weight: 950;
-            z-index: 10;
+            z-index: 30;
             text-shadow: 0 0 30px rgba(0,0,0,0.8);
             color: white;
             letter-spacing: -3px;
+            pointer-events: none;
         }
 
         .player-count-capsule {
@@ -849,12 +850,13 @@
                     }
                 }
                 banner.innerText = "";
-                banner.style.background = "transparent";
+                banner.style.display = "none"; // Hide banner when flying
                 updateButtonsFlying();
             } else {
                 if (isFlying) endFlight();
                 isFlying = false;
                 isCrashed = false;
+                banner.style.display = "block"; // Show banner when waiting
                 banner.innerText = `WAITING FOR NEXT ROUND IN ${data.timer}s`;
                 banner.style.background = "#f5a623";
                 updateButtonsWaiting(data.timer);
@@ -962,9 +964,9 @@
             const graphWidth = canvas.width - margin * 1.5;
             const graphHeight = canvas.height - margin * 1.5;
 
-            // Adjusted scaling for steeper curve like screenshot
-            const x = Math.min(elapsed * 60, graphWidth);
-            const y = Math.min(Math.pow(elapsed, 1.6) * 20, graphHeight);
+            // Smoother and more visible takeoff scaling
+            const x = Math.min(elapsed * 70, graphWidth);
+            const y = Math.min(Math.pow(elapsed, 1.65) * 22, graphHeight);
 
             const startX = margin;
             const startY = canvas.height - margin;

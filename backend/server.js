@@ -571,6 +571,11 @@ setInterval(() => {
             if (aviatorState.timer < 8) {
                  aviatorState.currentFakeCount += Math.floor(Math.random() * 3);
             }
+
+            // Start flight immediately when timer reaches 0
+            if (aviatorState.timer === 0) {
+                startAviatorFlight();
+            }
         } else {
             startAviatorFlight();
         }
