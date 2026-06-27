@@ -1272,8 +1272,44 @@ app.get("/api/health", (req, res) => {
     res.json({ success: true, message: "Solo Casino Demo API Running with MongoDB" });
 });
 
+const http = require("http");
+const { Server } = require("socket.io");
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+    cors: { origin: "*" }
+});
+
+// Initialize Managers with Socket.io
+ludoManager.init(io);
+
+io.on("connection", async (socket) => {
+    try {
+        const token = socket.handshake.auth.token;
+        if (!token) return socket.disconnect();
+
+        const decoded = jwt.verify(token, SECRET);
+        const user = await User.findById(decoded.id);
+        if (!user) return socket.disconnect();
+
+        socket.user = user;
+        console.log(`Socket Connected: ${user.name}`);
+
+        // Ludo Handlers
+        socket.on('ludo_join', (data) => ludoManager.joinRoom(socket, user.id, data.amount));
+        socket.on('ludo_roll', (data) => ludoManager.rollDice(user.id, data.roomId));
+        socket.on('ludo_move', (data) => ludoManager.moveToken(user.id, data.roomId, data.tokenIndex));
+
+        socket.on("disconnect", () => {
+            ludoManager.handleDisconnect(socket.id);
+            console.log(`Socket Disconnected: ${user.name}`);
+        });
+    } catch (e) {
+        socket.disconnect();
+    }
+});
+
 const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
-const server = app.listen(PORT, async () => {
+httpServer.listen(PORT, async () => {
     console.log(`🚀 Server Running On Port ${PORT}`);
 
     // Ensure all users have referral codes
@@ -1290,11 +1326,11 @@ const server = app.listen(PORT, async () => {
     } catch (e) { console.error("Referral sync error:", e); }
 });
 
-server.on("error", (err) => {
+httpServer.on("error", (err) => {
     if (err.code === "EADDRINUSE") {
         const fallbackPort = PORT + 1;
         console.error(`Port ${PORT} already in use. Trying port ${fallbackPort}...`);
-        app.listen(fallbackPort, () => {
+        httpServer.listen(fallbackPort, () => {
             console.log(`🚀 Server Running On Port ${fallbackPort}`);
         }).on("error", (error) => {
             console.error(`Failed to bind fallback port ${fallbackPort}:`, error.message);

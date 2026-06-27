@@ -3,347 +3,389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ludo Turbo | Solo Casino</title>
+    <title>Ludo Pro | Solo Casino</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root { --primary: #2563eb; --secondary: #ef4444; --accent: #f59e0b; --bg: #030a21; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #000 url('https://img.freepik.com/free-vector/gradient-dark-blue-background-with-abstract-shapes_23-2149117188.jpg') no-repeat center;
-            background-size: cover;
-            color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        :root {
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --green: #22c55e;
+            --yellow: #eab308;
+            --bg: #0f172a;
+            --panel: #1e293b;
         }
 
-        .header { background: rgba(0, 18, 66, 0.8); backdrop-filter: blur(10px); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002e8c; }
-        .balance { background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; color: #22c55e; font-weight: 800; border: 1.5px solid #22c55e; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: white; margin: 0;
+            display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* Lobby UI */
+        #lobby {
+            position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto;
+        }
+        .stake-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px;
+        }
+        .stake-card {
+            background: var(--panel); padding: 20px; border-radius: 20px; text-align: center;
+            border: 2px solid #334155; cursor: pointer; transition: 0.2s;
+        }
+        .stake-card:active { transform: scale(0.95); }
+        .stake-card h3 { margin: 0; font-size: 14px; color: #94a3b8; }
+        .stake-card .amount { font-size: 24px; font-weight: 900; color: var(--yellow); margin: 5px 0; }
+
+        /* Game UI */
+        .header {
+            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); z-index: 100;
+        }
+        .balance { color: var(--green); font-weight: 800; }
 
         .game-container {
-            flex: 1; display: flex; flex-direction: column; align-items: center; background: transparent; position: relative;
-            background: rgba(0,0,0,0.2);
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; padding: 10px;
         }
 
-        /* NEW LUDO BOARD CSS (Realistic) */
+        /* Ludo Board */
         .ludo-board {
-            width: 340px; height: 340px; background: #fff; padding: 5px; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); gap: 1px; border: 4px solid #1e293b; box-shadow: 0 0 50px rgba(0,0,0,0.8); border-radius: 8px; margin-top: 10px;
-        }
-        .cell { background: #f8fafc; border: 1px solid #e2e8f0; }
-        .red { background: #ef4444 !important; }
-        .green { background: #22c55e !important; }
-        .blue { background: #3b82f6 !important; }
-        .yellow { background: #eab308 !important; }
-        .home { grid-column: span 6; grid-row: span 6; display: flex; align-items: center; justify-content: center; position: relative; }
-        .home-inner { width: 75%; height: 70%; background: #fff; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; padding: 12px; border: 2px solid rgba(0,0,0,0.1); }
-        .token-pos { background: rgba(0,0,0,0.1); border-radius: 50%; border: 2px dashed rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; }
-        .center-home { grid-column: span 3; grid-row: span 3; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .tri { position: absolute; width: 0; height: 0; border-style: solid; }
-        .tri-red { border-width: 34px 34px 0 34px; border-color: #ef4444 transparent transparent transparent; top: 0; }
-        .tri-green { border-width: 34px 0 34px 34px; border-color: transparent transparent transparent #22c55e; left: 0; }
-        .tri-blue { border-width: 0 34px 34px 34px; border-color: transparent transparent #3b82f6 transparent; bottom: 0; }
-        .tri-yellow { border-width: 34px 34px 34px 0; border-color: transparent #eab308 transparent transparent; right: 0; }
-
-        /* SEARCHING SCREEN */
-        #searchingScreen {
-            position: fixed; inset: 0;
-            background: #2e0249 radial-gradient(circle at 50% 50%, #570a88 0%, #2e0249 100%);
-            z-index: 1500; display: none; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; max-width: 450px; aspect-ratio: 1/1;
+            background: #fff; border: 6px solid #1e293b; border-radius: 12px;
+            display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            position: relative;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #2e0249 radial-gradient(circle at 50% 50%, #570a88 0%, #2e0249 100%);
-            color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        .cell { border: 0.1px solid rgba(0,0,0,0.05); position: relative; }
+        .home-box { grid-column: span 6; grid-row: span 6; position: relative; border: 1px solid rgba(0,0,0,0.1); }
+        .home-inner { width: 80%; height: 80%; background: white; border-radius: 15px; position: absolute; top: 10%; left: 10%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; padding: 10px; border: 2px solid rgba(0,0,0,0.05); }
+        .base-slot { background: #f1f5f9; border-radius: 50%; border: 2px dashed #cbd5e1; }
+
+        .center-home { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; overflow: hidden; border: 1px solid rgba(0,0,0,0.1); }
+        .triangle { position: absolute; width: 0; height: 0; border-style: solid; }
+        .tri-red { border-width: 45px 45px 0 45px; border-color: var(--red) transparent transparent transparent; top: 0; }
+        .tri-blue { border-width: 45px 0 45px 45px; border-color: transparent transparent transparent var(--blue); left: 0; }
+        .tri-yellow { border-width: 0 45px 45px 45px; border-color: transparent transparent var(--yellow) transparent; bottom: 0; }
+        .tri-green { border-width: 45px 45px 45px 0; border-color: transparent var(--green) transparent transparent; right: 0; }
+
+        .safe { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2394a3b8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'); background-size: 70%; background-repeat: no-repeat; background-position: center; }
+
+        .red-bg { background-color: var(--red) !important; }
+        .blue-bg { background-color: var(--blue) !important; }
+        .green-bg { background-color: var(--green) !important; }
+        .yellow-bg { background-color: var(--yellow) !important; }
+
+        /* Tokens */
+        .token {
+            width: 32px; height: 32px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.8);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4); z-index: 100; cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: absolute; display: flex; align-items: center; justify-content: center;
         }
-        .vs-container { display: flex; align-items: center; gap: 40px; margin-bottom: 50px; position: relative; z-index: 10; }
-        .vs-overlay-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1; }
-        .search-avatar-box { text-align: center; z-index: 20; }
-        .search-avatar {
-            width: 120px; height: 120px; border-radius: 50%; border: 4px solid #fde047;
-            box-shadow: 0 0 30px rgba(253, 224, 71, 0.6); overflow: hidden; background: #1e293b;
-            position: relative; margin-bottom: 15px; transition: 0.5s;
+        .token::after { content: ''; width: 50%; height: 50%; background: rgba(255,255,255,0.3); border-radius: 50%; }
+        .token.active { animation: pulse 0.6s infinite alternate; z-index: 200; border-color: #fff; box-shadow: 0 0 15px #fff; }
+        @keyframes pulse { from { transform: scale(1) translateY(0); } to { transform: scale(1.2) translateY(-5px); } }
+
+        /* Controls */
+        .game-footer {
+            width: 100%; max-width: 450px; padding: 20px; display: flex; justify-content: space-between; align-items: center;
         }
-        .search-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .vs-text { font-size: 80px; font-weight: 950; font-style: italic; color: #fff; text-shadow: 0 0 30px #f59e0b; font-family: 'serif'; z-index: 20; }
-        .search-loader { position: absolute; inset: -10px; border: 4px solid transparent; border-top-color: #fde047; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .search-text { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: 3px; text-transform: uppercase; z-index: 20; text-shadow: 0 2px 10px black; }
+        .player-info { display: flex; align-items: center; gap: 10px; padding: 10px 15px; background: var(--panel); border-radius: 20px; border: 2px solid transparent; width: 42%; }
+        .player-info.active { border-color: var(--yellow); box-shadow: 0 0 20px rgba(234, 179, 8, 0.3); background: #2d3a4f; }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #475569; }
 
-        /* LOBBY */
-        #lobby { position: fixed; inset: 0; background: #001242; z-index: 1000; display: flex; flex-direction: column; align-items: center; padding-top: 40px; overflow-y: auto; }
-        .lobby-title-box { text-align: center; margin-bottom: 30px; }
-        .stake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 92%; max-width: 450px; padding-bottom: 50px; }
-        .stake-card { background: linear-gradient(145deg, #1e3a8a, #001242); padding: 20px 10px; border-radius: 20px; text-align: center; border: 2px solid #3b82f6; box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: 0.2s; }
-        .stake-card:active { transform: scale(0.95); }
-        .stake-card h2 { margin: 0; font-size: 14px; text-transform: uppercase; color: #60a5fa; }
-        .stake-card .amount { font-size: 28px; font-weight: 900; color: #fde047; margin: 10px 0; }
-        .btn-join { background: #f59e0b; color: #000; border: none; padding: 10px 0; border-radius: 12px; font-weight: 800; cursor: pointer; width: 85%; }
+        .dice-container { position: relative; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
+        .dice {
+            width: 60px; height: 60px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 32px; color: #1e293b; box-shadow: 0 8px 20px rgba(0,0,0,0.4); cursor: pointer; transition: 0.1s; border: 1px solid #e2e8f0;
+        }
+        .dice.rolling { animation: dice-roll 0.4s infinite linear; pointer-events: none; }
+        @keyframes dice-roll {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(0.9); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
 
-        /* GAME TOP BAR */
-        .game-top-bar { width: 100%; background: #001e5d; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002e8c; z-index: 100; }
-        .prize-pool { background: #1e3a8a; padding: 5px 15px; border-radius: 10px; border: 1px solid #fde047; color: #fde047; font-weight: 900; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-        .game-timer { font-size: 18px; font-weight: 900; color: #22c55e; font-family: monospace; background: rgba(0,0,0,0.3); padding: 2px 10px; border-radius: 5px; }
+        #status-msg { margin: 15px 0; font-weight: 800; text-align: center; height: 24px; color: var(--yellow); text-transform: uppercase; letter-spacing: 1px; font-size: 14px; }
 
-        .score-board { width: 100%; display: flex; justify-content: space-between; padding: 10px 20px; }
-        .player-score { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 12px; text-align: center; border: 1.5px solid rgba(255,255,255,0.1); width: 45%; position: relative; }
-        .player-score.active { border-color: #fde047; box-shadow: 0 0 15px #fde047; background: rgba(253, 224, 71, 0.1); }
-        .score-val { font-size: 22px; font-weight: 800; color: #fde047; }
-
-        .dice-area { margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .dice { width: 70px; height: 70px; background: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 36px; color: #333; box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.1s; position: relative; }
-        .dice.rolling { animation: roll 0.5s infinite; }
-        @keyframes roll { 0% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(90deg) scale(1.1); } 50% { transform: rotate(180deg) scale(1); } 75% { transform: rotate(270deg) scale(1.1); } 100% { transform: rotate(360deg) scale(1); } }
-        .dice::after { content: "ROLL"; position: absolute; bottom: -20px; font-size: 10px; font-weight: 900; color: #fde047; letter-spacing: 1px; }
-
-        .move-count { margin-top: 25px; font-size: 12px; opacity: 0.9; font-weight: 700; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; }
-        .status-msg { margin-top: 10px; font-weight: 700; color: #fde047; font-size: 14px; text-transform: uppercase; }
-
-        #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .res-card { background: #1e293b; padding: 40px; border-radius: 30px; border: 3px solid #fde047; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 0 50px rgba(253, 224, 71, 0.2); }
+        /* Result Overlay */
+        #result-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .res-card { background: var(--panel); padding: 50px; border-radius: 40px; text-align: center; border: 4px solid var(--yellow); box-shadow: 0 0 50px rgba(234, 179, 8, 0.2); }
     </style>
 </head>
 <body>
 
-    <div id="searchingScreen">
-        <div class="vs-container">
-            <div class="search-avatar-box">
-                <div class="search-avatar">
-                    <img id="mySearchAv" src="https://i.pravatar.cc/100?u=1" alt="Me">
-                    <div class="search-loader"></div>
-                </div>
-                <div id="mySearchName" style="font-weight:900; font-size:14px;">YOU</div>
-            </div>
-            <div class="vs-text">VS</div>
-            <div class="search-avatar-box">
-                <div class="search-avatar">
-                    <img id="oppSearchAv" src="https://www.transparenttextures.com/patterns/poker-qr.png" alt="Searching">
-                    <div class="search-loader"></div>
-                </div>
-                <div id="oppSearchName" style="font-weight:900; font-size:14px; color:#f59e0b;">SEARCHING...</div>
-            </div>
-        </div>
-        <div class="search-text">Searching for players...</div>
-    </div>
-
     <div id="lobby">
-        <div class="lobby-title-box">
-            <h1 style="color: #fde047; font-size: 36px; margin: 0; text-shadow: 0 0 20px rgba(253, 224, 71, 0.4);">LUDO TURBO</h1>
-            <p style="color: #60a5fa; font-weight: 700; letter-spacing: 1px;">Fast 25 Moves PvP Battle</p>
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-weight: 900; font-size: 48px; margin: 0; color: var(--yellow); text-shadow: 0 5px 15px rgba(0,0,0,0.5);">LUDO PRO</h1>
+            <p style="color: #94a3b8; font-weight: 600;">Multiplayer Real Cash Battle</p>
         </div>
-
-        <div class="stake-grid">
-            <div class="stake-card"><h2>Bronze</h2><div class="amount">₹5</div><button class="btn-join" onclick="joinGame(5)">JOIN NOW</button></div>
-            <div class="stake-card"><h2>Silver</h2><div class="amount">₹10</div><button class="btn-join" onclick="joinGame(10)">JOIN NOW</button></div>
-            <div class="stake-card"><h2>Gold</h2><div class="amount">₹20</div><button class="btn-join" onclick="joinGame(20)">JOIN NOW</button></div>
-            <div class="stake-card"><h2>Diamond</h2><div class="amount">₹50</div><button class="btn-join" onclick="joinGame(50)">JOIN NOW</button></div>
-            <div class="stake-card"><h2>Platinum</h2><div class="amount">₹100</div><button class="btn-join" onclick="joinGame(100)">JOIN NOW</button></div>
-            <div class="stake-card"><h2>Master</h2><div class="amount">₹500</div><button class="btn-join" onclick="joinGame(500)">JOIN NOW</button></div>
-            <div class="stake-card" style="grid-column: span 2;"><h2>Grand Master</h2><div class="amount">₹1000</div><button class="btn-join" onclick="joinGame(1000)">JOIN NOW</button></div>
+        <div class="stake-grid" id="stakes">
+            <div class="stake-card" onclick="joinLudo(10)"><h3>Bronze</h3><div class="amount">₹10</div></div>
+            <div class="stake-card" onclick="joinLudo(50)"><h3>Silver</h3><div class="amount">₹50</div></div>
+            <div class="stake-card" onclick="joinLudo(100)"><h3>Gold</h3><div class="amount">₹100</div></div>
+            <div class="stake-card" onclick="joinLudo(500)"><h3>Platinum</h3><div class="amount">₹500</div></div>
         </div>
-        <button onclick="location.href='dashboard.html'" style="background:transparent; border:none; color:#60a5fa; font-weight:700; margin-bottom:30px;">← EXIT TO LOBBY</button>
+        <button onclick="location.href='dashboard.html'" style="margin-top: 40px; background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer;">← BACK TO DASHBOARD</button>
     </div>
 
     <div class="header">
         <div onclick="location.href='dashboard.html'"><i class="fas fa-chevron-left"></i></div>
-        <div style="font-weight: 800; letter-spacing: 1px; color:#fde047;">LUDO TURBO</div>
+        <div style="font-weight: 900; letter-spacing: 2px; color: var(--yellow);">LUDO PRO</div>
         <div class="balance">₹<span id="balance">0.00</span></div>
     </div>
 
     <div class="game-container">
-        <div class="game-top-bar">
-            <div class="prize-pool">
-                <i class="fas fa-trophy"></i>
-                <span>Prize: ₹<span id="prizeVal">0.00</span></span>
-            </div>
-            <div class="game-timer" id="gameTimer">05:00</div>
-            <div style="width:40px;"></div>
+        <div id="status-msg">Connecting to server...</div>
+        <div class="ludo-board" id="board">
+            <!-- Board generated by JS -->
         </div>
 
-        <div class="score-board">
-            <div class="player-score" id="p1-card">
-                <div id="p1-name" style="font-size: 11px; margin-bottom: 3px; font-weight:900;">YOU</div>
-                <div class="score-val" id="p1-score">0</div>
+        <div class="game-footer">
+            <div class="player-info" id="p1-info">
+                <img id="p1-avatar" src="" class="avatar" alt="p1">
+                <div style="overflow: hidden;">
+                    <div id="p1-name" style="font-size: 11px; font-weight: 900; white-space: nowrap; text-overflow: ellipsis;">YOU</div>
+                    <div style="color: var(--red); font-size: 9px; font-weight: 800;">RED</div>
+                </div>
             </div>
-            <div class="player-score" id="p2-card">
-                <div id="p2-name" style="font-size: 11px; margin-bottom: 3px; font-weight:900;">WAITING...</div>
-                <div class="score-val" id="p2-score">0</div>
+
+            <div class="dice-container">
+                <div class="dice" id="diceBtn" onclick="rollDice()"><i class="fas fa-dice-one"></i></div>
+            </div>
+
+            <div class="player-info" id="p2-info">
+                <div style="overflow: hidden; text-align: right;">
+                    <div id="p2-name" style="font-size: 11px; font-weight: 900; white-space: nowrap; text-overflow: ellipsis;">WAITING...</div>
+                    <div style="color: var(--blue); font-size: 9px; font-weight: 800;">BLUE</div>
+                </div>
+                <img id="p2-avatar" src="" class="avatar" alt="p2">
             </div>
         </div>
+    </div>
 
-        <div class="ludo-board">
-            <!-- Green Home -->
-            <div class="home green" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
-            <!-- Path Green to Red -->
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div>
-            <!-- Red Home -->
-            <div class="home red" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
-
-            <div class="cell" style="grid-column: 7; grid-row: 1;"></div><div class="cell" style="grid-column: 8; grid-row: 1;"></div><div class="cell" style="grid-column: 9; grid-row: 1;"></div>
-            <div class="cell" style="grid-column: 7; grid-row: 2;"></div><div class="cell red" style="grid-column: 8; grid-row: 2;"></div><div class="cell" style="grid-column: 9; grid-row: 2;"></div>
-            <div class="cell" style="grid-column: 7; grid-row: 3;"></div><div class="cell red" style="grid-column: 8; grid-row: 3;"></div><div class="cell" style="grid-column: 9; grid-row: 3;"></div>
-            <div class="cell green" style="grid-column: 7; grid-row: 4;"></div><div class="cell red" style="grid-column: 8; grid-row: 4;"></div><div class="cell" style="grid-column: 9; grid-row: 4;"></div>
-            <div class="cell" style="grid-column: 7; grid-row: 5;"></div><div class="cell red" style="grid-column: 8; grid-row: 5;"></div><div class="cell" style="grid-column: 9; grid-row: 5;"></div>
-            <div class="cell" style="grid-column: 7; grid-row: 6;"></div><div class="cell red" style="grid-column: 8; grid-row: 6;"></div><div class="cell" style="grid-column: 9; grid-row: 6;"></div>
-
-            <div class="cell" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div><div class="cell green" style="grid-row: 7;"></div>
-            <div class="center-home">
-                <div class="tri tri-red"></div><div class="tri tri-green"></div><div class="tri tri-blue"></div><div class="tri tri-yellow"></div>
-                <img src="https://cdn-icons-png.flaticon.com/512/1041/1041849.png" width="25" alt="Home">
-            </div>
-            <div class="cell" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div><div class="cell blue" style="grid-row: 7;"></div><div class="cell" style="grid-row: 7;"></div>
-
-            <div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div><div class="cell" style="grid-row: 8;"></div>
-            <div class="cell" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div><div class="cell blue" style="grid-row: 8;"></div>
-
-            <div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div>
-            <div class="cell yellow" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell yellow" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div><div class="cell" style="grid-row: 9;"></div>
-
-            <div class="home blue" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
-            <div class="cell" style="grid-column: 7;"></div><div class="cell yellow" style="grid-column: 8;"></div><div class="cell" style="grid-column: 9;"></div>
-            <div class="home yellow" style="grid-column: span 6; grid-row: span 6;"><div class="home-inner"><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div><div class="token-pos"></div></div></div>
-        </div>
-
-        <div class="status-msg" id="statusMsg">Connecting...</div>
-
-        <div class="dice-area">
-            <div class="dice" id="diceBtn" onclick="rollDice()">
-                <i class="fas fa-dice-one"></i>
-            </div>
-            <div class="move-count">Moves Remaining: <span id="movesLeft">25</span></div>
+    <div id="result-overlay">
+        <div class="res-card">
+            <h1 id="res-title" style="font-size: 48px; margin: 0; font-weight: 900;">YOU WIN!</h1>
+            <p id="res-sub" style="font-size: 24px; color: var(--green); font-weight: 900; margin: 10px 0;">+₹180.00</p>
+            <button onclick="location.reload()" style="margin-top: 30px; padding: 15px 40px; border-radius: 15px; border: none; background: var(--yellow); color: #000; font-weight: 900; cursor: pointer; box-shadow: 0 5px 15px rgba(234, 179, 8, 0.4);">PLAY AGAIN</button>
         </div>
     </div>
 
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        let myId = "", currentRoom = null, isRolling = false, searchInterval = null;
+        if (!token) location.href = "login.html";
+
+        const socket = io({ auth: { token } });
+        let myId = "", currentRoom = null, myPlayerIndex = -1;
+        let gameState = null;
+        let isMoving = false;
+
+        const sndMove = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+        const sndDice = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
+        const sndKill = new Audio('https://www.soundjay.com/buttons/sounds/button-2.mp3');
+        const sndWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+
+        const cellMap = {};
+        function initCellMap() {
+            const cells = [
+                {r: 6, c: 0}, {r: 6, c: 1}, {r: 6, c: 2}, {r: 6, c: 3}, {r: 6, c: 4}, {r: 6, c: 5},
+                {r: 5, c: 6}, {r: 4, c: 6}, {r: 3, c: 6}, {r: 2, c: 6}, {r: 1, c: 6}, {r: 0, c: 6},
+                {r: 0, c: 7},
+                {r: 0, c: 8}, {r: 1, c: 8}, {r: 2, c: 8}, {r: 3, c: 8}, {r: 4, c: 8}, {r: 5, c: 8},
+                {r: 6, c: 9}, {r: 6, c: 10}, {r: 6, c: 11}, {r: 6, c: 12}, {r: 6, c: 13}, {r: 6, c: 14},
+                {r: 7, c: 14},
+                {r: 8, c: 14}, {r: 8, c: 13}, {r: 8, c: 12}, {r: 8, c: 11}, {r: 8, c: 10}, {r: 8, c: 9},
+                {r: 9, c: 8}, {r: 10, c: 8}, {r: 11, c: 8}, {r: 12, c: 8}, {r: 13, c: 8}, {r: 14, c: 8},
+                {r: 14, c: 7},
+                {r: 14, c: 6}, {r: 13, c: 6}, {r: 12, c: 6}, {r: 11, c: 6}, {r: 10, c: 6}, {r: 9, c: 6},
+                {r: 8, c: 5}, {r: 8, c: 4}, {r: 8, c: 3}, {r: 8, c: 2}, {r: 8, c: 1}, {r: 8, c: 0},
+                {r: 7, c: 0}
+            ];
+            cells.forEach((p, i) => cellMap[i + 1] = p);
+            for(let i=0; i<6; i++) cellMap[101 + i] = {r: 7, c: i + 1};
+            for(let i=0; i<6; i++) cellMap[201 + i] = {r: 7, c: 13 - i};
+        }
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = "";
+            for (let r = 0; r < 15; r++) {
+                for (let c = 0; c < 15; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (r < 6 && c < 6) cell.classList.add('red-bg');
+                    else if (r < 6 && c > 8) cell.classList.add('blue-bg');
+                    else if (r > 8 && c < 6) cell.classList.add('green-bg');
+                    else if (r > 8 && c > 8) cell.classList.add('yellow-bg');
+
+                    if (r === 7 && c > 0 && c < 6) cell.classList.add('red-bg');
+                    if (r === 7 && c > 8 && c < 14) cell.classList.add('blue-bg');
+
+                    const cellId = getCellId(r, c);
+                    if ([1, 9, 14, 22, 27, 35, 40, 48].includes(Number(cellId))) cell.classList.add('safe');
+                    if (cellId == 1) cell.classList.add('red-bg');
+                    if (cellId == 27) cell.classList.add('blue-bg');
+                    board.appendChild(cell);
+                }
+            }
+            const center = document.createElement('div');
+            center.className = 'center-home';
+            center.style.gridColumn = "7 / span 3"; center.style.gridRow = "7 / span 3";
+            center.innerHTML = '<div class="triangle tri-red"></div><div class="triangle tri-blue"></div><div class="triangle tri-yellow"></div><div class="triangle tri-green"></div>';
+            board.appendChild(center);
+        }
+
+        function getCellId(r, c) { return Object.keys(cellMap).find(id => cellMap[id].r === r && cellMap[id].c === c); }
+
+        function joinLudo(amount) {
+            socket.emit('ludo_join', { amount });
+            document.getElementById('lobby').style.display = 'none';
+        }
+
+        function rollDice() {
+            if (!gameState || gameState.turn !== myPlayerIndex || gameState.rolled || isMoving) return;
+            socket.emit('ludo_roll', { roomId: currentRoom });
+            document.getElementById('diceBtn').classList.add('rolling');
+            sndDice.play();
+        }
+
+        socket.on('ludo_state', (state) => {
+            gameState = state;
+            currentRoom = state.id;
+            updateUI(state);
+        });
+
+        socket.on('dice_rolled', (data) => {
+            const diceIcons = ["one", "two", "three", "four", "five", "six"];
+            const diceBtn = document.getElementById('diceBtn');
+            diceBtn.classList.remove('rolling');
+            diceBtn.innerHTML = `<i class="fas fa-dice-${diceIcons[data.dice - 1]}"></i>`;
+            if (gameState) {
+                gameState.rolled = true;
+                gameState.dice = data.dice;
+                highlightPossibleMoves();
+            }
+        });
+
+        socket.on('token_moved', async (data) => {
+            isMoving = true;
+            await animateMovement(data);
+            isMoving = false;
+        });
+
+        socket.on('game_over', (data) => {
+            const overlay = document.getElementById('result-overlay');
+            overlay.style.display = "flex";
+            sndWin.play();
+            if (data.winnerId === myId) {
+                document.getElementById('res-title').innerText = "YOU WIN!";
+                document.getElementById('res-sub').innerText = `+₹${data.prize.toFixed(2)}`;
+            } else {
+                document.getElementById('res-title').innerText = "YOU LOSE";
+                document.getElementById('res-title').style.color = "var(--red)";
+                document.getElementById('res-sub').innerText = `Entry fee lost`;
+            }
+        });
+
+        function updateUI(state) {
+            myId = socket.user?.id || JSON.parse(atob(token.split('.')[1])).id;
+            myPlayerIndex = state.players.findIndex(p => p.id === myId);
+            const p1 = state.players[myPlayerIndex] || state.players[0];
+            const p2 = state.players.find(p => p.id !== p1.id) || { name: "Waiting...", avatar: "" };
+
+            document.getElementById('p1-name').innerText = p1.name;
+            document.getElementById('p1-avatar').src = p1.avatar ? `${API_URL}/${p1.avatar}` : `https://i.pravatar.cc/100?u=${p1.id}`;
+            document.getElementById('p2-name').innerText = p2.name;
+            document.getElementById('p2-avatar').src = p2.avatar ? `${API_URL}/${p2.avatar}` : `https://i.pravatar.cc/100?u=${p2.id}`;
+
+            document.getElementById('p1-info').classList.toggle('active', state.turn === myPlayerIndex);
+            document.getElementById('p2-info').classList.toggle('active', state.turn !== myPlayerIndex);
+
+            const status = document.getElementById('status-msg');
+            if (state.gameState === 'WAITING') status.innerText = "Searching for opponent...";
+            else if (state.turn === myPlayerIndex) status.innerText = state.rolled ? "Pick a token to move" : "Your turn! Roll now";
+            else status.innerText = `${p2.name.toUpperCase()}'s turn...`;
+
+            if (!isMoving) renderTokens(state.board.tokens);
+        }
+
+        async function animateMovement(data) {
+            // Simplified: for now just re-render and play sound.
+            // In production, we'd loop through cells for path animation.
+            renderTokens(data.tokens);
+            if (data.killed) sndKill.play(); else sndMove.play();
+        }
+
+        function renderTokens(tokens) {
+            document.querySelectorAll('.token').forEach(t => t.remove());
+            const board = document.getElementById('board');
+            const boardRect = board.getBoundingClientRect();
+            const cellSize = boardRect.width / 15;
+
+            [0, 1].forEach(pIdx => {
+                tokens[pIdx].forEach((pos, tIdx) => {
+                    const token = document.createElement('div');
+                    token.className = `token ${pIdx === 0 ? 'red-bg' : 'blue-bg'}`;
+
+                    let r, c;
+                    if (pos === -1) {
+                        const basePos = getBaseCoords(pIdx, tIdx);
+                        r = basePos.r; c = basePos.c;
+                    } else {
+                        let actualId = pos >= 101 ? (pIdx === 0 ? pos : pos + 100) : pos;
+                        const coords = cellMap[actualId];
+                        r = coords.r; c = coords.c;
+                    }
+
+                    token.style.left = (c * cellSize + (cellSize - 32)/2) + "px";
+                    token.style.top = (r * cellSize + (cellSize - 32)/2) + "px";
+
+                    token.onclick = () => {
+                        if (gameState.turn === myPlayerIndex && gameState.rolled && !isMoving) {
+                            socket.emit('ludo_move', { roomId: currentRoom, tokenIndex: tIdx });
+                        }
+                    };
+                    board.appendChild(token);
+                });
+            });
+            highlightPossibleMoves();
+        }
+
+        function highlightPossibleMoves() {
+            if (!gameState || gameState.turn !== myPlayerIndex || !gameState.rolled) return;
+            const tokens = document.querySelectorAll(`.token.${myPlayerIndex === 0 ? 'red-bg' : 'blue-bg'}`);
+            tokens.forEach(t => t.classList.add('active'));
+        }
+
+        function getBaseCoords(pIdx, tIdx) {
+            const offsets = [{r:1.2, c:1.2}, {r:1.2, c:3.8}, {r:3.8, c:1.2}, {r:3.8, c:3.8}];
+            const baseOrigin = pIdx === 0 ? {r:0, c:0} : {r:0, c:9};
+            return { r: baseOrigin.r + offsets[tIdx].r, c: baseOrigin.c + offsets[tIdx].c };
+        }
 
         async function init() {
-            if (!token) { location.href = "login.html"; return; }
+            initCellMap();
+            createBoard();
             const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
             const data = await res.json();
             if (data.success) {
-                myId = data.user.id;
+                socket.user = data.user;
                 document.getElementById("balance").innerText = data.user.coins.toFixed(2);
-                document.getElementById("mySearchAv").src = data.user.avatar && data.user.avatar.includes('.') ? `${API_URL}/${data.user.avatar}` : `https://i.pravatar.cc/100?u=${myId}`;
-                document.getElementById("mySearchName").innerText = data.user.name;
             }
         }
         init();
-
-        async function joinGame(amount) {
-            const res = await fetch(`${API_URL}/api/game/ludo/join`, {
-                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ amount })
-            });
-            const data = await res.json();
-            if (data.success) {
-                currentRoom = data.roomId;
-                document.getElementById("lobby").style.display = "none";
-                document.getElementById("searchingScreen").style.display = "flex";
-                document.getElementById("prizeVal").innerText = (amount * 1.8).toFixed(2);
-                startSearchingLoop();
-            } else alert(data.message);
-        }
-
-        function startSearchingLoop() {
-            searchInterval = setInterval(async () => {
-                if (!currentRoom) return;
-                const res = await fetch(`${API_URL}/api/game/ludo/state/${currentRoom}`, { headers: { authorization: token } });
-                const data = await res.json();
-                if (data.success) {
-                    const players = Object.values(data.state.players);
-                    if (players.length === 2 || data.state.gameState === 'PLAYING') {
-                        clearInterval(searchInterval);
-                        const opp = players.find(p => p.id !== myId);
-                        document.getElementById("oppSearchAv").src = (opp.avatar && (opp.avatar.includes('.') || opp.avatar.startsWith('http'))) ? (opp.avatar.startsWith('http') ? opp.avatar : `${API_URL}/${opp.avatar}`) : `https://i.pravatar.cc/100?u=${opp.id}`;
-                        document.getElementById("oppSearchName").innerText = opp.name;
-
-                        setTimeout(() => {
-                            document.getElementById("searchingScreen").style.display = "none";
-                            startStateLoop();
-                        }, 200); // Super fast transition
-                    }
-                }
-            }, 500);
-        }
-
-        function startStateLoop() {
-            setInterval(async () => {
-                if (!currentRoom) return;
-                const res = await fetch(`${API_URL}/api/game/ludo/state/${currentRoom}`, { headers: { authorization: token } });
-                const data = await res.json();
-                if (data.success) updateUI(data.state);
-            }, 500);
-        }
-
-        function updateUI(state) {
-            const players = Object.values(state.players);
-            const opponent = players.find(p => p.id !== myId) || { name: "Waiting...", id: null };
-
-            document.getElementById("p1-name").innerText = state.players[myId].name;
-            document.getElementById("p2-name").innerText = opponent.name;
-            document.getElementById("p1-score").innerText = state.scores[myId] || 0;
-            if (opponent.id) document.getElementById("p2-score").innerText = state.scores[opponent.id] || 0;
-
-            document.getElementById("p1-card").classList.toggle("active", state.turn === myId);
-            document.getElementById("p2-card").classList.toggle("active", opponent.id && state.turn === opponent.id);
-
-            const min = Math.floor(state.timer / 60);
-            const sec = state.timer % 60;
-            document.getElementById("gameTimer").innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-
-            const movesPerPlayer = 25;
-            const myMovesDone = state.history.filter(h => h.userId === myId).length;
-            document.getElementById("movesLeft").innerText = movesPerPlayer - myMovesDone;
-
-            const diceBtn = document.getElementById("diceBtn");
-            if (state.turn === myId && state.gameState === 'PLAYING') {
-                document.getElementById("statusMsg").innerText = "YOUR TURN! Roll the dice.";
-                diceBtn.style.opacity = "1";
-                diceBtn.style.pointerEvents = "auto";
-            } else if (state.gameState === 'PLAYING') {
-                document.getElementById("statusMsg").innerText = `${opponent.name}'s turn...`;
-                diceBtn.style.opacity = "0.5";
-                diceBtn.style.pointerEvents = "none";
-            }
-
-            const lastMove = state.history[state.history.length - 1];
-            if (lastMove && !isRolling) {
-                const icons = ["", "dice-one", "dice-two", "dice-three", "dice-four", "dice-five", "dice-six"];
-                diceBtn.innerHTML = `<i class="fas fa-${icons[lastMove.dice]}"></i>`;
-            }
-
-            if (state.gameState === 'FINISHED') {
-                showResult(state);
-            }
-        }
-
-        async function rollDice() {
-            if (isRolling) return;
-            isRolling = true;
-            const diceBtn = document.getElementById("diceBtn");
-            diceBtn.classList.add("rolling");
-
-            try {
-                await fetch(`${API_URL}/api/game/ludo/move`, {
-                    method: "POST", headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ roomId: currentRoom })
-                });
-                setTimeout(() => { diceBtn.classList.remove("rolling"); isRolling = false; }, 800);
-            } catch(e) { isRolling = false; diceBtn.classList.remove("rolling"); }
-        }
-
-        function showResult(state) {
-            document.getElementById("resultOverlay").style.display = "flex";
-            const win = state.winner === myId;
-            const opponentId = Object.keys(state.players).find(id => id !== myId);
-            document.getElementById("resTitle").innerText = win ? "YOU WIN!" : "YOU LOSE";
-            document.getElementById("resTitle").style.color = win ? "#22c55e" : "#ef4444";
-            document.getElementById("resSub").innerText = `Score: ${state.scores[myId]} vs ${state.scores[opponentId] || 0}`;
-            const entry = Number(currentRoom.split('_')[0]);
-            document.getElementById("resAmount").innerText = win ? `+₹${(entry * 1.8).toFixed(2)}` : `-₹${entry.toFixed(2)}`;
-            document.getElementById("resAmount").style.color = win ? "#22c55e" : "#ef4444";
-        }
     </script>
 </body>
 </html>
