@@ -525,12 +525,16 @@
                         const avi = s.aviatorState;
                         let timerText = avi.isFlying ? "FLYING" : `BETTING: ${avi.timer}s`;
 
-                        if (avi.isFlying && avi.startTime) {
-                            const timeOffset = Date.now() - (s.serverTime || Date.now());
-                            const startTime = (avi.startTime || Date.now()) + timeOffset;
-                            const elapsed = (Date.now() - startTime) / 1000;
-                            const currentMult = Math.pow(1.1, elapsed).toFixed(2);
-                            timerText = `FLYING: ${currentMult}x`;
+                        if (avi.isFlying) {
+                            if (avi.isCrashed) {
+                                timerText = `CRASHED: ${avi.crashMultiplier.toFixed(2)}x`;
+                            } else if (avi.startTime) {
+                                const timeOffset = Date.now() - (s.serverTime || Date.now());
+                                const startTime = (avi.startTime || Date.now()) + timeOffset;
+                                const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
+                                const currentMult = Math.pow(1.1, elapsed).toFixed(2);
+                                timerText = `FLYING: ${currentMult}x`;
+                            }
                         }
 
                         document.getElementById('aviator-timer').innerText = timerText;

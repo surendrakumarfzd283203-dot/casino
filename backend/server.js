@@ -537,6 +537,7 @@ let aviatorState = {
     roundId: Date.now(),
     timer: 10, // 10 seconds betting time
     isFlying: false,
+    isCrashed: false,
     crashMultiplier: 2.0,
     startTime: null,
     history: [],
@@ -565,6 +566,7 @@ setInterval(() => {
 
 async function startAviatorFlight() {
     aviatorState.isFlying = true;
+    aviatorState.isCrashed = false;
     aviatorState.startTime = Date.now();
     aviatorState.cashoutBlocked = false; // Reset block on every flight
 
@@ -579,7 +581,8 @@ async function startAviatorFlight() {
     }
 
     // Flight duration based on multiplier
-    const flightDuration = Math.floor(Math.log(aviatorState.crashMultiplier) / Math.log(1.1) * 1000);
+    // Ensure minimum flight time of 100ms so clients can register the state change
+    const flightDuration = Math.max(100, Math.floor(Math.log(aviatorState.crashMultiplier) / Math.log(1.1) * 1000));
 
     aviatorState.flightTimeout = setTimeout(() => {
         resolveAviatorCrash();
@@ -596,6 +599,7 @@ async function resolveAviatorCrash(manualMultiplier = null) {
         aviatorState.crashMultiplier = manualMultiplier;
     }
 
+    aviatorState.isCrashed = true;
     // Round Crashed
     aviatorState.history.unshift({ roundId: aviatorState.roundId, crash: aviatorState.crashMultiplier });
     if (aviatorState.history.length > 20) aviatorState.history.pop();
@@ -613,12 +617,16 @@ async function resolveAviatorCrash(manualMultiplier = null) {
         }
     }
 
-    // Reset for next round
-    aviatorState.roundId = Date.now();
-    aviatorState.timer = 10; // 10 seconds gap
-    aviatorState.isFlying = false;
-    aviatorState.startTime = null;
-    activeBets.aviator = [];
+    // Delay the reset slightly so users see the "Crashed" result on screen
+    setTimeout(() => {
+        // Reset for next round
+        aviatorState.roundId = Date.now();
+        aviatorState.timer = 10; // 10 seconds gap
+        aviatorState.isFlying = false;
+        aviatorState.isCrashed = false;
+        aviatorState.startTime = null;
+        activeBets.aviator = [];
+    }, 3000); // 3 seconds delay to show result
 }
 
 app.get("/api/game/aviator/state", auth, (req, res) => {

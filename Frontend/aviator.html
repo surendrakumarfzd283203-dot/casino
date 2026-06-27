@@ -762,26 +762,35 @@
             }
 
             if (data.isFlying) {
-                if (!isFlying) {
-                    isFlying = true;
-                    isCrashed = false;
-                    const timeOffset = Date.now() - (data.serverTime || Date.now());
-                    startTime = (data.startTime || Date.now()) + timeOffset;
-                    sndFly.play().catch(e=>{});
-                    animate();
+                if (data.isCrashed) {
+                    if (isFlying) endFlight();
+                    isFlying = false;
+                    isCrashed = true;
+                    crashStartTime = Date.now();
+                } else {
+                    if (!isFlying) {
+                        isFlying = true;
+                        isCrashed = false;
+                        // Calculate client-side startTime adjusted for server offset
+                        const serverNow = data.serverTime || Date.now();
+                        const clientNow = Date.now();
+                        const offset = clientNow - serverNow;
+                        startTime = (data.startTime || serverNow) + offset;
+
+                        sndFly.play().catch(e=>{});
+                        animate();
+                    }
+                    // Auto Cash Out Logic
+                    for (let i = 1; i <= 2; i++) {
+                        if (activeBets[i].placed && document.getElementById(`autoEnabled${i}`).checked) {
+                            const target = parseFloat(document.getElementById(`autoVal${i}`).value);
+                            if (currentMult >= target) handleBtn(i); // Trigger cashout
+                        }
+                    }
                 }
                 banner.innerText = "";
                 banner.style.background = "transparent";
                 updateButtonsFlying();
-
-                // Auto Cash Out Logic
-                for (let i = 1; i <= 2; i++) {
-                    if (activeBets[i].placed && document.getElementById(`autoEnabled${i}`).checked) {
-                        const target = parseFloat(document.getElementById(`autoVal${i}`).value);
-                        if (currentMult >= target) handleBtn(i); // Trigger cashout
-                    }
-                }
-
             } else {
                 if (isFlying) endFlight();
                 isFlying = false;
@@ -868,13 +877,13 @@
             if (!isFlying && !isCrashed) return;
 
             if (isFlying) {
-                lastElapsed = (Date.now() - startTime) / 1000;
+                lastElapsed = Math.max(0, (Date.now() - startTime) / 1000);
                 currentMult = Math.pow(1.1, lastElapsed);
                 document.getElementById("multiplier").innerText = currentMult.toFixed(2) + "x";
                 drawGame(lastElapsed);
             } else if (isCrashed) {
                 const crashElapsed = (Date.now() - crashStartTime) / 1000;
-                if (crashElapsed > 2) {
+                if (crashElapsed > 2.5) {
                     isCrashed = false;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     return;
