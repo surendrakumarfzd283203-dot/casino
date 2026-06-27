@@ -46,8 +46,8 @@ class TeenPattiTable {
 
             // --- SMART BOT FILLING ---
             // If only 1 human player, add 2-3 admin bots to beat them
-            const humanIds = playerIds.filter(id => !this.players[id].isBot);
-            if (humanIds.length === 1) {
+            const humans = playerIds.filter(id => !this.players[id].isBot && !this.players[id].disconnectedAt);
+            if (humans.length === 1) {
                 const botNames = ["Casino_Pro", "Gold_Hunter", "Ace_Player", "Lucky_Hand", "Pro_Dealer"];
                 const neededBots = 2 + Math.floor(Math.random() * 2); // 2 or 3 bots
                 while (Object.keys(this.players).length < neededBots + 1) {
@@ -59,7 +59,7 @@ class TeenPattiTable {
                         avatar: `https://i.pravatar.cc/100?u=${botId}`
                     };
                 }
-            } else if (humanIds.length > 1) {
+            } else if (humans.length > 1) {
                 // If 2 or more humans, remove admin bots so they play against each other
                 for (let uid in this.players) {
                     if (this.players[uid].isAdminBot) delete this.players[uid];
@@ -439,13 +439,23 @@ module.exports = {
             sideShowRequester: t.sideShowRequester, sideShowTarget: t.sideShowTarget
         };
     }),
-    leaveTable(userId) {
+    leaveTable(userId, force = false) {
         for (let id in tables) {
             const t = tables[id];
             const p = t.players[userId];
             if (p) {
-                // Keep the player for 10 seconds grace period to allow reconnection
-                p.disconnectedAt = Date.now();
+                if (force) {
+                    delete t.players[userId];
+                    // Bot cleanup if table empty
+                    const humans = Object.keys(t.players).filter(uid => !t.players[uid].isBot);
+                    if (humans.length === 0) {
+                        for (let uid in t.players) if (t.players[uid].isBot) delete t.players[uid];
+                        t.reset();
+                    }
+                } else {
+                    // Accidental disconnect: Keep the player for 10 seconds grace period
+                    p.disconnectedAt = Date.now();
+                }
                 return { success: true };
             }
         }
@@ -457,7 +467,7 @@ module.exports = {
 
         // Handle reconnection
         if (t.players[userId]) {
-            t.players[userId].disconnectedAt = null;
+            t.players[userId].disconnectedAt = null; // RESET disconnect timer
             return { success: true, tableId };
         }
 
@@ -468,18 +478,26 @@ module.exports = {
         return { success: true, tableId };
     },
     joinByBoot: (bootAmount, userId, name, avatar) => {
-        // First check if user is already at a table (reconnection)
+        // First check if user is already at a table (reconnection within 10s)
         for (let id in tables) {
             if (tables[id].players[userId] && tables[id].bootAmount == bootAmount) {
-                tables[id].players[userId].disconnectedAt = null;
+                tables[id].players[userId].disconnectedAt = null; // RESET disconnect timer
                 return { success: true, tableId: id };
             }
         }
 
         const bootTables = Object.values(tables).filter(t => t.bootAmount == bootAmount);
-        let targetTable = bootTables.find(t => Object.keys(t.players).length < 5);
+        // Try to find a table that isn't full and isn't the one they just left (if they are switching)
+        let targetTable = bootTables.find(t => Object.keys(t.players).length < 5 && !t.players[userId]);
+
+        // If all other tables are full, use any available
+        if (!targetTable) targetTable = bootTables.find(t => Object.keys(t.players).length < 5);
+
         if (!targetTable) return { success: false, message: "All tables full" };
+
+        // Ensure removed from any other table
         for(let id in tables) if (tables[id].players[userId]) delete tables[id].players[userId];
+
         targetTable.players[userId] = { name, avatar, hand: [], status: 'WAITING', blind: true, isBot: false };
         return { success: true, tableId: targetTable.id };
     },

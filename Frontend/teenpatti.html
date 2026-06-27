@@ -371,6 +371,9 @@
     <audio id="snd-show" src="https://assets.mixkit.co/active_storage/sfx/1103/1103-preview.mp3"></audio>
 
     <div id="lobby">
+        <div style="padding: 10px;">
+            <button onclick="location.href='dashboard.html'" style="background:none; border:none; color:white; font-size: 20px; cursor:pointer;"><i class="fas fa-arrow-left"></i> BACK</button>
+        </div>
         <div class="lobby-header">
             <div class="lobby-title">Teen Patti Solo</div>
             <p style="color: #fca5a5; font-weight: 700;">Select Stakes to Join</p>
@@ -385,14 +388,14 @@
     </div>
 
     <div class="game-header">
-        <div class="circle-btn" onclick="exitTable()"><i class="fas fa-sign-out-alt"></i></div>
+        <div class="circle-btn" onclick="exitTable()" title="Exit Game"><i class="fas fa-arrow-left"></i></div>
         <div class="wallet-display">
             <i class="fas fa-coins" style="color:var(--gold)"></i>
             ₹<span id="balance">0.00</span>
         </div>
         <div style="display:flex; gap:10px;">
-            <div class="circle-btn" onclick="switchTable()"><i class="fas fa-random"></i></div>
-            <div class="circle-btn" onclick="openAv()"><i class="fas fa-ellipsis-v"></i></div>
+            <div class="circle-btn" onclick="switchTable()" title="Switch Table"><i class="fas fa-random"></i></div>
+            <div class="circle-btn" onclick="openAv()" title="Select Avatar"><i class="fas fa-user-circle"></i></div>
         </div>
     </div>
 
@@ -461,7 +464,6 @@
         <div class="showdown-card-box" id="showdownContent">
             <!-- Hands injected here -->
         </div>
-        <button class="btn-act btn-chaal btn-small" onclick="closeShowdown()">CONTINUE</button>
     </div>
 
     <div id="resultOverlay">
@@ -469,7 +471,6 @@
             <h1 id="resTitle" style="margin: 0; color: var(--gold); font-size: 28px;">YOU WIN!</h1>
             <div id="resHand" style="display: flex; justify-content: center; gap: 8px; margin: 15px 0;"></div>
             <div id="resAmount" style="font-size: 24px; color: #22c55e; font-weight: 900; margin-bottom: 15px;">+₹0</div>
-            <button class="btn-act btn-chaal btn-small" style="width: 100%;" onclick="closeRes()">CLOSE</button>
         </div>
     </div>
 
@@ -522,20 +523,14 @@
             if(!confirm("Switch table?")) return;
             const boot = currentTable ? Number(currentTable.split('_')[0]) : 1;
 
-            // 1. Leave current
+            // 1. Leave current (Forced)
             await fetch(`${API_URL}/api/teenpatti/leave`, { method: "POST", headers: { authorization: token } });
 
-            // 2. Join new table with same boot
-            const res = await fetch(`${API_URL}/api/teenpatti/join`, {
-                method: "POST", headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ bootAmount: boot })
-            });
-            const data = await res.json();
-            if (data.success) {
-                currentTable = data.tableId;
-                fetchState();
-                fetchBalance();
-            }
+            // 2. Clear state and show lobby briefly or just join
+            currentTable = null;
+
+            // 3. Join new table with same boot
+            joinByBoot(boot);
         }
 
         async function exitTable() {
@@ -911,15 +906,23 @@
             else document.getElementById('snd-lose').play().catch(e=>{});
 
             fetchBalance();
+
+            // Auto-close result after 5 seconds
+            setTimeout(() => {
+                closeRes();
+            }, 5000);
         }
-        function closeRes() { document.getElementById("resultOverlay").style.display = "none"; }
+        function closeRes() { document.getElementById("resultOverlay").style.display = "none"; fetchBalance(); }
+
         async function fetchBalance() {
-            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
-                window.currentUser = data.user;
-            }
+            try {
+                const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById("balance").innerText = data.user.coins.toFixed(2);
+                    window.currentUser = data.user;
+                }
+            } catch(e) {}
         }
 
         const emojis = ["😎", "🤠", "🤑", "🤡", "🤖", "👻", "🔥", "💎", "🃏", "🎴", "🦁", "🐉", "🤴", "👸", "🦸", "🥷"];

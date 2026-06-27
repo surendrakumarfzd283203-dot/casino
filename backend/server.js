@@ -806,7 +806,7 @@ app.post("/api/teenpatti/sideshow-response", auth, async (req, res) => {
 
 
 app.post("/api/teenpatti/leave", auth, async (req, res) => {
-    const result = teenPattiManager.leaveTable(req.user.id);
+    const result = teenPattiManager.leaveTable(req.user.id, true); // Forced exit
     res.json(result);
 });
 
