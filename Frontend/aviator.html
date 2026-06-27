@@ -605,7 +605,7 @@
                         <button onclick="setAmt(1, 100)">100</button>
                     </div>
                 </div>
-                <button id="btn1" class="big-bet-btn btn-green" onclick="handleBtn(1)">
+                <button id="btn1" class="big-bet-btn btn-green" onclick="handleBtn(event, 1)">
                     <span class="label">BET</span>
                     <span class="value" id="sub1">10.00 INR</span>
                 </button>
@@ -647,7 +647,7 @@
                         <button onclick="setAmt(2, 100)">100</button>
                     </div>
                 </div>
-                <button id="btn2" class="big-bet-btn btn-green" onclick="handleBtn(2)">
+                <button id="btn2" class="big-bet-btn btn-green" onclick="handleBtn(event, 2)">
                     <span class="label">BET</span>
                     <span class="value" id="sub2">10.00 INR</span>
                 </button>
@@ -721,7 +721,10 @@
         let crashStartTime = 0;
         let lastElapsed = 0;
         let currentUser = null;
-        let activeBets = { 1: { placed: false, amount: 0 }, 2: { placed: false, amount: 0 } };
+        let activeBets = {
+            1: { placed: false, amount: 0, lastAction: 0, isProcessing: false },
+            2: { placed: false, amount: 0, lastAction: 0, isProcessing: false }
+        };
         let currentMult = 1.0;
         let startTime = null;
         let animFrame = null;
@@ -808,16 +811,16 @@
                 const myBets = data.activeBets.filter(b => b.userId === currentUser._id || b.userId === currentUser.id);
 
                 // Sync slots correctly
+                const now = Date.now();
                 [1, 2].forEach(slot => {
+                    // Skip syncing if we just clicked a button (prevent flickering/double reaction)
+                    if (now - activeBets[slot].lastAction < 2000) return;
+
                     const serverBet = myBets.find(b => b.slot === slot);
                     if (serverBet) {
                         activeBets[slot].placed = !serverBet.cashedOut;
                         activeBets[slot].amount = serverBet.betAmount;
                     } else {
-                        // If server doesn't see the bet, and it's not a round transition
-                        // (which is handled above), then the bet is either cancelled or not placed.
-                        // We only set it to false if the round is not flying yet (waiting period)
-                        // or if it's already flying and server doesn't have it.
                         if (!data.isFlying || (data.isFlying && !data.isCrashed)) {
                             activeBets[slot].placed = false;
                         }
@@ -853,7 +856,7 @@
                     for (let i = 1; i <= 2; i++) {
                         if (activeBets[i].placed && document.getElementById(`autoEnabled${i}`).checked) {
                             const target = parseFloat(document.getElementById(`autoVal${i}`).value);
-                            if (currentMult >= target) handleBtn(i);
+                            if (currentMult >= target) handleBtn(null, i);
                         }
                     }
                 }
@@ -1117,77 +1120,89 @@
             }
         }
 
-        async function handleBtn(i) {
+        async function handleBtn(event, i) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            const now = Date.now();
+            if (activeBets[i].isProcessing || now - activeBets[i].lastAction < 800) return;
+            activeBets[i].lastAction = now;
+            activeBets[i].isProcessing = true;
+
             const btn = document.getElementById(`btn${i}`);
             const amount = parseFloat(document.getElementById(`amt${i}`).value);
-            const label = btn.querySelector('.label').innerText;
             const autoCashOut = parseFloat(document.getElementById(`autoVal${i}`).value);
 
-            if (label === "BET") {
-                // Play tick sound for betting
-                if (sndTick) { sndTick.currentTime = 0; sndTick.play().catch(()=>{}); }
+            // Determine action based on state, not label text to avoid sync issues
+            const isPlaced = activeBets[i].placed;
+            const isFlyingLocal = isFlying && !isCrashed;
 
-                // Optimistic UI for immediate feel
-                activeBets[i] = { placed: true, amount };
-                updateButtonsWaiting(0);
+            try {
+                if (!isPlaced) {
+                    // Action: BET
+                    if (sndTick) { sndTick.currentTime = 0; sndTick.play().catch(()=>{}); }
 
-                const res = await fetch(`${API_URL}/api/play/aviator`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ betAmount: amount, cashOutMultiplier: 100, slot: i })
-                });
-                const data = await res.json();
-                if (data.success) { fetchBalance(); }
-                else {
-                    activeBets[i].placed = false;
-                    alert(data.message);
-                    updateButtonsWaiting(0);
-                }
-            } else if (label === "CANCEL") {
-                activeBets[i].placed = false;
-                updateButtonsWaiting(0);
-
-                const res = await fetch(`${API_URL}/api/game/aviator/cancel`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ slot: i })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    fetchBalance();
-                    // Explicitly update UI to ensure "BET" is shown
-                    updateButtonsWaiting(0);
-                }
-                else {
                     activeBets[i].placed = true;
+                    activeBets[i].amount = amount;
                     updateButtonsWaiting(0);
-                }
-            } else if (label === "CASH OUT") {
-                const winAmt = (activeBets[i].amount * currentMult).toFixed(2);
 
-                // Fast Cashout UI: Don't wait for server to play sound and update UI
-                activeBets[i].placed = false;
+                    const res = await fetch(`${API_URL}/api/play/aviator`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", authorization: token },
+                        body: JSON.stringify({ betAmount: amount, cashOutMultiplier: 100, slot: i })
+                    });
+                    const data = await res.json();
+                    if (data.success) { fetchBalance(); }
+                    else {
+                        activeBets[i].placed = false;
+                        alert(data.message);
+                        updateButtonsWaiting(0);
+                    }
+                } else if (!isFlyingLocal) {
+                    // Action: CANCEL (Round not started yet)
+                    activeBets[i].placed = false;
+                    updateButtonsWaiting(0);
 
-                // Play Win Sound
-                if (sndWin) {
-                    sndWin.currentTime = 0;
-                    sndWin.play().catch(e=>{});
-                }
-
-                updateButtonsFlying();
-                showResult('win', winAmt);
-
-                const res = await fetch(`${API_URL}/api/game/aviator/cashout`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", authorization: token },
-                    body: JSON.stringify({ multiplier: currentMult.toFixed(2), slot: i })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    fetchBalance();
+                    const res = await fetch(`${API_URL}/api/game/aviator/cancel`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", authorization: token },
+                        body: JSON.stringify({ slot: i })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        fetchBalance();
+                        updateButtonsWaiting(0);
+                    } else {
+                        activeBets[i].placed = true;
+                        updateButtonsWaiting(0);
+                    }
                 } else {
-                    console.error("Cashout failed on server:", data.message);
+                    // Action: CASH OUT
+                    const winAmt = (activeBets[i].amount * currentMult).toFixed(2);
+                    activeBets[i].placed = false;
+
+                    if (sndWin) {
+                        sndWin.currentTime = 0;
+                        sndWin.play().catch(e=>{});
+                    }
+
+                    updateButtonsFlying();
+                    showResult('win', winAmt);
+
+                    const res = await fetch(`${API_URL}/api/game/aviator/cashout`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", authorization: token },
+                        body: JSON.stringify({ multiplier: currentMult.toFixed(2), slot: i })
+                    });
+                    const data = await res.json();
+                    if (data.success) { fetchBalance(); }
                 }
+            } catch (e) {
+                console.error("Action Error:", e);
+            } finally {
+                activeBets[i].isProcessing = false;
             }
         }
 
