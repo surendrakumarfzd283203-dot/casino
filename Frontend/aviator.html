@@ -708,6 +708,8 @@
     <audio id="sndFly" src="sound/fly.mp3" loop></audio>
     <audio id="sndWin" src="sound/win.mp3"></audio>
     <audio id="sndCrash" src="sound/crash.mp3"></audio>
+    <audio id="sndLose" src="sound/lose.mp3"></audio>
+    <audio id="sndTick" src="sound/tick.mp3"></audio>
 
     <script>
         const API_URL = window.location.origin;
@@ -727,6 +729,7 @@
         let currentStatsTab = 'all';
         let previousBets = [];
         let lastRoundId = null;
+        let lastTimerValue = null;
         let topBets = [
             { name: "Winner1", betAmount: 100, multiplier: 45.20, winAmount: 4520.00, cashedOut: true },
             { name: "SuperFly", betAmount: 50, multiplier: 88.10, winAmount: 4405.00, cashedOut: true },
@@ -752,6 +755,8 @@
         const sndFly = document.getElementById("sndFly");
         const sndWin = document.getElementById("sndWin");
         const sndCrash = document.getElementById("sndCrash");
+        const sndLose = document.getElementById("sndLose");
+        const sndTick = document.getElementById("sndTick");
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -860,6 +865,14 @@
                 banner.innerText = `WAITING FOR NEXT ROUND IN ${data.timer}s`;
                 banner.style.background = "#f5a623";
                 updateButtonsWaiting(data.timer);
+
+                // Tik Tik sound logic
+                if (data.timer !== lastTimerValue && data.timer > 0) {
+                    lastTimerValue = data.timer;
+                    sndTick.currentTime = 0;
+                    sndTick.play().catch(e => {});
+                }
+
                 if (!isCrashed) {
                     document.getElementById("multiplier").innerText = "1.00x";
                     document.getElementById("multiplier").style.color = "white";
@@ -1058,7 +1071,7 @@
             // Play lose sound ONLY if user had active bets and hasn't cashed out
             const hadActiveBet = (activeBets[1].placed || activeBets[2].placed);
             if (hadActiveBet) {
-                new Audio('sound/lose.mp3').play().catch(e=>{});
+                sndLose.play().catch(e=>{});
                 showResult('lose', 0);
             }
 
@@ -1215,6 +1228,8 @@
             sndFly.play().then(() => { sndFly.pause(); }).catch(() => {});
             sndWin.play().then(() => { sndWin.pause(); }).catch(() => {});
             sndCrash.play().then(() => { sndCrash.pause(); }).catch(() => {});
+            sndLose.play().then(() => { sndLose.pause(); }).catch(() => {});
+            sndTick.play().then(() => { sndTick.pause(); }).catch(() => {});
             unlocker.remove();
         };
     </script>
