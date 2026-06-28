@@ -237,6 +237,7 @@
         let myCurrentBets = [];
         let selectedPrediction = 'ODD';
         let lastTimerValue = -1;
+        let canFetchState = true;
 
         // Initialize Audio
         const sndTick = document.getElementById("sndTick");
@@ -249,8 +250,8 @@
         selectPrediction('ODD');
 
         async function fetchState() {
+            if (!canFetchState) return;
             try {
-                const res = await fetch(`${API_URL}/api/game/luckydraw/state`, { headers: { authorization: token } });
                 const data = await res.json();
                 if (data.success) {
                     const secs = data.timer;
@@ -295,6 +296,7 @@
                         const last = data.history[0];
                         if (last.roundId !== lastRoundId) {
                             if (lastRoundId !== null && myCurrentBets.length > 0) {
+                                canFetchState = false;
                                 checkWin(last);
                                 myCurrentBets = [];
                                 renderActiveBets();
@@ -351,6 +353,8 @@
             setTimeout(() => {
                 msg.style.display = "none";
                 fetchBalance();
+                // Resume game logic after popup closes
+                canFetchState = true;
             }, 5000);
         }
 
