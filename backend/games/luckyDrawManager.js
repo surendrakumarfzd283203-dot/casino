@@ -21,14 +21,22 @@ class LuckyDrawManager {
                 this.timer--;
             } else {
                 if (!this.isResolving) {
-                    this.resolveRound();
+                    this.startRollingPhase();
                 }
             }
         }, 1000);
     }
 
-    async resolveRound() {
+    async startRollingPhase() {
         this.isResolving = true;
+        // Broadcast "Resolving" state if we had sockets, but here we just wait
+        setTimeout(() => {
+            this.resolveRound();
+        }, 3000); // 3 seconds of "rolling" animation time
+    }
+
+    async resolveRound() {
+        // Calculation logic stays same...
 
         let result;
         if (this.forcedResult !== null) {
@@ -157,6 +165,7 @@ class LuckyDrawManager {
         return {
             roundId: this.roundId,
             timer: this.timer,
+            isResolving: this.isResolving,
             history: this.history,
             activeBetsCount: this.bets.length,
             totalBet: this.bets.reduce((a, b) => a + b.amount, 0),

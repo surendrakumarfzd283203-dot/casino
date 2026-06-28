@@ -254,12 +254,29 @@
                 const data = await res.json();
                 if (data.success) {
                     const secs = data.timer;
-                    document.getElementById("timer").innerText = `Next Draw: ${secs}s`;
-                    if(secs < 4) document.getElementById("timer").style.color = "#ef4444";
-                    else document.getElementById("timer").style.color = "var(--gold)";
+
+                    if (data.isResolving) {
+                        startRolling();
+                        document.getElementById("timer").innerText = "ROLLING...";
+                        document.getElementById("timer").style.color = "#ef4444";
+                        document.getElementById("betBtn").disabled = true;
+                        document.getElementById("cancelBtn").disabled = true;
+                        document.getElementById("betBtn").innerText = "DRAWING...";
+                    } else {
+                        document.getElementById("timer").innerText = `Next Draw: ${secs}s`;
+                        if(secs < 4) document.getElementById("timer").style.color = "#ef4444";
+                        else document.getElementById("timer").style.color = "var(--gold)";
+
+                        if (isRolling) {
+                            stopRolling(data.history[0]?.result || "777");
+                        }
+                        document.getElementById("betBtn").disabled = false;
+                        document.getElementById("cancelBtn").disabled = false;
+                        document.getElementById("betBtn").innerText = "PLACE BET";
+                    }
 
                     // Timer Sound (fasrtick.mp3)
-                    if (secs !== lastTimerValue) {
+                    if (secs !== lastTimerValue && !data.isResolving) {
                         if (secs > 0 && secs <= 10) {
                             if (sndTick) {
                                 sndTick.currentTime = 0;
@@ -283,23 +300,6 @@
                                 renderActiveBets();
                             }
                             lastRoundId = last.roundId;
-                        }
-                    }
-
-                    if (data.timer < 3) {
-                        startRolling();
-                        document.getElementById("betBtn").disabled = true;
-                        document.getElementById("cancelBtn").disabled = true;
-                        document.getElementById("betBtn").innerText = "DRAWING...";
-                    } else {
-                        isRolling = false;
-                        document.getElementById("betBtn").disabled = false;
-                        document.getElementById("cancelBtn").disabled = false;
-                        document.getElementById("betBtn").innerText = "PLACE BET";
-
-                        // Sync result if round just ended
-                        if (data.timer > 7) {
-                            stopRolling(data.history[0]?.result || "777");
                         }
                     }
                     renderHistory(data.history);
