@@ -400,10 +400,9 @@
             const sectionAngle = 360 / sections.length;
             const winningIndex = sections.indexOf(winningNumber);
 
-            // Calculate target angle to bring winningIndex to the top (0deg)
-            // Since 7 is at 0deg in the image, we rotate by -(index * angle)
+            // Calculate target angle
             const targetOffset = -(winningIndex * sectionAngle);
-            const baseRotations = 8;
+            const baseRotations = 1;
 
             // Add to current rotation to keep it smooth
             const targetRotation = currentRotation + (baseRotations * 360) + targetOffset - (currentRotation % 360);
