@@ -272,8 +272,8 @@
 
             // Sound Logic: Ensure no overlap and correct timing
             if (totalSecs !== lastTimerValue) {
-                if (totalSecs >= 10 && totalSecs <= 39) {
-                    // Normal tick during betting phase (30s down to 1s)
+                if (totalSecs >= 10 && totalSecs <= 24) {
+                    // Normal tick during betting phase (15s down to 1s)
                     if (!sndFastTick.paused) { sndFastTick.pause(); sndFastTick.currentTime = 0; }
                     sndTick.currentTime = 0;
                     sndTick.play().catch(e => {});
@@ -291,7 +291,7 @@
             }
 
             if (totalSecs > 9) {
-                // Betting phase (30s)
+                // Betting phase (15s)
                 const bettingSecs = totalSecs - 9;
                 timerEl.innerText = `00:${bettingSecs.toString().padStart(2, '0')}`;
                 timerEl.style.color = "var(--gold)";
