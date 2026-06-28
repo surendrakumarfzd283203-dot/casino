@@ -30,6 +30,7 @@
             transition: transform 4s cubic-bezier(.17,.67,.12,.99);
             box-shadow: 0 0 30px rgba(0,0,0,0.5);
             background: #000;
+            z-index: 5;
         }
 
         .wheel-img {
@@ -40,7 +41,15 @@
             pointer-events: none;
         }
 
-        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 40px; z-index: 100; filter: drop-shadow(0 0 5px rgba(255,193,7,0.8)); }
+        .pointer {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 45px;
+            z-index: 150;
+            filter: drop-shadow(0 0 8px rgba(0,0,0,0.8));
+        }
 
         .wheel-status-overlay {
             position: absolute;
@@ -118,6 +127,23 @@
         .spin-icon { animation: rotate 2s linear infinite; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+        #resPopup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px 40px;
+            border-radius: 30px;
+            font-weight: 900;
+            font-size: 32px;
+            z-index: 2000;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 100px rgba(0,0,0,1);
+            animation: zoomIn 0.3s;
+            min-width: 280px;
+        }
+        @keyframes zoomIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } }
+
     </style>
 </head>
 <body>
@@ -138,8 +164,10 @@
             <i class="fa-solid fa-lock status-icon"></i>
             <span class="status-text">BETS LOCKED</span>
         </div>
-        <!-- Using a data URI for the pointer to ensure it always appears -->
-        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZmZjMTA3Ij48cGF0aCBkPSJNMTIgMmwtOCA4aDZsLTQgOGwxMi04aC02bDRtLTgtNHoiLz48L3N2Zz4=" class="pointer" alt="Pointer">
+        <!-- Proper Teer (Arrow) Pointer -->
+        <svg class="pointer" viewBox="0 0 100 100" fill="#ffc107">
+            <path d="M50 95 L10 20 L90 20 Z" stroke="#fff" stroke-width="2" />
+        </svg>
     </div>
 
     <div class="timer-box">
@@ -217,9 +245,13 @@
         </div>
     </div>
 
+    <div id="resPopup"></div>
+
     <!-- Audio Elements -->
     <audio id="sndWheel" src="sound/wheelspin.mp3"></audio>
     <audio id="sndTick" src="sound/fasrtick.mp3"></audio>
+    <audio id="sndWin" src="sound/win.mp3"></audio>
+    <audio id="sndLose" src="sound/lose.mp3"></audio>
 
     <script src="js/config.js"></script>
     <script>
@@ -284,13 +316,24 @@
         }
 
         function updateUI(state) {
-            document.getElementById("timer").innerText = state.timer;
+            const timerEl = document.getElementById("timer");
             const bar = document.getElementById("timerBar");
-            bar.style.width = (state.timer / 15 * 100) + "%";
+            const timerValBox = document.querySelector(".timer-box");
+
+            // Only show timer if not spinning and timer > 0
+            if (state.isSpinning) {
+                timerValBox.style.opacity = "0.3";
+                timerEl.innerText = "0";
+                bar.style.width = "0%";
+            } else {
+                timerValBox.style.opacity = "1";
+                timerEl.innerText = state.timer;
+                bar.style.width = (state.timer / 15 * 100) + "%";
+            }
 
             // Timer Sound (fasrtick.mp3)
             if (state.timer !== lastTimerValue) {
-                if (state.timer > 0 && !state.isSpinning) {
+                if (state.timer > 0 && !state.isSpinning && state.timer <= 15) {
                     if (sndTick) {
                         sndTick.currentTime = 0;
                         sndTick.play().catch(e => {});
@@ -305,9 +348,21 @@
                 if (!isSpinning) startSpinAnimation(state.history[0].result);
             } else {
                 statusOverlay.style.display = "none";
-                isSpinning = false;
+                // Ensure wheel stays at the last winning position when not spinning
+                if (state.history.length > 0 && !isSpinning) {
+                     const lastRes = state.history[0].result;
+                     const sections = [7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12];
+                     const sectionAngle = 360 / sections.length;
+                     const winningIndex = sections.indexOf(lastRes);
+                     const offset = -(winningIndex * sectionAngle);
+                     document.getElementById("wheel").style.transform = `rotate(${currentRotation - (currentRotation % 360) + offset}deg)`;
+                }
+
                 if (state.roundId !== lastRoundId) {
-                    clearBets();
+                    if (lastRoundId !== null) {
+                        // Round changed, clear bets for next round
+                        clearBets();
+                    }
                     lastRoundId = state.roundId;
                 }
             }
@@ -358,13 +413,59 @@
             currentRotation = targetRotation;
 
             setTimeout(() => {
-                fetchBalance();
-                // Reset if rotation gets too large
-                if (currentRotation > 50000) {
-                    wheel.style.transition = 'none';
-                    currentRotation = currentRotation % 360;
-                    wheel.style.transform = `rotate(${currentRotation}deg)`;
+                const sndWin = document.getElementById("sndWin");
+                const sndLose = document.getElementById("sndLose");
+
+                // Calculate if user won
+                let totalWon = 0;
+                let betPlaced = false;
+
+                for (let key in myBets) {
+                    betPlaced = true;
+                    const amt = myBets[key];
+                    let multiplier = 0;
+
+                    if (key === 'DOWN' && winningNumber >= 2 && winningNumber <= 6) multiplier = 2;
+                    else if (key === 'MIDDLE' && winningNumber === 7) multiplier = 5;
+                    else if (key === 'UP' && winningNumber >= 8 && winningNumber <= 12) multiplier = 2;
+                    else if (key === winningNumber.toString()) multiplier = 10;
+
+                    totalWon += amt * multiplier;
                 }
+
+                if (betPlaced) {
+                    const popup = document.getElementById("resPopup");
+                    popup.style.display = "block";
+
+                    if (totalWon > 0) {
+                        popup.innerHTML = `
+                            <div style="color: #f1c40f; font-size: 40px; margin-bottom: 10px;">WIN!</div>
+                            <div style="font-size: 18px; opacity: 0.9; margin-bottom: 15px;">Result: ${winningNumber}</div>
+                            <div style="font-size: 32px; color: #fff; font-weight: 900;">₹${totalWon.toFixed(2)}</div>
+                        `;
+                        popup.style.background = "linear-gradient(135deg, #15803d 0%, #064e3b 100%)";
+                        popup.style.border = "3px solid #22c55e";
+                        if (sndWin) sndWin.play().catch(e=>{});
+                    } else {
+                        popup.innerHTML = `
+                            <div style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">LOSE</div>
+                            <div style="font-size: 18px; opacity: 0.9; margin-bottom: 15px;">Result: ${winningNumber}</div>
+                            <div style="font-size: 14px; color: #fff;">Better luck next time!</div>
+                        `;
+                        popup.style.background = "linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%)";
+                        popup.style.border = "3px solid #ef4444";
+                        if (sndLose) sndLose.play().catch(e=>{});
+                    }
+
+                    setTimeout(() => {
+                        popup.style.display = "none";
+                        fetchBalance();
+                    }, 3000);
+                } else {
+                    fetchBalance();
+                }
+
+                // Reset spinning state
                 isSpinning = false;
             }, 4500);
         }
