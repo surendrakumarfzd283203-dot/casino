@@ -598,16 +598,16 @@ async function startAviatorFlight() {
             aviatorState.crashMultiplier = Number(forcedAviatorMultiplier);
             forcedAviatorMultiplier = null;
         } else {
-            const rand = Math.random();
-            if (rand < 0.12) {
-                // Minimum crash at 1.15x to ensure everyone sees the takeoff
-                aviatorState.crashMultiplier = 1.15 + Math.random() * 0.15;
-            } else if (rand < 0.5) {
-                aviatorState.crashMultiplier = 1.30 + Math.random() * 1.5;
-            } else if (rand < 0.8) {
-                aviatorState.crashMultiplier = 3.0 + Math.random() * 9.0;
+            const realBets = activeBets.aviator.length;
+            if (realBets >= 5) {
+                // If 5 or more real users bet, crash very early
+                aviatorState.crashMultiplier = 1.04;
+            } else if (realBets > 0) {
+                // If 1-4 real users bet, crash between 1.2x and 3.0x
+                aviatorState.crashMultiplier = 1.2 + Math.random() * 1.8;
             } else {
-                aviatorState.crashMultiplier = 12.0 + Math.random() * 88.0;
+                // If no real users bet, let it go high (5x - 99x)
+                aviatorState.crashMultiplier = 5.0 + Math.random() * 94.0;
             }
         }
 
@@ -953,10 +953,14 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
 });
 
 app.post("/api/admin/aviator/crash-now", adminAuth, (req, res) => {
-    const { multiplier } = req.body;
-    if (!aviatorState.isFlying) return res.json({ success: false, message: "Plane is not flying" });
-    resolveAviatorCrash(Number(multiplier) || 1.0);
-    res.json({ success: true, message: "Plane crashed manually!" });
+    if (!aviatorState.isFlying || aviatorState.isCrashed) return res.json({ success: false, message: "Plane is not flying" });
+
+    // Calculate current multiplier based on elapsed time
+    const elapsed = (Date.now() - aviatorState.startTime) / 1000;
+    const currentMult = Math.pow(1.1, Math.max(0, elapsed));
+
+    resolveAviatorCrash(currentMult);
+    res.json({ success: true, message: `Plane crashed manually at ${currentMult.toFixed(2)}x!` });
 });
 
 app.post("/api/admin/aviator/toggle-cashout", adminAuth, (req, res) => {

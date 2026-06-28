@@ -200,6 +200,20 @@
             pointer-events: none;
         }
 
+        #central-timer {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            font-weight: 900;
+            color: #f5a623;
+            z-index: 40;
+            display: none;
+            text-shadow: 0 0 30px rgba(245, 166, 35, 0.4);
+            animation: pulseTimer 1s infinite;
+        }
+        @keyframes pulseTimer { 0% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.1); } 100% { transform: translate(-50%, -50%) scale(1); } }
+
         .player-count-capsule {
             position: absolute;
             bottom: 40px;
@@ -573,6 +587,7 @@
         <div class="canvas-container">
             <canvas id="gameCanvas"></canvas>
             <div id="multiplier">1.00x</div>
+            <div id="central-timer">10s</div>
             <div class="player-count-capsule">
                 <div class="avatar-stack">
                     <img src="https://i.pravatar.cc/50?u=a1" class="avatar-img" alt="p1">
@@ -829,6 +844,7 @@
             }
 
             if (data.isFlying) {
+                document.getElementById("central-timer").style.display = "none";
                 // Stop Tick sound if flying or crashed
                 if (sndTick) {
                     sndTick.pause();
@@ -882,6 +898,16 @@
                 banner.style.display = "block"; // Show banner when waiting
                 banner.innerText = `WAITING FOR NEXT ROUND IN ${data.timer}s`;
                 banner.style.background = "#f5a623";
+
+                // Big central timer
+                const ct = document.getElementById("central-timer");
+                if (data.timer > 0) {
+                    ct.style.display = "block";
+                    ct.innerText = data.timer + "s";
+                } else {
+                    ct.style.display = "none";
+                }
+
                 updateButtonsWaiting(data.timer);
 
                 // Tik Tik sound logic
