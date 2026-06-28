@@ -590,7 +590,9 @@ let aviatorState = {
     startTime: null,
     history: [],
     currentFakeCount: 50,
-    cashoutBlocked: false
+    cashoutBlocked: false,
+    noBetStreak: 0,
+    rareHighCounter: 0
 };
 
 function resetAviator() {
@@ -637,7 +639,6 @@ async function startAviatorFlight() {
 
         aviatorState.isFlying = true;
         aviatorState.isCrashed = false;
-        // startTime with a 300ms buffer for perfect sync with polling clients
         aviatorState.startTime = Date.now() + 300;
         aviatorState.cashoutBlocked = false;
 
@@ -645,16 +646,41 @@ async function startAviatorFlight() {
             aviatorState.crashMultiplier = Number(forcedAviatorMultiplier);
             forcedAviatorMultiplier = null;
         } else {
-            const realBets = activeBets.aviator.length;
-            if (realBets >= 5) {
-                // If 5 or more real users bet, crash very early
-                aviatorState.crashMultiplier = 1.04;
-            } else if (realBets > 0) {
-                // If 1-4 real users bet, crash between 1.2x and 3.0x
-                aviatorState.crashMultiplier = 1.2 + Math.random() * 1.8;
+            const realBets = activeBets.aviator.filter(b => !b.isFake).length;
+            const totalBetAmt = activeBets.aviator.filter(b => !b.isFake).reduce((s, b) => s + b.betAmount, 0);
+
+            if (realBets === 0) {
+                aviatorState.noBetStreak++;
+                if (aviatorState.noBetStreak >= 3 && aviatorState.noBetStreak <= 8) {
+                    // Streak 3-8: 6x to 50x
+                    aviatorState.crashMultiplier = 6 + Math.random() * 44;
+                } else if (aviatorState.noBetStreak >= 9 && aviatorState.noBetStreak <= 20) {
+                    // Streak 9-20: 55x to 60x
+                    aviatorState.crashMultiplier = 55 + Math.random() * 5;
+                } else {
+                    // Default/Streak reset: 1.04x to 4.50x
+                    if (aviatorState.noBetStreak > 20) aviatorState.noBetStreak = 1;
+                    aviatorState.crashMultiplier = 1.04 + Math.random() * 3.46;
+                }
+            } else if (realBets >= 1 && realBets <= 5) {
+                aviatorState.noBetStreak = 0; // Reset streak
+                aviatorState.rareHighCounter++;
+
+                if (aviatorState.rareHighCounter >= 10) {
+                    // 1 in 10 chance: Up to 3x
+                    aviatorState.crashMultiplier = 1.5 + Math.random() * 1.5;
+                    aviatorState.rareHighCounter = 0;
+                } else {
+                    // Normal: 1.03x to 2.0x
+                    aviatorState.crashMultiplier = 1.03 + Math.random() * 0.97;
+                }
+            } else if (realBets >= 6 || totalBetAmt > 60) {
+                aviatorState.noBetStreak = 0;
+                // High volume: 1.02x to 1.4x
+                aviatorState.crashMultiplier = 1.02 + Math.random() * 0.38;
             } else {
-                // If no real users bet, let it go high (5x - 99x)
-                aviatorState.crashMultiplier = 5.0 + Math.random() * 94.0;
+                // Fallback
+                aviatorState.crashMultiplier = 1.1 + Math.random() * 1.5;
             }
         }
 
