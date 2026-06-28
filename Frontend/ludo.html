@@ -11,8 +11,8 @@
         :root {
             --red: #ff3232;
             --blue: #2874ed;
-            --green: #2ecc71;
             --yellow: #f1c40f;
+            --green: #2ecc71;
             --bg: #001529;
             --panel: #00224d;
         }
@@ -36,7 +36,7 @@
         .prize-box { background: #1e40af; padding: 5px 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); text-align: center; }
         .timer-badge { background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 10px; display: flex; align-items: center; gap: 8px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* Game Board */
+        /* Game Area */
         .game-area { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 10px; }
 
         .ludo-board {
@@ -60,7 +60,7 @@
 
         .center { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; overflow: hidden; border: 1px solid rgba(0,0,0,0.1); }
         .tri { position: absolute; width: 0; height: 0; border-style: solid; }
-        .tri-l { border-width: 45px 45px 0 45px; border-color: var(--red) transparent transparent transparent; top: 0; transform: rotate(90deg); left: -22px; top: 22px; }
+        .tri-l { border-width: 45px 45px 0 45px; border-color: var(--red) transparent transparent transparent; transform: rotate(90deg); left: -22px; top: 22px; }
         .tri-t { border-width: 45px 45px 0 45px; border-color: var(--blue) transparent transparent transparent; top: -22px; left: 0; }
         .tri-r { border-width: 45px 45px 0 45px; border-color: var(--yellow) transparent transparent transparent; top: 22px; right: -22px; transform: rotate(-90deg); }
         .tri-b { border-width: 45px 45px 0 45px; border-color: var(--green) transparent transparent transparent; bottom: -22px; left: 0; transform: rotate(180deg); }
@@ -76,19 +76,25 @@
         .token.active { animation: bounce 0.6s infinite alternate; z-index: 200; box-shadow: 0 0 15px #fff; border-width: 3.5px; }
         @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.25); } }
 
-        /* Players */
+        /* Players Area */
         .player-bar { width: 95%; display: flex; justify-content: space-between; align-items: center; padding: 10px; }
         .profile { display: flex; align-items: center; gap: 10px; }
         .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid #fff; object-fit: cover; }
         .score-circle { width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid var(--red); color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .score-circle.blue { border-color: var(--blue); }
+        .score-circle.yellow { border-color: var(--yellow); }
+        .score-circle.green { border-color: var(--green); }
 
-        /* Dice */
-        .dice-wrap { width: 55px; height: 55px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #333; box-shadow: 0 6px 20px rgba(0,0,0,0.5); cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
+        /* Dice Animation */
+        .dice-wrap { width: 55px; height: 55px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #333; box-shadow: 0 6px 20px rgba(0,0,0,0.5); cursor: pointer; border: 3px solid transparent; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .dice-wrap.active { border-color: #4ade80; animation: glow 1s infinite alternate; }
         @keyframes glow { from { box-shadow: 0 0 5px #4ade80; } to { box-shadow: 0 0 25px #4ade80; } }
-        .dice-wrap.rolling { animation: roll 0.4s infinite; }
-        @keyframes roll { to { transform: rotate(360deg); } }
+        .dice-wrap.rolling { animation: popRoll 0.6s infinite ease-in-out; }
+        @keyframes popRoll {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-30px) rotate(180deg) scale(1.2); }
+            100% { transform: translateY(0) rotate(360deg) scale(1); }
+        }
 
         #search-overlay { position: fixed; inset: 0; background: rgba(0,21,41,0.95); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .loader { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--yellow); border-radius: 50%; animation: spin 1s infinite linear; }
@@ -129,16 +135,16 @@
     </div>
 
     <div class="game-area">
-        <!-- Opponent -->
+        <!-- Opponent Area -->
         <div class="player-bar">
             <div class="profile">
-                <img id="opp-avatar" src="https://i.pravatar.cc/100?u=bot" class="avatar">
+                <img id="opp-avatar" src="" class="avatar">
                 <div>
                     <div id="opp-name" style="font-weight: 800; font-size: 13px;">Waiting...</div>
                     <div id="opp-dice" class="dice-wrap" style="width: 35px; height: 35px; font-size: 18px;"><i class="fas fa-dice-one"></i></div>
                 </div>
             </div>
-            <div class="score-circle blue">
+            <div class="score-circle" id="opp-score-circle">
                 <div style="font-size: 10px; font-weight: 800;">SCORE</div>
                 <div id="opp-score" style="font-size: 22px; font-weight: 900;">0</div>
             </div>
@@ -148,14 +154,14 @@
             <!-- Board JS Generated -->
         </div>
 
-        <!-- Self -->
+        <!-- My Area -->
         <div class="player-bar">
-            <div class="score-circle">
+            <div class="score-circle" id="my-score-circle">
                 <div style="font-size: 10px; font-weight: 800;">SCORE</div>
                 <div id="my-score" style="font-size: 22px; font-weight: 900;">0</div>
             </div>
             <div class="profile" style="flex-direction: row-reverse; text-align: right;">
-                <img id="my-avatar" src="https://i.pravatar.cc/100?u=user" class="avatar">
+                <img id="my-avatar" src="" class="avatar">
                 <div>
                     <div id="my-name" style="font-weight: 800; font-size: 13px;">You</div>
                     <div id="diceBtn" class="dice-wrap" onclick="rollDice()"><i class="fas fa-dice-one"></i></div>
@@ -176,61 +182,34 @@
     <script>
         const token = localStorage.getItem("token");
         if (!token) location.href = "login.html";
-
         const socket = io({ auth: { token } });
         let myId = "", currentRoom = null, myPlayerIndex = -1, gameState = null;
 
         function createBoard() {
-            const board = document.getElementById('board');
-            board.innerHTML = "";
+            const board = document.getElementById('board'); board.innerHTML = "";
             for (let r = 0; r < 15; r++) {
                 for (let c = 0; c < 15; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.id = `c-${r}-${c}`;
-
-                    // Layout Mapping (Classic Ludo)
-                    if (r < 6 && c < 6) { // Red Base
-                        if (r === 0 && c === 0) {
-                            cell.className = 'base red';
-                            cell.innerHTML = '<div class="base-inner"><div class="slot" id="p0-t0"></div><div class="slot" id="p0-t1"></div><div class="slot" id="p0-t2"></div><div class="slot" id="p0-t3"></div></div>';
-                        } else if (r > 0 || c > 0) { cell.style.display = 'none'; continue; }
-                    } else if (r < 6 && c > 8) { // Blue Base
-                        if (r === 0 && c === 9) {
-                            cell.className = 'base blue';
-                            cell.innerHTML = '<div class="base-inner"><div class="slot" id="p1-t0"></div><div class="slot" id="p1-t1"></div><div class="slot" id="p1-t2"></div><div class="slot" id="p1-t3"></div></div>';
-                        } else if (r > 0 || c > 9) { cell.style.display = 'none'; continue; }
-                    } else if (r > 8 && c < 6) { // Green Base
-                        if (r === 9 && c === 0) {
-                            cell.className = 'base green';
-                            cell.innerHTML = '<div class="base-inner"><div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>';
-                        } else if (r > 9 || c > 0) { cell.style.display = 'none'; continue; }
-                    } else if (r > 8 && c > 8) { // Yellow Base
-                        if (r === 9 && c === 9) {
-                            cell.className = 'base yellow';
-                            cell.innerHTML = '<div class="base-inner"><div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>';
-                        } else if (r > 9 || c > 9) { cell.style.display = 'none'; continue; }
+                    const cell = document.createElement('div'); cell.className = 'cell'; cell.id = `c-${r}-${c}`;
+                    if (r < 6 && c < 6) { // Red
+                        if (r === 0 && c === 0) { cell.className = 'base red'; cell.innerHTML = '<div class="base-inner"><div class="slot" id="p0-t0"></div><div class="slot" id="p0-t1"></div><div class="slot" id="p0-t2"></div><div class="slot" id="p0-t3"></div></div>'; }
+                        else if (r > 0 || c > 0) { cell.style.display = 'none'; continue; }
+                    } else if (r < 6 && c > 8) { // Blue
+                        if (r === 0 && c === 9) { cell.className = 'base blue'; cell.innerHTML = '<div class="base-inner"><div class="slot" id="p1-t0"></div><div class="slot" id="p1-t1"></div><div class="slot" id="p1-t2"></div><div class="slot" id="p1-t3"></div></div>'; }
+                        else if (r > 0 || c > 9) { cell.style.display = 'none'; continue; }
+                    } else if (r > 8 && c > 8) { // Yellow
+                        if (r === 9 && c === 9) { cell.className = 'base yellow'; cell.innerHTML = '<div class="base-inner"><div class="slot" id="p2-t0"></div><div class="slot" id="p2-t1"></div><div class="slot" id="p2-t2"></div><div class="slot" id="p2-t3"></div></div>'; }
+                        else if (r > 9 || c > 9) { cell.style.display = 'none'; continue; }
+                    } else if (r > 8 && c < 6) { // Green
+                        if (r === 9 && c === 0) { cell.className = 'base green'; cell.innerHTML = '<div class="base-inner"><div class="slot" id="p3-t0"></div><div class="slot" id="p3-t1"></div><div class="slot" id="p3-t2"></div><div class="slot" id="p3-t3"></div></div>'; }
+                        else if (r > 9 || c > 0) { cell.style.display = 'none'; continue; }
                     }
-
-                    // Path Colors
                     if (r === 7 && c > 0 && c < 6) cell.classList.add('red');
                     if (c === 7 && r > 0 && r < 6) cell.classList.add('blue');
                     if (r === 7 && c > 8 && c < 14) cell.classList.add('yellow');
                     if (c === 7 && r > 8 && r < 14) cell.classList.add('green');
-
-                    // Safe Spots (Classic)
-                    if ((r === 6 && c === 1) || (r === 1 && c === 8) || (r === 8 && c === 13) || (r === 13 && c === 6) ||
-                        (r === 2 && c === 6) || (r === 6 && c === 12) || (r === 12 && c === 8) || (r === 8 && c === 2)) {
-                        cell.classList.add('safe');
-                    }
-
-                    // Center Triangle
-                    if (r === 6 && c === 6) {
-                        cell.className = 'center';
-                        cell.innerHTML = '<div class="tri tri-l"></div><div class="tri tri-t"></div><div class="tri tri-r"></div><div class="tri tri-b"></div>';
-                        cell.style.gridColumn = "span 3"; cell.style.gridRow = "span 3";
-                    } else if (r >= 6 && r <= 8 && c >= 6 && c <= 8) { cell.style.display = 'none'; continue; }
-
+                    if ((r === 6 && c === 1) || (r === 1 && c === 8) || (r === 8 && c === 13) || (r === 13 && c === 6) || (r === 2 && c === 6) || (r === 6 && c === 12) || (r === 12 && c === 8) || (r === 8 && c === 2)) cell.classList.add('safe');
+                    if (r === 6 && c === 6) { cell.className = 'center'; cell.innerHTML = '<div class="tri tri-l"></div><div class="tri tri-t"></div><div class="tri tri-r"></div><div class="tri tri-b"></div>'; cell.style.gridColumn = "span 3"; cell.style.gridRow = "span 3"; }
+                    else if (r >= 6 && r <= 8 && c >= 6 && c <= 8) { cell.style.display = 'none'; continue; }
                     board.appendChild(cell);
                 }
             }
@@ -238,23 +217,12 @@
 
         const cellMap = {};
         function initCellMap() {
-            const p = [
-                {r:6,c:0},{r:6,c:1},{r:6,c:2},{r:6,c:3},{r:6,c:4},{r:6,c:5},
-                {r:5,c:6},{r:4,c:6},{r:3,c:6},{r:2,c:6},{r:1,c:6},{r:0,c:6},
-                {r:0,c:7},
-                {r:0,c:8},{r:1,c:8},{r:2,c:8},{r:3,c:8},{r:4,c:8},{r:5,c:8},
-                {r:6,c:9},{r:6,c:10},{r:6,c:11},{r:6,c:12},{r:6,c:13},{r:6,c:14},
-                {r:7,c:14},
-                {r:8,c:14},{r:8,c:13},{r:8,c:12},{r:8,c:11},{r:8,c:10},{r:8,c:9},
-                {r:9,c:8},{r:10,c:8},{r:11,c:8},{r:12,c:8},{r:13,c:8},{r:14,c:8},
-                {r:14,c:7},
-                {r:14,c:6},{r:13,c:6},{r:12,c:6},{r:11,c:6},{r:10,c:6},{r:9,c:6},
-                {r:8,c:5},{r:8,c:4},{r:8,c:3},{r:8,c:2},{r:8,c:1},{r:8,c:0},
-                {r:7,c:0}
-            ];
-            p.forEach((pos, i) => cellMap[i + 1] = pos);
+            const path = [ {r:6,c:0},{r:6,c:1},{r:6,c:2},{r:6,c:3},{r:6,c:4},{r:6,c:5},{r:5,c:6},{r:4,c:6},{r:3,c:6},{r:2,c:6},{r:1,c:6},{r:0,c:6},{r:0,c:7},{r:0,c:8},{r:1,c:8},{r:2,c:8},{r:3,c:8},{r:4,c:8},{r:5,c:8},{r:6,c:9},{r:6,c:10},{r:6,c:11},{r:6,c:12},{r:6,c:13},{r:6,c:14},{r:7,c:14},{r:8,c:14},{r:8,c:13},{r:8,c:12},{r:8,c:11},{r:8,c:10},{r:8,c:9},{r:9,c:8},{r:10,c:8},{r:11,c:8},{r:12,c:8},{r:13,c:8},{r:14,c:8},{r:14,c:7},{r:14,c:6},{r:13,c:6},{r:12,c:6},{r:11,c:6},{r:10,c:6},{r:9,c:6},{r:8,c:5},{r:8,c:4},{r:8,c:3},{r:8,c:2},{r:8,c:1},{r:8,c:0},{r:7,c:0} ];
+            path.forEach((pos, i) => cellMap[i + 1] = pos);
             for(let i=1; i<=6; i++) cellMap[100+i] = {r:7, c:i}; // Red Home
             for(let i=1; i<=6; i++) cellMap[200+i] = {r:i, c:7}; // Blue Home
+            for(let i=1; i<=6; i++) cellMap[300+i] = {r:7, c:14-i}; // Yellow Home
+            for(let i=1; i<=6; i++) cellMap[400+i] = {r:14-i, c:7}; // Green Home
         }
 
         function joinLudo(amount) {
@@ -270,80 +238,55 @@
             document.getElementById('diceBtn').classList.add('rolling');
         }
 
-        socket.on('ludo_state', (state) => {
-            gameState = state;
-            currentRoom = state.id;
-            updateUI(state);
-        });
-
-        socket.on('ludo_timer', (data) => {
-            const min = Math.floor(data.gameTimer / 60);
-            const sec = data.gameTimer % 60;
-            document.getElementById('game-clock').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-        });
-
-        socket.on('dice_rolled', (data) => {
-            const icons = ["one", "two", "three", "four", "five", "six"];
-            const html = `<i class="fas fa-dice-${icons[data.dice - 1]}"></i>`;
-            if (data.turn === myPlayerIndex) {
-                document.getElementById('diceBtn').classList.remove('rolling');
-                document.getElementById('diceBtn').innerHTML = html;
-            } else {
-                document.getElementById('opp-dice').innerHTML = html;
-            }
-        });
-
-        socket.on('token_moved', (data) => {
-            renderTokens(data.tokens);
-            document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
-            document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
-        });
+        socket.on('ludo_state', (state) => { gameState = state; currentRoom = state.id; updateUI(state); });
+        socket.on('ludo_timer', (data) => { const min = Math.floor(data.gameTimer / 60); const sec = data.gameTimer % 60; document.getElementById('game-clock').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`; });
+        socket.on('dice_rolled', (data) => { const icons = ["one", "two", "three", "four", "five", "six"]; const html = `<i class="fas fa-dice-${icons[data.dice - 1]}"></i>`; if (data.turn === myPlayerIndex) { document.getElementById('diceBtn').classList.remove('rolling'); document.getElementById('diceBtn').innerHTML = html; } else { document.getElementById('opp-dice').innerHTML = html; } });
+        socket.on('token_moved', (data) => { renderTokens(data.tokens); document.getElementById('my-score').innerText = data.scores[myPlayerIndex]; document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex]; });
 
         function updateUI(state) {
             myId = socket.user?.id || socket.user?._id;
             myPlayerIndex = state.players.findIndex(p => p.id === myId?.toString());
             if (state.gameState === 'PLAYING') document.getElementById('search-overlay').style.display = 'none';
-
-            const me = state.players[myPlayerIndex];
-            const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", score: 0 };
-
+            const me = state.players[myPlayerIndex]; const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", score: 0 };
             document.getElementById('my-name').innerText = me.name;
             document.getElementById('my-score').innerText = me.score;
+            document.getElementById('my-avatar').src = me.avatar?.startsWith('http') ? me.avatar : `${API_URL}/${me.avatar}`;
             document.getElementById('opp-name').innerText = opp.name;
-            document.getElementById('opp-avatar').src = opp.avatar || 'https://i.pravatar.cc/100?u=opp';
+            document.getElementById('opp-avatar').src = opp.avatar?.startsWith('http') ? opp.avatar : (opp.avatar ? `${API_URL}/${opp.avatar}` : 'https://i.pravatar.cc/100?u=opp');
             document.getElementById('opp-score').innerText = opp.score;
             document.getElementById('diceBtn').classList.toggle('active', state.turn === myPlayerIndex);
+
+            const colors = ['red', 'blue', 'yellow', 'green'];
+            document.getElementById('my-score-circle').className = `score-circle ${colors[me.color]}`;
+            document.getElementById('opp-score-circle').className = `score-circle ${colors[opp.color]}`;
 
             renderTokens(state.board.tokens);
         }
 
         function renderTokens(tokens) {
             document.querySelectorAll('.token').forEach(t => t.remove());
-            [0, 1].forEach(pIdx => {
-                tokens[pIdx].forEach((pos, tIdx) => {
+            const colors = ['red', 'blue', 'yellow', 'green'];
+            Object.keys(tokens).forEach(colorIdx => {
+                const colorName = colors[colorIdx];
+                tokens[colorIdx].forEach((pos, tIdx) => {
                     const token = document.createElement('div');
-                    token.className = `token ${pIdx === 0 ? 'red' : 'blue'}`;
-                    if (gameState.turn === myPlayerIndex && pIdx === myPlayerIndex && gameState.rolled) token.classList.add('active');
-
-                    token.onclick = (e) => {
-                        e.stopPropagation();
-                        if (gameState.turn === myPlayerIndex && pIdx === myPlayerIndex) {
-                            socket.emit('ludo_move', { roomId: currentRoom, tokenIndex: tIdx });
-                        }
-                    };
-
+                    token.className = `token ${colorName}`;
+                    const isMyTurn = gameState.turn === myPlayerIndex;
+                    const isMyColor = gameState.players[myPlayerIndex].color == colorIdx;
+                    if (isMyTurn && isMyColor && gameState.rolled) token.classList.add('active');
+                    token.onclick = (e) => { e.stopPropagation(); if (isMyTurn && isMyColor) socket.emit('ludo_move', { roomId: currentRoom, tokenIndex: tIdx }); };
                     if (pos === -1) {
-                        const slot = document.getElementById(`p${pIdx}-t${tIdx}`);
+                        const slot = document.getElementById(`p${colorIdx}-t${tIdx}`);
                         if (slot) slot.appendChild(token);
                     } else {
-                        const actualId = pos >= 101 ? (pIdx === 0 ? pos : pos + 100) : pos;
+                        const baseOffset = (Number(colorIdx) * 100);
+                        const actualId = pos >= 101 ? (pos + baseOffset) : pos;
                         const coords = cellMap[actualId];
                         if (coords) {
                             const cell = document.getElementById(`c-${coords.r}-${coords.c}`);
                             if (cell) {
-                                // Position adjustment for overlapping tokens
-                                const tokensInCell = cell.querySelectorAll('.token').length;
-                                token.style.transform = `translate(${tokensInCell * 4}px, ${tokensInCell * 4}px)`;
+                                const exist = cell.querySelectorAll('.token').length;
+                                token.style.transform = `translate(${exist*3}px, ${exist*3}px)`;
                                 cell.appendChild(token);
                             }
                         }
@@ -353,16 +296,9 @@
         }
 
         socket.on('game_over', (data) => {
-            const overlay = document.getElementById('result-overlay');
-            overlay.style.display = 'flex';
-            if (data.winnerId.toString() === myId?.toString()) {
-                document.getElementById('res-title').innerText = "YOU WIN!";
-                document.getElementById('res-sub').innerText = `+₹${data.prize.toFixed(2)}`;
-            } else {
-                document.getElementById('res-title').innerText = "YOU LOSE";
-                document.getElementById('res-title').style.color = "#ff3232";
-                document.getElementById('res-sub').innerText = "Better luck next time!";
-            }
+            const overlay = document.getElementById('result-overlay'); overlay.style.display = 'flex';
+            if (data.winnerId.toString() === myId?.toString()) { document.getElementById('res-title').innerText = "YOU WIN!"; document.getElementById('res-sub').innerText = `+₹${data.prize.toFixed(2)}`; }
+            else { document.getElementById('res-title').innerText = "YOU LOSE"; document.getElementById('res-title').style.color = "#ff3232"; document.getElementById('res-sub').innerText = "Better luck next time!"; }
         });
 
         initCellMap(); createBoard();

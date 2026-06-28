@@ -8,8 +8,9 @@ class LudoManager {
         this.io = null;
 
         this.SAFE_POSITIONS = [1, 9, 14, 22, 27, 35, 40, 48];
-        this.START_POSITIONS = { 0: 1, 1: 27 };
-        this.HOME_PATH_START = { 0: 51, 1: 25 };
+        // Positions for 4 colors: 0:Red, 1:Blue, 2:Yellow, 3:Green
+        this.START_POSITIONS = { 0: 1, 1: 14, 2: 27, 3: 40 };
+        this.HOME_PATH_START = { 0: 51, 1: 12, 2: 25, 3: 38 };
         this.TOTAL_CELLS = 52;
         this.GAME_DURATION = 300;
 
@@ -33,21 +34,14 @@ class LudoManager {
             const room = this.rooms[roomId];
             if (room.gameState === 'PLAYING') {
                 room.gameTimer--;
-
-                // Broadcast timer every second
                 this.io.to(roomId).emit('ludo_timer', {
                     gameTimer: room.gameTimer,
                     turnDeadline: room.turnDeadline ? Math.max(0, Math.floor((room.turnDeadline - Date.now()) / 1000)) : 0
                 });
-
-                if (room.gameTimer <= 0) {
-                    this.endGameByScore(roomId);
-                }
+                if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 8) {
-                    this.addBot(roomId);
-                }
+                if (room.waitingTime >= 6) this.addBot(roomId);
             }
         }
     }
@@ -60,19 +54,22 @@ class LudoManager {
         const botAvatar = this.BOT_AVATARS[Math.floor(Math.random() * this.BOT_AVATARS.length)];
         const botId = "bot_" + Math.random().toString(36).substr(2, 9);
 
+        // Opposite color selection for 2 players
+        // Red(0) vs Yellow(2) or Blue(1) vs Green(3)
+        const playerColor = room.players[0].color;
+        let botColor = 2; // Default Yellow
+        if (playerColor === 1) botColor = 3; // Blue vs Green
+        else if (playerColor === 2) botColor = 0; // Yellow vs Red
+        else if (playerColor === 3) botColor = 1; // Green vs Blue
+
         room.players.push({
-            id: botId,
-            name: botName,
-            avatar: botAvatar,
-            socketId: null,
-            isBot: true,
-            color: 'blue',
-            score: 0,
-            misses: 0
+            id: botId, name: botName, avatar: botAvatar, socketId: null,
+            isBot: true, color: botColor, score: 0, misses: 0
         });
 
+        room.boardState.tokens[botColor] = [-1, -1, -1, -1];
         room.gameState = 'PLAYING';
-        room.turn = Math.floor(Math.random() * 2);
+        room.turn = 0; // Human always starts or random?
         this.startGame(roomId);
     }
 
@@ -89,58 +86,39 @@ class LudoManager {
 
         if (!roomId) {
             roomId = `ludo_${Date.now()}_${userId}`;
+            // Randomly assign player color 0:Red or 1:Blue
+            const color = Math.floor(Math.random() * 2);
             this.rooms[roomId] = {
-                id: roomId,
-                stake: stake,
+                id: roomId, stake: stake,
                 players: [{
-                    id: userId.toString(),
-                    name,
-                    avatar,
-                    socketId: socket.id,
-                    isBot: false,
-                    color: 'red',
-                    score: 0,
-                    misses: 0
+                    id: userId.toString(), name, avatar, socketId: socket.id,
+                    isBot: false, color: color, score: 0, misses: 0
                 }],
-                gameState: 'WAITING',
-                waitingTime: 0,
-                boardState: {
-                    tokens: {
-                        0: [-1, -1, -1, -1],
-                        1: [-1, -1, -1, -1]
-                    }
-                },
-                turn: 0,
-                dice: 1,
-                rolled: false,
-                gameTimer: this.GAME_DURATION,
-                lastUpdate: Date.now()
+                gameState: 'WAITING', waitingTime: 0,
+                boardState: { tokens: { [color]: [-1, -1, -1, -1] } },
+                turn: 0, dice: 1, rolled: false, gameTimer: this.GAME_DURATION, lastUpdate: Date.now()
             };
         } else {
             const room = this.rooms[roomId];
             if (room.players[0].id === userId.toString()) return;
 
+            const playerColor = room.players[0].color;
+            const myColor = (playerColor === 0) ? 2 : 3; // Red->Yellow, Blue->Green
+
             room.players.push({
-                id: userId.toString(),
-                name,
-                avatar,
-                socketId: socket.id,
-                isBot: false,
-                color: 'blue',
-                score: 0,
-                misses: 0
+                id: userId.toString(), name, avatar, socketId: socket.id,
+                isBot: false, color: myColor, score: 0, misses: 0
             });
+            room.boardState.tokens[myColor] = [-1, -1, -1, -1];
             room.gameState = 'PLAYING';
-            room.turn = Math.floor(Math.random() * 2);
+            room.turn = 0;
             this.startGame(roomId);
         }
-
         socket.join(roomId);
         this.emitState(roomId);
     }
 
     startGame(roomId) {
-        const room = this.rooms[roomId];
         this.startTurnTimer(roomId);
         this.emitState(roomId);
     }
@@ -149,19 +127,14 @@ class LudoManager {
         const room = this.rooms[roomId];
         if (!room) return;
         if (room.timer) clearTimeout(room.timer);
-
         room.turnDeadline = Date.now() + 15000;
-        room.timer = setTimeout(() => {
-            this.handleTimeout(roomId);
-        }, 15500);
-
+        room.timer = setTimeout(() => this.handleTimeout(roomId), 15500);
         this.checkBotAction(roomId);
     }
 
     checkBotAction(roomId) {
         const room = this.rooms[roomId];
         if (!room || room.gameState !== 'PLAYING') return;
-
         const currentPlayer = room.players[room.turn];
         if (currentPlayer.isBot) {
             setTimeout(() => {
@@ -170,30 +143,22 @@ class LudoManager {
                     setTimeout(() => {
                         const possible = this.getPossibleMoves(roomId);
                         if (possible.length > 0) {
-                            // Bot priority: 1. Kill, 2. Enter Home, 3. Farthest Token
-                            const tokenToMove = possible[Math.floor(Math.random() * possible.length)];
-                            this.moveToken(currentPlayer.id, roomId, tokenToMove);
+                            this.moveToken(currentPlayer.id, roomId, possible[Math.floor(Math.random() * possible.length)]);
                         }
                     }, 1000);
                 }
-            }, 1000 + Math.random() * 1500);
+            }, 1500);
         }
     }
 
     handleTimeout(roomId) {
         const room = this.rooms[roomId];
         if (!room || room.gameState !== 'PLAYING') return;
-
         const player = room.players[room.turn];
         player.misses++;
-
         this.io.to(roomId).emit('turn_missed', { userId: player.id, misses: player.misses });
-
-        if (player.misses >= 3) {
-            this.endGameByMiss(roomId, player.id);
-        } else {
-            this.nextTurn(roomId);
-        }
+        if (player.misses >= 3) this.endGameByMiss(roomId, player.id);
+        else this.nextTurn(roomId);
     }
 
     rollDice(userId, roomId) {
@@ -204,20 +169,17 @@ class LudoManager {
         const dice = Math.floor(Math.random() * 6) + 1;
         room.dice = dice;
         room.rolled = true;
-
         this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn });
 
         const possibleMoves = this.getPossibleMoves(roomId);
-        if (possibleMoves.length === 0) {
-            setTimeout(() => this.nextTurn(roomId), 1200);
-        }
+        if (possibleMoves.length === 0) setTimeout(() => this.nextTurn(roomId), 1200);
     }
 
     getPossibleMoves(roomId) {
         const room = this.rooms[roomId];
         const dice = room.dice;
-        const playerIndex = room.turn;
-        const tokens = room.boardState.tokens[playerIndex];
+        const playerColor = room.players[room.turn].color;
+        const tokens = room.boardState.tokens[playerColor];
         const possible = [];
 
         tokens.forEach((pos, i) => {
@@ -225,9 +187,7 @@ class LudoManager {
                 if (dice === 6) possible.push(i);
             } else if (pos >= 101) {
                 if (pos + dice <= 106) possible.push(i);
-            } else {
-                possible.push(i);
-            }
+            } else possible.push(i);
         });
         return possible;
     }
@@ -235,19 +195,20 @@ class LudoManager {
     async moveToken(userId, roomId, tokenIndex) {
         const room = this.rooms[roomId];
         if (!room || room.gameState !== 'PLAYING' || !room.rolled) return;
-        if (room.players[room.turn].id !== userId.toString()) return;
+        const playerIndex = room.turn;
+        if (room.players[playerIndex].id !== userId.toString()) return;
 
         const possible = this.getPossibleMoves(roomId);
         if (!possible.includes(tokenIndex)) return;
 
         const dice = room.dice;
-        const playerIndex = room.turn;
-        let currentPos = room.boardState.tokens[playerIndex][tokenIndex];
+        const playerColor = room.players[playerIndex].color;
+        let currentPos = room.boardState.tokens[playerColor][tokenIndex];
         let nextPos;
         let pointsEarned = 0;
 
         if (currentPos === -1) {
-            nextPos = this.START_POSITIONS[playerIndex];
+            nextPos = this.START_POSITIONS[playerColor];
             pointsEarned = 1;
         } else if (currentPos >= 101) {
             nextPos = currentPos + dice;
@@ -257,7 +218,7 @@ class LudoManager {
             let tempPos = currentPos;
             let enteredHome = false;
             for (let s = 0; s < dice; s++) {
-                if (tempPos === this.HOME_PATH_START[playerIndex]) {
+                if (tempPos === this.HOME_PATH_START[playerColor]) {
                     nextPos = 101 + (dice - s - 1);
                     enteredHome = true;
                     pointsEarned = dice;
@@ -265,38 +226,39 @@ class LudoManager {
                 }
                 tempPos = (tempPos % this.TOTAL_CELLS) + 1;
             }
-            if (!enteredHome) {
-                nextPos = tempPos;
-                pointsEarned = dice;
-            }
+            if (!enteredHome) { nextPos = tempPos; pointsEarned = dice; }
         }
 
-        room.boardState.tokens[playerIndex][tokenIndex] = nextPos;
+        room.boardState.tokens[playerColor][tokenIndex] = nextPos;
         room.players[playerIndex].score += pointsEarned;
 
         let killed = false;
         if (nextPos <= 52 && !this.SAFE_POSITIONS.includes(nextPos)) {
-            const opponentIndex = 1 - playerIndex;
-            const oppTokens = room.boardState.tokens[opponentIndex];
-            oppTokens.forEach((opos, oi) => {
-                if (opos === nextPos) {
-                    room.boardState.tokens[opponentIndex][oi] = -1;
-                    killed = true;
-                    room.players[playerIndex].score += 10;
-                }
-            });
+            for (let pIdx = 0; pIdx < room.players.length; pIdx++) {
+                if (pIdx === playerIndex) continue;
+                const oppColor = room.players[pIdx].color;
+                const oppTokens = room.boardState.tokens[oppColor];
+                oppTokens.forEach((opos, oi) => {
+                    if (opos === nextPos) {
+                        room.boardState.tokens[oppColor][oi] = -1;
+                        killed = true;
+                        room.players[playerIndex].score += 10;
+                    }
+                });
+            }
         }
 
         this.io.to(roomId).emit('token_moved', {
-            playerIndex,
+            playerIndex: playerIndex,
+            playerColor: playerColor,
             tokenIndex,
             nextPos,
             tokens: room.boardState.tokens,
-            scores: [room.players[0].score, room.players[1].score],
+            scores: room.players.map(p => p.score),
             killed
         });
 
-        if (room.boardState.tokens[playerIndex].every(p => p === 106)) {
+        if (room.boardState.tokens[playerColor].every(p => p === 106)) {
             this.endGame(roomId, userId);
             return;
         }
@@ -305,15 +267,13 @@ class LudoManager {
             room.rolled = false;
             this.startTurnTimer(roomId);
             this.emitState(roomId);
-        } else {
-            this.nextTurn(roomId);
-        }
+        } else this.nextTurn(roomId);
     }
 
     nextTurn(roomId) {
         const room = this.rooms[roomId];
         if (!room) return;
-        room.turn = 1 - room.turn;
+        room.turn = (room.turn + 1) % room.players.length;
         room.rolled = false;
         this.startTurnTimer(roomId);
         this.emitState(roomId);
@@ -344,23 +304,18 @@ class LudoManager {
 
         const stake = room.stake;
         const prize = stake * 1.8;
-
         const winner = room.players.find(p => p.id === winnerId.toString());
         if (winner && !winner.isBot) {
             try {
                 await User.findByIdAndUpdate(winnerId, { $inc: { coins: prize } });
                 await new Transaction({
-                    user_id: winnerId,
-                    amount: prize,
-                    type: 'game_win',
-                    game_name: 'Ludo',
-                    details: `Won Ludo match (Stake: ${stake})`
+                    user_id: winnerId, amount: prize, type: 'game_win',
+                    game_name: 'Ludo', details: `Won Ludo match (Stake: ${stake})`
                 }).save();
                 await Admin.findOneAndUpdate({}, { $inc: { balance: -(prize - stake) } });
             } catch (e) { console.error("Ludo Win error:", e); }
         }
-
-        this.io.to(roomId).emit('game_over', { winnerId, prize, scores: [room.players[0].score, room.players[1].score] });
+        this.io.to(roomId).emit('game_over', { winnerId, prize, scores: room.players.map(p => p.score) });
         setTimeout(() => delete this.rooms[roomId], 5000);
     }
 
@@ -370,13 +325,9 @@ class LudoManager {
         this.io.to(roomId).emit('ludo_state', {
             id: room.id,
             players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, color: p.color, score: p.score, misses: p.misses })),
-            gameState: room.gameState,
-            board: room.boardState,
-            turn: room.turn,
-            dice: room.dice,
-            rolled: room.rolled,
-            turnDeadline: room.turnDeadline,
-            gameTimer: room.gameTimer
+            gameState: room.gameState, board: room.boardState,
+            turn: room.turn, dice: room.dice, rolled: room.rolled,
+            turnDeadline: room.turnDeadline, gameTimer: room.gameTimer
         });
     }
 
@@ -389,9 +340,7 @@ class LudoManager {
             if (room.gameState === 'PLAYING') {
                 const opponent = room.players.find(p => p.socketId !== socketId);
                 if (opponent) this.endGame(roomId, opponent.id);
-            } else {
-                delete this.rooms[roomId];
-            }
+            } else delete this.rooms[roomId];
         }
     }
 }
