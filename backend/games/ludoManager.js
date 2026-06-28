@@ -8,7 +8,6 @@ class LudoManager {
         this.io = null;
 
         this.SAFE_POSITIONS = [1, 9, 14, 22, 27, 35, 40, 48];
-        // Standard Ludo Layout: 0:Red(TL), 1:Blue(TR), 2:Yellow(BR), 3:Green(BL)
         this.START_POSITIONS = { 0: 1, 1: 14, 2: 27, 3: 40 };
         this.HOME_PATH_START = { 0: 51, 1: 12, 2: 25, 3: 38 };
         this.TOTAL_CELLS = 52;
@@ -41,7 +40,7 @@ class LudoManager {
                 if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 10) this.addBot(roomId);
+                if (room.waitingTime >= 12) this.addBot(roomId);
             }
         }
     }
@@ -55,7 +54,7 @@ class LudoManager {
         const botId = "bot_" + Math.random().toString(36).substr(2, 9);
 
         const playerColor = room.players[0].color;
-        const botColor = (playerColor + 2) % 4; // Always opposite corner
+        const botColor = (playerColor + 2) % 4;
 
         room.players.push({
             id: botId, name: botName, avatar: botAvatar, socketId: null,
@@ -75,12 +74,12 @@ class LudoManager {
         let roomId = Object.keys(this.rooms).find(id =>
             this.rooms[id].gameState === 'WAITING' &&
             this.rooms[id].stake === stake &&
-            this.rooms[id].players.length === 1
+            this.rooms[id].players.length === 1 &&
+            !this.rooms[id].players[0].isBot
         );
 
         if (!roomId) {
             roomId = `ludo_${Date.now()}_${userId}`;
-            // Randomly assign player to one of the corners
             const color = Math.floor(Math.random() * 4);
             this.rooms[roomId] = {
                 id: roomId, stake: stake,
@@ -97,7 +96,7 @@ class LudoManager {
             if (room.players[0].id === userId.toString()) return;
 
             const playerColor = room.players[0].color;
-            const myColor = (playerColor + 2) % 4; // Join opposite corner
+            const myColor = (playerColor + 2) % 4;
 
             room.players.push({
                 id: userId.toString(), name, avatar, socketId: socket.id,
@@ -168,7 +167,7 @@ class LudoManager {
         this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn, playerColor: room.players[room.turn].color });
 
         const possibleMoves = this.getPossibleMoves(roomId);
-        if (possibleMoves.length === 0) setTimeout(() => this.nextTurn(roomId), 1200);
+        if (possibleMoves.length === 0) setTimeout(() => this.nextTurn(roomId), 1500);
     }
 
     getPossibleMoves(roomId) {
@@ -340,6 +339,19 @@ class LudoManager {
                 if (opponent) this.endGame(roomId, opponent.id);
             } else delete this.rooms[roomId];
         }
+    }
+
+    handleChat(socket, roomId, message, emoji) {
+        const room = this.rooms[roomId];
+        if (!room) return;
+        const sender = room.players.find(p => p.socketId === socket.id);
+        if (!sender) return;
+        this.io.to(roomId).emit('ludo_chat_received', {
+            senderId: sender.id,
+            name: sender.name,
+            message: message,
+            emoji: emoji
+        });
     }
 }
 
