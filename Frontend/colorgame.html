@@ -14,12 +14,13 @@
         }
 
         body {
-            background-color: var(--bg-dark);
+            background-color: #2e0249;
+            background-image: radial-gradient(circle at 50% 50%, #570a88 0%, #2e0249 100%);
+            background-attachment: fixed;
             color: white;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 10px;
-            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
         }
 
         .header {
@@ -27,6 +28,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px;
+            background: rgba(46, 2, 73, 0.9);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -174,8 +177,16 @@
     </div>
 
     <div class="timer-panel">
-        <div style="font-size: 11px; opacity: 0.6; font-weight: 800; text-transform: uppercase;">Next Draw In</div>
-        <div id="timer">00:20</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+            <div style="text-align: left;">
+                <div style="font-size: 11px; opacity: 0.6; font-weight: 800; text-transform: uppercase;">Next Draw In</div>
+                <div id="timer">00:20</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 11px; opacity: 0.6; font-weight: 800; text-transform: uppercase;">Last Result</div>
+                <div id="lastResultDisplay" style="font-size: 48px; font-weight: 950; color: var(--gold); text-shadow: 0 0 10px rgba(255,255,255,0.2);">-</div>
+            </div>
+        </div>
     </div>
 
     <div class="section-label">Size (1.95x)</div>
@@ -199,9 +210,12 @@
     <div class="bet-input-card">
         <div class="bet-row">
             <span style="font-weight: 800;">Bet Amount</span>
-            <input type="number" id="betAmount" value="100">
+            <input type="number" id="betAmount" value="100" min="10">
         </div>
-        <button id="confirmBtn" class="btn-confirm" onclick="placeBet()">PLACE BET</button>
+        <div style="display: flex; gap: 10px;">
+            <button id="confirmBtn" class="btn-confirm" onclick="placeBet()" style="flex: 2;">PLACE BET</button>
+            <button id="cancelBtn" class="btn-confirm" onclick="cancelLastBet()" style="flex: 1; background: #ef4444; box-shadow: 0 4px 0 #991b1b;">CANCEL</button>
+        </div>
     </div>
 
     <div id="activeBetsList" class="active-bets" style="display: none;">
@@ -221,6 +235,10 @@
 
     <div id="resPopup"></div>
 
+    <!-- Audio Elements -->
+    <audio id="sndTick" src="sound/tick2.mp3"></audio>
+    <audio id="sndFastTick" src="sound/fasrtick.mp3"></audio>
+
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
@@ -228,6 +246,11 @@
         let selectedValue = "";
         let currentBets = [];
         let lastRoundId = null;
+        let lastTimerValue = -1;
+
+        // Initialize Audio
+        const sndTick = document.getElementById("sndTick");
+        const sndFastTick = document.getElementById("sndFastTick");
 
         const grid = document.getElementById("numGrid");
         for(let i=1; i<=20; i++) {
@@ -243,20 +266,51 @@
         }
 
         function updateUI(data) {
-            const secs = data.timer;
-            document.getElementById("timer").innerText = `00:${secs.toString().padStart(2, '0')}`;
-            if(secs < 5) {
-                document.getElementById("timer").style.color = "#ef4444";
-                document.getElementById("confirmBtn").disabled = true;
-                document.getElementById("confirmBtn").innerText = "WAITING...";
+            const totalSecs = data.timer;
+            const timerEl = document.getElementById("timer");
+            const btn = document.getElementById("confirmBtn");
+
+            // Sound Logic: Ensure no overlap and correct timing
+            if (totalSecs !== lastTimerValue) {
+                if (totalSecs >= 10 && totalSecs <= 24) {
+                    // Normal tick during betting phase (15s down to 1s)
+                    if (!sndFastTick.paused) { sndFastTick.pause(); sndFastTick.currentTime = 0; }
+                    sndTick.currentTime = 0;
+                    sndTick.play().catch(e => {});
+                } else if (totalSecs > 0 && totalSecs <= 9) {
+                    // Fast tick during last 9s waiting phase
+                    if (!sndTick.paused) { sndTick.pause(); sndTick.currentTime = 0; }
+                    sndFastTick.currentTime = 0;
+                    sndFastTick.play().catch(e => {});
+                } else if (totalSecs === 0) {
+                    // Stop everything at 0
+                    sndTick.pause(); sndTick.currentTime = 0;
+                    sndFastTick.pause(); sndFastTick.currentTime = 0;
+                }
+                lastTimerValue = totalSecs;
+            }
+
+            if (totalSecs > 9) {
+                // Betting phase (15s)
+                const bettingSecs = totalSecs - 9;
+                timerEl.innerText = `00:${bettingSecs.toString().padStart(2, '0')}`;
+                timerEl.style.color = "var(--gold)";
+                btn.disabled = false;
+                btn.innerText = "PLACE BET";
             } else {
-                document.getElementById("timer").style.color = "var(--gold)";
-                document.getElementById("confirmBtn").disabled = false;
-                document.getElementById("confirmBtn").innerText = "PLACE BET";
+                // Admin phase (9s)
+                timerEl.innerText = `00:${totalSecs.toString().padStart(2, '0')}`;
+                timerEl.style.color = "#ef4444";
+                btn.disabled = true;
+                btn.innerText = "WAITING...";
             }
 
             if (data.history && data.history.length > 0) {
                 const last = data.history[0];
+                const resDisp = document.getElementById("lastResultDisplay");
+                resDisp.innerText = last.number;
+                resDisp.style.color = `var(--${last.color.toLowerCase()})`;
+
                 if (last.roundId !== lastRoundId) {
                     if (lastRoundId !== null && currentBets.length > 0) {
                         checkWin(last);
@@ -301,6 +355,20 @@
             } else alert(data.message);
         }
 
+        async function cancelLastBet() {
+            const res = await fetch(`${API_URL}/api/game/color/cancel`, {
+                method: "POST",
+                headers: { authorization: token }
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentBets.pop();
+                renderActiveBets();
+                fetchBalance();
+                alert("Last bet cancelled");
+            } else alert(data.message);
+        }
+
         function renderActiveBets() {
             const container = document.getElementById("activeBetsList");
             const items = document.getElementById("betItems");
@@ -319,26 +387,55 @@
 
         function checkWin(last) {
             let totalWon = 0;
+            let totalBet = 0;
             let count = 0;
 
             for(let bet of currentBets) {
+                totalBet += bet.amount;
                 let won = false;
-                if (bet.type === 'COLOR' && last.color === bet.value) won = true;
-                if (bet.type === 'NUMBER' && last.number == bet.value) won = true;
-                if (bet.type === 'SIZE' && last.size === bet.value) won = true;
-                if (won) count++;
+                let mult = 0;
+                if (bet.type === 'COLOR' && last.color === bet.value) { won = true; mult = 4.5; }
+                if (bet.type === 'NUMBER' && last.number == bet.value) { won = true; mult = 18; }
+                if (bet.type === 'SIZE' && last.size === bet.value) { won = true; mult = 1.95; }
+                if (won) {
+                    count++;
+                    totalWon += bet.amount * mult;
+                }
             }
 
             const msg = document.getElementById("resPopup");
             msg.style.display = "block";
+            msg.style.width = "80%";
+            msg.style.maxWidth = "400px";
+
             if (count > 0) {
-                msg.innerText = `WINNER! (${count} Bets)`;
-                msg.style.background = "rgba(34, 197, 94, 0.95)";
+                msg.innerHTML = `
+                    <div style="color: #f1c40f; font-size: 40px; margin-bottom: 10px;">WIN!</div>
+                    <div style="font-size: 18px; opacity: 0.9; margin-bottom: 20px;">
+                        Result: <b style="color: var(--${last.color.toLowerCase()})">${last.number} (${last.color})</b>
+                    </div>
+                    <div style="font-size: 32px; color: #fff; font-weight: 900;">₹${totalWon.toFixed(2)}</div>
+                    <div style="font-size: 12px; opacity: 0.6; margin-top: 10px;">Winner Winner Chicken Dinner!</div>
+                `;
+                msg.style.background = "linear-gradient(135deg, #15803d 0%, #064e3b 100%)";
+                msg.style.border = "3px solid #22c55e";
+                new Audio('sound/win.mp3').play().catch(e=>{});
             } else {
-                msg.innerText = "LOST";
-                msg.style.background = "rgba(239, 68, 68, 0.95)";
+                msg.innerHTML = `
+                    <div style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">LOSE</div>
+                    <div style="font-size: 18px; opacity: 0.9; margin-bottom: 20px;">
+                        Result: <b style="color: var(--${last.color.toLowerCase()})">${last.number} (${last.color})</b>
+                    </div>
+                    <div style="font-size: 14px; color: #fff;">Better luck next time!</div>
+                `;
+                msg.style.background = "linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%)";
+                msg.style.border = "3px solid #ef4444";
+                new Audio('sound/lose.mp3').play().catch(e=>{});
             }
-            setTimeout(() => msg.style.display = "none", 4000);
+            setTimeout(() => {
+                msg.style.display = "none";
+                fetchBalance();
+            }, 2000);
         }
 
         function renderHistory(history) {
@@ -358,7 +455,7 @@
             if (data.success) document.getElementById("balance").innerText = data.user.coins.toFixed(2);
         }
 
-        setInterval(fetchState, 1000);
+        setInterval(fetchState, 500);
         fetchBalance();
     </script>
 </body>

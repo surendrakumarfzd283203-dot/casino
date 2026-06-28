@@ -12,7 +12,7 @@
             --header-height: 70px;
             --primary: #ff9800;
             --bg-body: #050507;
-            --bg-card: #111115;
+            --bg-card: rgba(17, 17, 21, 0.8);
             --glass-border: rgba(255, 255, 255, 0.05);
             --text-main: #ffffff;
             --text-dim: rgba(255, 255, 255, 0.6);
@@ -21,7 +21,9 @@
         * { box-sizing: border-box; }
 
         body {
-            background: var(--bg-body);
+            background-color: #2e0249;
+            background-image: radial-gradient(circle at 50% 50%, #570a88 0%, #2e0249 100%);
+            background-attachment: fixed;
             color: var(--text-main);
             margin: 0;
             font-family: 'Inter', sans-serif;
@@ -31,7 +33,8 @@
         /* Sidebar Styling */
         .admin-sidebar {
             width: var(--sidebar-width);
-            background: var(--bg-card);
+            background: rgba(46, 2, 73, 0.9);
+            backdrop-filter: blur(20px);
             height: 100vh;
             position: fixed;
             left: 0;
@@ -261,7 +264,8 @@
         </div>
 
         <a class="sidebar-link active" onclick="showSection('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</a>
-        <a class="sidebar-link" onclick="showSection('requests')"><i class="fas fa-hourglass-half"></i> Pending Requests</a>
+        <a class="sidebar-link" onclick="showSection('requests')"><i class="fas fa-hourglass-half"></i> Pending Payments</a>
+        <a class="sidebar-link" onclick="showSection('kyc')"><i class="fas fa-id-card"></i> Pending KYC</a>
         <a class="sidebar-link" onclick="showSection('users')"><i class="fas fa-user-group"></i> Users</a>
         <a class="sidebar-link" onclick="showSection('deposits')"><i class="fas fa-arrow-trend-up"></i> Deposits</a>
         <a class="sidebar-link" onclick="showSection('withdrawals')"><i class="fas fa-arrow-trend-down"></i> Withdrawals</a>
@@ -289,10 +293,17 @@
                     <h4><i class="fas fa-paper-plane"></i> Aviator Control</h4>
                     <div id="aviator-timer" style="font-size: 20px; font-weight: 800; text-align:center; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 15px;">...</div>
                     <div id="aviator-pot" style="font-size: 14px; font-weight: 700; color: var(--primary); text-align:center; margin-bottom: 15px;">LIVE POT: ₹0.00</div>
-                    <label style="font-size: 11px; color: var(--text-dim);">SET NEXT CRASH MULTIPLIER</label>
+
+                    <label style="font-size: 11px; color: var(--text-dim);">NEXT CRASH (BEFORE START)</label>
                     <div style="display: flex; gap: 10px; margin-top: 8px; margin-bottom: 15px;">
                         <input type="number" id="forceAviatorMult" value="1.5" step="0.1" class="input-dark">
                         <button class="action-btn btn-edit" onclick="forceAviator()">SET</button>
+                    </div>
+
+                    <label style="font-size: 11px; color: var(--text-dim);">LIVE CONTROL (WHILE FLYING)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                        <button class="action-btn btn-block" onclick="crashAviatorNow()">CRASH NOW</button>
+                        <button class="action-btn btn-edit" id="btn-toggle-cashout" onclick="toggleCashout(true)">BLOCK CASHOUT</button>
                     </div>
                     <div id="live-bets-aviator" class="live-bet-table"></div>
                 </div>
@@ -301,16 +312,34 @@
                 <div class="control-card">
                     <h4><i class="fas fa-palette"></i> Color Game</h4>
                     <div id="color-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
-                    <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px;">
-                        <label style="font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 8px;">FORCE NEXT NUMBER (1-20)</label>
-                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                            <input type="number" id="forceColorNum" min="1" max="20" class="input-dark" style="width: 80px;">
-                            <button class="action-btn btn-edit" onclick="forceGame('color', null, null, document.getElementById('forceColorNum').value)">SET</button>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="action-btn btn-unblock" style="flex:1" onclick="toggleAutoOpen(true)">AUTO ON</button>
-                            <button class="action-btn btn-block" style="flex:1" onclick="toggleAutoOpen(false)">AUTO OFF</button>
-                        </div>
+
+                    <label style="font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 10px;">FORCE NEXT NUMBER (SELECT NUMBER)</label>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px;">
+                        <button class="action-btn btn-edit" style="background:#ef4444; padding:8px 0;" onclick="forceGame('color', null, null, 1)">1</button>
+                        <button class="action-btn btn-edit" style="background:#3b82f6; padding:8px 0;" onclick="forceGame('color', null, null, 2)">2</button>
+                        <button class="action-btn btn-edit" style="background:#22c55e; padding:8px 0;" onclick="forceGame('color', null, null, 3)">3</button>
+                        <button class="action-btn btn-edit" style="background:#f59e0b; padding:8px 0;" onclick="forceGame('color', null, null, 4)">4</button>
+                        <button class="action-btn btn-edit" style="background:#8b5cf6; padding:8px 0;" onclick="forceGame('color', null, null, 5)">5</button>
+                        <button class="action-btn btn-edit" style="background:#ef4444; padding:8px 0;" onclick="forceGame('color', null, null, 6)">6</button>
+                        <button class="action-btn btn-edit" style="background:#3b82f6; padding:8px 0;" onclick="forceGame('color', null, null, 7)">7</button>
+                        <button class="action-btn btn-edit" style="background:#22c55e; padding:8px 0;" onclick="forceGame('color', null, null, 8)">8</button>
+                        <button class="action-btn btn-edit" style="background:#f59e0b; padding:8px 0;" onclick="forceGame('color', null, null, 9)">9</button>
+                        <button class="action-btn btn-edit" style="background:#8b5cf6; padding:8px 0;" onclick="forceGame('color', null, null, 10)">10</button>
+                        <button class="action-btn btn-edit" style="background:#ef4444; padding:8px 0;" onclick="forceGame('color', null, null, 11)">11</button>
+                        <button class="action-btn btn-edit" style="background:#3b82f6; padding:8px 0;" onclick="forceGame('color', null, null, 12)">12</button>
+                        <button class="action-btn btn-edit" style="background:#22c55e; padding:8px 0;" onclick="forceGame('color', null, null, 13)">13</button>
+                        <button class="action-btn btn-edit" style="background:#f59e0b; padding:8px 0;" onclick="forceGame('color', null, null, 14)">14</button>
+                        <button class="action-btn btn-edit" style="background:#8b5cf6; padding:8px 0;" onclick="forceGame('color', null, null, 15)">15</button>
+                        <button class="action-btn btn-edit" style="background:#ef4444; padding:8px 0;" onclick="forceGame('color', null, null, 16)">16</button>
+                        <button class="action-btn btn-edit" style="background:#3b82f6; padding:8px 0;" onclick="forceGame('color', null, null, 17)">17</button>
+                        <button class="action-btn btn-edit" style="background:#22c55e; padding:8px 0;" onclick="forceGame('color', null, null, 18)">18</button>
+                        <button class="action-btn btn-edit" style="background:#f59e0b; padding:8px 0;" onclick="forceGame('color', null, null, 19)">19</button>
+                        <button class="action-btn btn-edit" style="background:#8b5cf6; padding:8px 0;" onclick="forceGame('color', null, null, 20)">20</button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button class="action-btn btn-unblock" style="flex:1" onclick="toggleAutoOpen(true)">AUTO PROFIT ON</button>
+                        <button class="action-btn btn-block" style="flex:1" onclick="toggleAutoOpen(false)">AUTO OFF</button>
                     </div>
                     <div id="live-bets-color" class="live-bet-table"></div>
                 </div>
@@ -319,28 +348,79 @@
                 <div class="control-card">
                     <h4><i class="fas fa-dice"></i> Big Small</h4>
                     <div id="bigsmall-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <button class="action-btn btn-block" onclick="forceGame('bigsmall', 'SMALL')">FORCE SMALL</button>
-                        <button class="action-btn btn-unblock" onclick="forceGame('bigsmall', 'BIG')">FORCE BIG</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <button class="action-btn btn-block" onclick="forceGame('bigsmall', 'SMALL')">SMALL</button>
+                        <button class="action-btn btn-edit" style="background:#8b5cf6;" onclick="forceGame('bigsmall', 'TRIPLE')">TRIPLE</button>
+                        <button class="action-btn btn-unblock" onclick="forceGame('bigsmall', 'BIG')">BIG</button>
                     </div>
                     <div id="live-bets-bigsmall" class="live-bet-table"></div>
                 </div>
 
-                <!-- Teen Patti Control -->
+                <!-- Lucky Draw -->
                 <div class="control-card">
-                    <h4><i class="fas fa-spade"></i> Teen Patti</h4>
-                    <select id="tpTableSelect" class="input-dark" style="margin-bottom: 15px;">
-                        <option value="1">Table 1</option><option value="2">Table 2</option>
-                        <option value="3">Table 3</option><option value="4">Table 4</option><option value="5">Table 5</option>
-                    </select>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="action-btn btn-block" style="flex:1" onclick="forceGame('teenpatti', 'DEALER_WINS', document.getElementById('tpTableSelect').value)">Dealer Win</button>
-                        <button class="action-btn btn-unblock" style="flex:1" onclick="forceGame('teenpatti', 'PLAYERS_WIN', document.getElementById('tpTableSelect').value)">Player Win</button>
+                    <h4><i class="fas fa-star"></i> Lucky Draw</h4>
+                    <div id="lucky-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
+
+                    <label style="font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 10px;">FORCE LOGIC RESULT</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                        <button class="action-btn btn-edit" onclick="forceLucky('ODD')">FORCE ODD</button>
+                        <button class="action-btn btn-edit" onclick="forceLucky('EVEN')">FORCE EVEN</button>
+                        <button class="action-btn btn-unblock" onclick="forceLucky('PAIR')">FORCE PAIR</button>
+                        <button class="action-btn btn-unblock" onclick="forceLucky('TRIPLE')">FORCE TRIPLE</button>
+                        <button class="action-btn btn-block" style="grid-column: span 2;" onclick="forceGame('luckydraw', '777')">FORCE JACKPOT (777)</button>
+                        <button class="action-btn btn-edit" style="grid-column: span 2; background:#3b82f6;" onclick="forceGame('luckydraw', null)">AUTO MODE</button>
                     </div>
-                    <div id="live-bets-teenpatti" class="live-bet-table"></div>
+
+                    <label style="font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 8px;">CUSTOM NUMBER (100-999)</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="forceLuckyRes" placeholder="Result" class="input-dark">
+                        <button class="action-btn btn-edit" onclick="forceGame('luckydraw', document.getElementById('forceLuckyRes').value)">SET</button>
+                    </div>
+                    <div id="live-bets-lucky" class="live-bet-table"></div>
+                </div>
+                <div class="control-card" style="grid-column: span 2;">
+                    <h4><i class="fas fa-spade"></i> Advanced Teen Patti Control</h4>
+                    <div id="tp-advanced-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                        <!-- Live Tables will be rendered here -->
+                    </div>
                 </div>
 
-                <!-- Spin Game -->
+                <!-- Number Spin Control -->
+                <div class="control-card">
+                    <h4><i class="fas fa-arrows-rotate"></i> Number Spin</h4>
+                    <div id="numberspin-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
+
+                    <label style="font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 10px;">FORCE NEXT RESULT (SELECT NUMBER)</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '2')">2</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '3')">3</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '4')">4</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '5')">5</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '6')">6</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px; background: #22c55e;" onclick="forceGame('numberspin', '7')">7</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '8')">8</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '9')">9</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '10')">10</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '11')">11</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px;" onclick="forceGame('numberspin', '12')">12</button>
+                        <button class="action-btn btn-edit" style="padding: 10px 5px; background: #3b82f6;" onclick="forceGame('numberspin', null)">RANDOM</button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button class="action-btn btn-unblock" style="flex:1" onclick="forceGame('numberspin', null, null, null, true)">AUTO PROFIT ON</button>
+                        <button class="action-btn btn-block" style="flex:1" onclick="forceGame('numberspin', null, null, null, false)">AUTO OFF</button>
+                    </div>
+                    <div id="live-bets-numberspin" class="live-bet-table"></div>
+                </div>
+
+                <!-- Ludo Control -->
+                <div class="control-card">
+                    <h4><i class="fas fa-gamepad"></i> Ludo Turbo</h4>
+                    <div id="ludo-active-games" style="font-size: 14px; margin-bottom: 10px;">Active Games: 0</div>
+                    <div id="live-bets-ludo" class="live-bet-table"></div>
+                </div>
+
+                <!-- Spin Game (Existing) -->
                 <div class="control-card">
                     <h4><i class="fas fa-arrows-rotate"></i> Spin Game</h4>
                     <div id="spin-timer" style="font-size: 14px; margin-bottom: 10px;">...</div>
@@ -351,13 +431,7 @@
                     <div id="live-bets-spin" class="live-bet-table"></div>
                 </div>
 
-                <!-- Lucky Draw -->
-                <div class="control-card">
-                    <h4><i class="fas fa-star"></i> Lucky Draw</h4>
-                    <div id="lucky-timer" style="font-size: 16px; font-weight: 700; color: #10b981; margin-bottom: 15px;">...</div>
-                    <button class="action-btn btn-unblock" style="width: 100%;" onclick="forceGame('luckydraw')">FORCE 777 NEXT</button>
-                    <div id="live-bets-lucky" class="live-bet-table"></div>
-                </div>
+                <!-- Lucky Draw (Replacement) -->
 
                 <!-- Rummy -->
                 <div class="control-card">
@@ -388,6 +462,17 @@
             </div>
         </div>
 
+        <!-- Pending KYC Section -->
+        <div id="section-kyc" style="display:none;">
+            <h2 style="margin-top:0">KYC Approval Queue</h2>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>User</th><th>Full Name</th><th>Aadhar/PAN</th><th>Account/IFSC</th><th>Actions</th></tr></thead>
+                    <tbody id="kyc-body"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="section-users" style="display:none;">
             <h2 style="margin-top:0">User Directory</h2>
             <div class="table-container"><table id="users-table"></table></div>
@@ -395,6 +480,22 @@
 
         <div id="section-deposits" style="display:none;"><h2>Deposit History</h2><div class="table-container"><table id="deposits-table"></table></div></div>
         <div id="section-withdrawals" style="display:none;"><h2>Withdrawal History</h2><div class="table-container"><table id="withdrawals-table"></table></div></div>
+
+        <!-- Teen Patti Card Modal -->
+        <div id="tp-card-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; padding:20px; overflow-y:auto;">
+            <div style="background:#1a1a20; border-radius:20px; padding:30px; border:2px solid var(--primary); max-width:600px; margin:auto; text-align:center;">
+                <h3 id="tp-modal-title">Set Player Cards</h3>
+                <div id="tp-card-selector" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin:25px 0;">
+                    <div>Card 1: <select id="tp-c1-r" class="input-dark"></select><select id="tp-c1-s" class="input-dark"></select></div>
+                    <div>Card 2: <select id="tp-c2-r" class="input-dark"></select><select id="tp-c2-s" class="input-dark"></select></div>
+                    <div>Card 3: <select id="tp-c3-r" class="input-dark"></select><select id="tp-c3-s" class="input-dark"></select></div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="action-btn btn-unblock" style="flex:1" onclick="saveTPCards()">SAVE CARDS</button>
+                    <button class="action-btn btn-block" style="flex:1" onclick="document.getElementById('tp-card-modal').style.display='none'">CANCEL</button>
+                </div>
+            </div>
+        </div>
 
         <!-- User History Modal -->
         <div id="history-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:40px; overflow-y:auto;">
@@ -434,28 +535,152 @@
 
                     if (s.aviatorState) {
                         const avi = s.aviatorState;
-                        const timerText = avi.isFlying ? "FLYING" : `BETTING: ${avi.timer}s`;
+                        let timerText = avi.isFlying ? "FLYING" : `BETTING: ${avi.timer}s`;
+
+                        if (avi.isFlying) {
+                            if (avi.isCrashed) {
+                                timerText = `CRASHED: ${avi.crashMultiplier.toFixed(2)}x`;
+                            } else if (avi.startTime) {
+                                const timeOffset = Date.now() - (s.serverTime || Date.now());
+                                const startTime = (avi.startTime || Date.now()) + timeOffset;
+                                const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
+                                const currentMult = Math.pow(1.1, elapsed).toFixed(2);
+                                timerText = `FLYING: ${currentMult}x`;
+                            }
+                        }
+
                         document.getElementById('aviator-timer').innerText = timerText;
                         document.getElementById('aviator-timer').style.color = avi.isFlying ? "#ef4444" : "#10b981";
 
                         const pot = (s.liveBets.aviator || []).reduce((a, b) => a + b.betAmount, 0);
                         document.getElementById('aviator-pot').innerText = `LIVE POT: ₹${pot.toFixed(2)}`;
+
+                        const cashoutBtn = document.getElementById('btn-toggle-cashout');
+                        if (avi.cashoutBlocked) {
+                            cashoutBtn.innerText = "ALLOW CASHOUT";
+                            cashoutBtn.onclick = () => toggleCashout(false);
+                            cashoutBtn.classList.remove('btn-edit');
+                            cashoutBtn.classList.add('btn-unblock');
+                        } else {
+                            cashoutBtn.innerText = "BLOCK CASHOUT";
+                            cashoutBtn.onclick = () => toggleCashout(true);
+                            cashoutBtn.classList.add('btn-edit');
+                            cashoutBtn.classList.remove('btn-unblock');
+                        }
                     }
 
-                    if (s.colorState) document.getElementById('color-timer').innerText = `Next Round: ${s.colorState.timer}s`;
+                    if (s.colorState) {
+                        const ct = s.colorState.timer;
+                        document.getElementById('color-timer').innerText = ct > 9 ? `Betting: ${ct - 9}s` : `ADMIN WINDOW: ${ct}s`;
+                        document.getElementById('color-timer').style.color = ct > 9 ? "#10b981" : "#ef4444";
+                    }
                     if (s.luckyState) document.getElementById('lucky-timer').innerText = `Lucky Draw: ${s.luckyState.timer}s`;
                     if (s.spinState) document.getElementById('spin-timer').innerText = `Spinning in: ${s.spinState.timer}s`;
                     if (s.bigSmallState) document.getElementById('bigsmall-timer').innerText = `Dice Roll: ${s.bigSmallState.timer}s`;
+                    if (s.numberspinState) document.getElementById('numberspin-timer').innerText = `Spinning in: ${s.numberspinState.timer}s`;
 
                     renderLiveBets('color', s.liveBets.color);
                     renderLiveBets('lucky', s.liveBets.luckydraw);
                     renderLiveBets('spin', s.liveBets.spin);
+                    renderLiveBets('numberspin', s.liveBets.numberspin);
                     renderLiveBets('bigsmall', s.liveBets.bigsmall);
-                    renderLiveBets('teenpatti', s.liveBets.teenpatti);
+                    renderTPAdvanced(s.liveBets.teenpatti);
                     renderLiveBets('rummy', s.liveBets.rummy);
                     renderLiveBets('aviator', s.liveBets.aviator);
+                    renderLiveBets('ludo', s.liveBets.ludo);
                 }
             } catch(e) {}
+        }
+
+        function renderTPAdvanced(tables) {
+            const container = document.getElementById('tp-advanced-container');
+            if (!container) return;
+            container.innerHTML = (tables || []).map(t => {
+                const players = Object.keys(t.players).map(uid => {
+                    const p = t.players[uid];
+                    const cards = p.hand.length > 0 ? p.hand.map(c => `<span style="color:${(c.suit==='♥'||c.suit==='♦')?'#ef4444':'#fff'}">${c.rank}${c.suit}</span>`).join(' ') : '---';
+                    const canEdit = p.status === 'ACTIVE' && (p.isBlind || t.state === 'WAITING' || t.state === 'DEALING');
+
+                    let statusLabel = p.status;
+                    if (p.status === 'ACTIVE') {
+                        statusLabel = p.isBlind ? 'BLIND' : 'SEEN';
+                    }
+
+                    const statusColor = p.status === 'PACKED' ? '#ef4444' : (p.isBlind ? '#334155' : '#10b981');
+
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background: ${p.status === 'PACKED' ? 'rgba(239, 68, 68, 0.05)' : (p.isBlind ? 'transparent' : 'rgba(16, 185, 129, 0.05)')}">
+                        <div style="font-size:10px;">
+                            <b style="color: ${p.isAdminBot ? '#ff4d4d' : (p.isBot ? '#fde047' : '#fff')}">${p.name} ${p.isAdminBot ? '[ADMIN]' : ''}</b>
+                            <span class="badge" style="background: ${statusColor}; font-size:8px;">${statusLabel}</span>
+                            <br><small style="font-family: monospace; font-size:11px;">${cards}</small>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button class="action-btn btn-edit" style="padding:4px 8px; font-size:9px; opacity: ${canEdit ? 1 : 0.4}"
+                                ${canEdit ? `onclick="openTPCardEditor('${t.id}', '${uid}', '${p.name}')"` : 'disabled'}
+                                >${canEdit ? 'EDIT' : 'LOCKED'}</button>
+                            ${p.status === 'ACTIVE' ? `<button class="action-btn btn-block" style="padding:4px 8px; font-size:9px;" onclick="forcePack('${t.id}', '${uid}')">PACK</button>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+
+                const stateColors = { 'WAITING': '#64748b', 'PLAYING': '#10b981', 'SHOW': '#3b82f6', 'DEALING': '#eab308' };
+
+                return `<div style="background:rgba(0,0,0,0.3); border-radius:12px; padding:15px; border:1px solid var(--glass-border);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                        <div>
+                            <span style="font-weight:800; color:var(--primary);">TABLE ${t.id}</span>
+                            <div class="badge" style="background:${stateColors[t.state] || '#333'}">${t.state} (${t.timer}s)</div>
+                        </div>
+                        <span style="font-size:12px; color:#10b981; font-weight:900;">Pot: ₹${t.pot}</span>
+                    </div>
+                    ${players || '<div style="font-size:10px; opacity:0.5;">Empty Table</div>'}
+                </div>`;
+            }).join('');
+        }
+
+        let editingTP = { tableId: null, userId: null };
+        function openTPCardEditor(tableId, userId, name) {
+            editingTP = { tableId, userId };
+            document.getElementById('tp-modal-title').innerText = `Edit Cards for ${name}`;
+            const suits = ['♠', '♥', '♦', '♣'];
+            const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+            for(let i=1; i<=3; i++) {
+                const rs = document.getElementById(`tp-c${i}-r`);
+                const ss = document.getElementById(`tp-c${i}-s`);
+                rs.innerHTML = ranks.map(r => `<option value="${r}">${r}</option>`).join('');
+                ss.innerHTML = suits.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+            document.getElementById('tp-card-modal').style.display = 'block';
+        }
+
+        async function saveTPCards() {
+            const hand = [];
+            for(let i=1; i<=3; i++) {
+                hand.push({
+                    rank: document.getElementById(`tp-c${i}-r`).value,
+                    suit: document.getElementById(`tp-c${i}-s`).value
+                });
+            }
+            const res = await fetch(`${API_URL}/api/admin/teenpatti/force-cards`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId: editingTP.tableId, userId: editingTP.userId, hand })
+            });
+            const data = await res.json();
+            alert(data.message);
+            document.getElementById('tp-card-modal').style.display = 'none';
+        }
+
+        async function forcePack(tableId, userId) {
+            if(!confirm("Force player to Pack?")) return;
+            const res = await fetch(`${API_URL}/api/admin/teenpatti/force-pack`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ tableId, userId })
+            });
+            const data = await res.json();
+            alert(data.message);
         }
 
         function renderLiveBets(game, bets) {
@@ -483,7 +708,7 @@
                 }
                 html += `</div>`;
 
-                // Show player list too
+                // Show player list
                 html += `<div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px; max-height:80px; overflow-y:auto;">
                     ${(bets || []).map(b => `<div style="font-size:10px; opacity:0.7; margin-bottom:3px;">${b.name}: ₹${b.amount} (${b.type} ${b.value})</div>`).join('')}
                 </div>`;
@@ -495,36 +720,146 @@
             if (game === 'bigsmall') {
                 const stats = statsData?.liveBets?.bigsmall;
                 if (!stats) return;
-                container.innerHTML = `<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span style="color:#34b4ff">BIG: ₹${stats.BIG}</span>
-                    <span style="color:#ef4444">SMALL: ₹${stats.SMALL}</span>
-                    <span style="color:#ffc107">TRIPLE: ₹${stats.TRIPLE}</span>
-                </div>
-                <div style="font-size:11px; color:var(--text-dim);">Bets: ${stats.bets.length}</div>`;
+                let html = `<div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
+                    <div style="color:#34b4ff; text-align:center;">BIG<br><b>₹${stats.BIG}</b></div>
+                    <div style="color:#8b5cf6; text-align:center;">TRIPLE<br><b>₹${stats.TRIPLE}</b></div>
+                    <div style="color:#ef4444; text-align:center;">SMALL<br><b>₹${stats.SMALL}</b></div>
+                </div>`;
+                html += `<div style="max-height:80px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                    ${(stats.bets || []).map(b => `<div style="font-size:10px; opacity:0.7; margin-bottom:3px;">${b.name}: ₹${b.amount} (${b.prediction})</div>`).join('')}
+                </div>`;
+                container.innerHTML = html;
                 return;
             }
 
-            if (game === 'teenpatti' || game === 'rummy') {
-                container.innerHTML = (bets || []).map(t => `<div style="padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);">Table ${t.id}: ${Object.keys(t.players).length} Players (Pot: ₹${t.pot})</div>`).join('') || "No active tables";
+            if (game === 'lucky') {
+                const s = statsData?.luckyState;
+                if (!s) return;
+                let html = `<div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-bottom:15px; font-size:12px; text-align:center;\">
+                    <div style=\"color:#10b981; background:rgba(16,185,129,0.1); padding:5px; border-radius:8px;\">ODD<br><b style=\"font-size:14px;\">₹${s.oddBets || 0}</b></div>
+                    <div style=\"color:#3b82f6; background:rgba(59,130,246,0.1); padding:5px; border-radius:8px;\">EVEN<br><b style=\"font-size:14px;\">₹${s.evenBets || 0}</b></div>
+                    <div style=\"color:#9d50bb; background:rgba(157,80,187,0.1); padding:5px; border-radius:8px;\">PAIR<br><b style=\"font-size:14px;\">₹${s.pairBets || 0}</b></div>
+                    <div style=\"color:#c017b2; background:rgba(192,23,178,0.1); padding:5px; border-radius:8px;\">TRI<br><b style=\"font-size:14px;\">₹${s.tripleBets || 0}</b></div>
+                    <div style=\"color:#f59e0b; background:rgba(245,158,11,0.1); padding:5px; border-radius:8px;\">JKP<br><b style=\"font-size:14px;\">₹${s.jackpotBets || 0}</b></div>
+                    <div style=\"color:#94a3b8; background:rgba(148,163,184,0.1); padding:5px; border-radius:8px;\">OTH<br><b style=\"font-size:14px;\">₹${s.otherBets || 0}</b></div>
+                </div>`;
+                html += `<div style=\"max-height:200px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;\">
+                    ${(s.bets || []).map(b => `<div style=\"font-size:13px; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(255,255,255,0.02);\">
+                        <div>
+                            <b style=\"color:#fff;\">${b.name}</b>
+                            <div style=\"font-size:10px; opacity:0.5;\">Selection</div>
+                        </div>
+                        <div style=\"text-align:right;\">
+                            <b style=\"color:#fde047; font-size:15px;\">₹${b.amount}</b>
+                            <br><span class=\"badge\" style=\"background:rgba(255,152,0,0.15); color:#ff9800; padding:2px 8px; font-size:10px; border:1px solid rgba(255,152,0,0.2);\">${b.selection}</span>
+                        </div>
+                    </div>`).join('')}
+                </div>`;
+                container.innerHTML = html;
                 return;
             }
 
-            const total = bets.reduce((a,b)=>a + (game==='aviator' ? b.betAmount : b.amount), 0);
+            if (game === 'numberspin') {
+                const s = statsData?.numberspinState;
+                if (!s) return;
+                let html = `<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-bottom:10px; font-size:10px; text-align:center;">
+                    <div style="color:#ef4444">DWN:<br><b>₹${s.downBets || 0}</b></div>
+                    <div style="color:#ffc107">MID:<br><b>₹${s.midBets || 0}</b></div>
+                    <div style="color:#10b981">UP:<br><b>₹${s.upBets || 0}</b></div>
+                </div>`;
+                html += `<div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:4px; font-size:9px;">`;
+                const numBets = s.numBets || {};
+                [2,3,4,5,6,8,9,10,11,12].forEach(n => {
+                    html += `<div style="background:rgba(255,255,255,0.05); padding:3px; text-align:center; border-radius:4px;">${n}: <b>₹${numBets[n] || 0}</b></div>`;
+                });
+                html += `</div>`;
+                html += `<div style="margin-top:10px; max-height:80px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                    ${(bets || []).map(b => `<div style="font-size:10px; opacity:0.7; margin-bottom:3px;">${b.name}: ₹${b.amount} (${b.selection})</div>`).join('')}
+                </div>`;
+                container.innerHTML = html;
+                return;
+            }
+
+            if (game === 'ludo') {
+                const games = statsData?.ludoState?.activeGames || [];
+                document.getElementById('ludo-active-games').innerText = `Active Games: ${games.length}`;
+                container.innerHTML = games.map(g => `
+                    <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(255,152,0,0.05); margin-bottom:5px; border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px;">
+                            <span>Room: ${g.id}</span>
+                            <span style="color:#fde047">Pot: ₹${(Number(g.id.split('_')[0]) * 1.8).toFixed(2)}</span>
+                        </div>
+                        <div style="font-size:10px; margin-top:4px;">
+                            ${Object.values(g.players).map(p => `
+                                <div style="display:flex; justify-content:space-between; color:${p.isBot?'#fde047':'#fff'}">
+                                    <span>${p.name} ${p.isBot?'[BOT]':''}</span>
+                                    <span>Score: ${g.scores[p.id]}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('') || "No active games";
+                return;
+            }
+
+            if (game === 'rummy') {
+                container.innerHTML = (bets || []).map(t => `
+                    <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(34,197,94,0.05); margin-bottom:5px; border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px;">
+                            <span>Table: ${t.id}</span>
+                            <span style="color:#10b981">Pot: ₹${t.pot}</span>
+                        </div>
+                        <div style="font-size:10px; margin-top:4px;">
+                            ${Object.values(t.players).map(p => `<div>${p.name}: ₹${p.betAmount}</div>`).join('')}
+                        </div>
+                    </div>
+                `).join('') || "No active games";
+                return;
+            }
+
+            const total = bets.reduce((a,b)=>a + (game==='aviator' ? b.betAmount : (b.amount || 0)), 0);
             container.innerHTML = `<div style="margin-bottom:8px; display:flex; justify-content:space-between"><span>Players: ${bets.length}</span> <span style="color:var(--primary)">₹${total}</span></div>`;
             if (bets.length > 0) {
                 container.innerHTML += `<div style="max-height:80px; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
-                    ${bets.slice(0, 10).map(b => `<div style="font-size:10px; opacity:0.7; margin-bottom:3px;">${b.name}: ₹${game==='aviator' ? b.betAmount : b.amount}</div>`).join('')}
+                    ${bets.slice(0, 10).map(b => `<div style="font-size:10px; opacity:0.7; margin-bottom:3px;">${b.name}: ₹${game==='aviator' ? b.betAmount : (b.amount || 0)}</div>`).join('')}
                     ${bets.length > 10 ? '<div style="font-size:9px; text-align:center;">...more...</div>' : ''}
                 </div>`;
             }
         }
 
         let statsData = null;
-        async function forceGame(game, result = null, tableId = null, number = null) {
+        async function forceLucky(type) {
+            let res = "";
+            if (type === 'ODD') {
+                while(true) {
+                    let n = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    let sum = n.split('').reduce((a,b)=>parseInt(a)+parseInt(b), 0);
+                    if(sum % 2 !== 0) { res = n; break; }
+                }
+            } else if (type === 'EVEN') {
+                while(true) {
+                    let n = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    let sum = n.split('').reduce((a,b)=>parseInt(a)+parseInt(b), 0);
+                    if(sum % 2 === 0) { res = n; break; }
+                }
+            } else if (type === 'PAIR') {
+                while(true) {
+                    let n = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    let d = n.split('');
+                    if(d[0]==d[1] || d[1]==d[2] || d[0]==d[2]) { res = n; break; }
+                }
+            } else if (type === 'TRIPLE') {
+                let d = Math.floor(Math.random() * 10).toString();
+                res = d + d + d;
+            }
+            forceGame('luckydraw', res);
+        }
+
+        async function forceGame(game, result = null, tableId = null, number = null, autoOpen = undefined) {
             const res = await fetch(`${API_URL}/api/admin/force-result`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ game, result, tableId, number })
+                body: JSON.stringify({ game, result, tableId, number, autoOpen })
             });
             const data = await res.json();
             alert(data.message);
@@ -551,6 +886,48 @@
             alert(data.message);
         }
 
+        async function crashAviatorNow() {
+            if (!confirm("Crash Aviator plane immediately?")) return;
+            // We need to send the "current" multiplier if we want to crash exactly now,
+            // but the server can just use 1.0 or whatever it's currently at.
+            const res = await fetch(`${API_URL}/api/admin/aviator/crash-now`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ multiplier: 1.0 })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        let isCashoutBlocked = false;
+        async function toggleCashout(blocked) {
+            const res = await fetch(`${API_URL}/api/admin/aviator/toggle-cashout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ blocked })
+            });
+            const data = await res.json();
+            if (data.success) {
+                isCashoutBlocked = blocked;
+                const btn = document.getElementById('btn-toggle-cashout');
+                btn.innerText = blocked ? "ALLOW CASHOUT" : "BLOCK CASHOUT";
+                btn.onclick = () => toggleCashout(!blocked);
+            }
+            alert(data.message);
+        }
+
+        async function updateCoins(userId) {
+            const coins = document.getElementById(`coins-${userId}`).value;
+            const res = await fetch(`${API_URL}/api/admin/update-coins`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId, coins: Number(coins) })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchUsers();
+        }
+
         function showSection(id) {
             document.querySelectorAll('.admin-main > div').forEach(d => d.style.display = 'none');
             document.getElementById('section-' + id).style.display = 'block';
@@ -564,6 +941,7 @@
             if(window.innerWidth < 1024) toggleSidebar();
 
             if(id === 'requests') fetchPendingRequests();
+            if(id === 'kyc') fetchPendingKYC();
             if(id === 'users') fetchUsers();
             if(id === 'deposits') fetchDeposits();
             if(id === 'withdrawals') fetchWithdrawals();
@@ -666,6 +1044,38 @@
             }
         }
 
+        async function fetchPendingKYC() {
+            const res = await fetch(`${API_URL}/api/admin/users`, { headers: { authorization: token } });
+            const users = await res.json();
+            const body = document.getElementById('kyc-body');
+            const pending = users.filter(u => u.kyc_status === 'pending');
+            body.innerHTML = pending.map(u => {
+                const k = u.kyc_data || {};
+                return `
+                    <tr>
+                        <td><b>${u.name}</b><br><small>${u.email}</small></td>
+                        <td>${k.full_name || 'N/A'}</td>
+                        <td>Aadhaar: ${k.aadhar_no || 'N/A'}<br>PAN: ${k.pan_no || 'N/A'}</td>
+                        <td>A/C: ${k.account_no || 'N/A'}<br>IFSC: ${k.ifsc_code || 'N/A'}</td>
+                        <td style="white-space:nowrap">
+                            <button class="action-btn btn-unblock" onclick="handleKYC('${u.id}', 'approve')">Approve</button>
+                            <button class="action-btn btn-block" onclick="handleKYC('${u.id}', 'reject')">Reject</button>
+                        </td>
+                    </tr>
+                `}).join('') || '<tr><td colspan="5" style="text-align:center">No pending KYC</td></tr>';
+        }
+
+        async function handleKYC(userId, action) {
+            const res = await fetch(`${API_URL}/api/admin/${action}-kyc`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchPendingKYC();
+        }
+
         async function handleRequest(requestId, action) {
             let reason = null;
             if (action === 'reject') {
@@ -686,7 +1096,7 @@
 
         function logout() { localStorage.removeItem("adminToken"); location.href = "login.html"; }
 
-        setInterval(fetchStats, 1000);
+        setInterval(fetchStats, 500);
         fetchStats();
     </script>
 </body>
