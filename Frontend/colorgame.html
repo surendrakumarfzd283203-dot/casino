@@ -236,7 +236,6 @@
     <div id="resPopup"></div>
 
     <!-- Audio Elements -->
-    <audio id="sndBg" src="sound/bg.mp3" loop></audio>
     <audio id="sndTick" src="sound/tick2.mp3"></audio>
     <audio id="sndFastTick" src="sound/fasrtick.mp3"></audio>
 
@@ -250,14 +249,8 @@
         let lastTimerValue = -1;
 
         // Initialize Audio
-        const sndBg = document.getElementById("sndBg");
         const sndTick = document.getElementById("sndTick");
         const sndFastTick = document.getElementById("sndFastTick");
-
-        // Interaction listener to start BG music (browsers block auto-play)
-        document.body.addEventListener('click', () => {
-            if (sndBg.paused) sndBg.play().catch(e => {});
-        }, { once: true });
 
         const grid = document.getElementById("numGrid");
         for(let i=1; i<=20; i++) {
@@ -277,18 +270,22 @@
             const timerEl = document.getElementById("timer");
             const btn = document.getElementById("confirmBtn");
 
-            // Sound Logic
+            // Sound Logic: Ensure no overlap and correct timing
             if (totalSecs !== lastTimerValue) {
-                if (totalSecs <= 39 && totalSecs > 9) {
-                    // Normal tick during last 30s of betting (39-9=30)
+                if (totalSecs >= 10 && totalSecs <= 39) {
+                    // Normal tick during betting phase (30s down to 1s)
+                    if (!sndFastTick.paused) { sndFastTick.pause(); sndFastTick.currentTime = 0; }
                     sndTick.currentTime = 0;
-                    sndTick.playbackRate = 1.0;
                     sndTick.play().catch(e => {});
-                } else if (totalSecs <= 9 && totalSecs > 0) {
-                    // Fast tick during last 9s
+                } else if (totalSecs > 0 && totalSecs <= 9) {
+                    // Fast tick during last 9s waiting phase
+                    if (!sndTick.paused) { sndTick.pause(); sndTick.currentTime = 0; }
                     sndFastTick.currentTime = 0;
-                    sndFastTick.playbackRate = 2.0; // Fasten the sound
                     sndFastTick.play().catch(e => {});
+                } else if (totalSecs === 0) {
+                    // Stop everything at 0
+                    sndTick.pause(); sndTick.currentTime = 0;
+                    sndFastTick.pause(); sndFastTick.currentTime = 0;
                 }
                 lastTimerValue = totalSecs;
             }
