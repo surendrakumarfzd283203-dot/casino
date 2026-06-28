@@ -571,8 +571,8 @@
 
                     if (s.colorState) {
                         const ct = s.colorState.timer;
-                        document.getElementById('color-timer').innerText = ct > 9 ? `Betting: ${ct - 9}s` : `ADMIN WINDOW: ${ct}s`;
-                        document.getElementById('color-timer').style.color = ct > 9 ? "#10b981" : "#ef4444";
+                        document.getElementById('color-timer').innerText = ct > 5 ? `Betting: ${ct - 5}s` : `ADMIN WINDOW: ${ct}s`;
+                        document.getElementById('color-timer').style.color = ct > 5 ? "#10b981" : "#ef4444";
                     }
                     if (s.luckyState) document.getElementById('lucky-timer').innerText = `Lucky Draw: ${s.luckyState.timer}s`;
                     if (s.spinState) document.getElementById('spin-timer').innerText = `Spinning in: ${s.spinState.timer}s`;
