@@ -6,7 +6,7 @@
     <title>Ludo Turbo | Solo Casino</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         :root {
             --red-main: #ff3232; --red-light: #ff7676;
@@ -118,6 +118,8 @@
 
         #search-overlay { position: fixed; inset: 0; background: rgba(0,21,41,0.95); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         #result-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -139,7 +141,6 @@
     <div id="search-overlay">
         <div style="width:50px; height:50px; border:5px solid #333; border-top-color:#f1c40f; border-radius:50%; animation:spin 1s infinite linear;"></div>
         <h2 style="margin-top: 25px; font-weight: 800;">Finding Opponent...</h2>
-        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
     </div>
 
     <div class="header">
@@ -199,7 +200,8 @@
             <span class="emoji-btn" onclick="sendEmoji('😮')">😮</span>
         </div>
         <div class="chat-row">
-            <input type="text" id="chatInput" class="chat-input" placeholder="Chat here..." onkeypress="if(event.key==='Enter') sendChat()">
+            <label for="chatInput" style="display:none">Chat</label>
+            <input type="text" id="chatInput" class="chat-input" placeholder="Chat here..." onkeydown="if(event.key==='Enter') sendChat()">
             <button class="send-btn" onclick="sendChat()">SEND</button>
         </div>
     </div>
