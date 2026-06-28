@@ -652,9 +652,13 @@
                     <i class="fas fa-user"></i>
                     <span>Profile</span>
                 </a>
-                <a href="#" onclick="window.open('https://t.me/your_helpdesk', '_blank')" class="menu-item">
+                <a href="#" onclick="logout()" class="menu-item" style="color: #ff4d4d;">
+                    <i class="fas fa-power-off" style="color: #ff4d4d;"></i>
+                    <span>Logout</span>
+                </a>
+                <a href="#" onclick="window.open('https://t.me/your_helpdesk', '_blank')" class="menu-item" style="grid-column: span 3;">
                     <i class="fas fa-headset"></i>
-                    <span>Support</span>
+                    <span>Support Helpdesk</span>
                 </a>
             </div>
         </div>
@@ -667,10 +671,10 @@
 
         // Fast Load Caching Mechanism for Instant Loading
         if (localStorage.getItem("cached_name")) {
-            document.getElementById("userName").innerText = localStorage.getItem("cached_name");
+            document.getElementById("headerUserName").innerText = localStorage.getItem("cached_name");
         }
         if (localStorage.getItem("cached_coins")) {
-            document.getElementById("coins").innerText = parseFloat(localStorage.getItem("cached_coins")).toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById("headerCoins").innerText = parseFloat(localStorage.getItem("cached_coins")).toLocaleString(undefined, {minimumFractionDigits: 2});
         }
         if (localStorage.getItem("cached_ref")) {
             document.getElementById("referralCode").innerText = localStorage.getItem("cached_ref");
@@ -694,10 +698,8 @@
                 }
 
                 // Update UI instantly
-                document.getElementById("userName").innerText = data.user.name;
                 document.getElementById("headerUserName").innerText = data.user.name;
                 const coinsFormatted = data.user.coins.toLocaleString(undefined, {minimumFractionDigits: 2});
-                document.getElementById("coins").innerText = coinsFormatted;
                 document.getElementById("headerCoins").innerText = coinsFormatted;
                 document.getElementById("referralCode").innerText = data.user.referral_code || "N/A";
 
