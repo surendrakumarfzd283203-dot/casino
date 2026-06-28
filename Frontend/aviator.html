@@ -829,6 +829,12 @@
             }
 
             if (data.isFlying) {
+                // Stop Tick sound if flying or crashed
+                if (sndTick) {
+                    sndTick.pause();
+                    sndTick.currentTime = 0;
+                }
+
                 if (data.isCrashed) {
                     if (!isCrashed) {
                         endFlight();
@@ -842,6 +848,12 @@
                         isFlying = true;
                         isCrashed = false;
                         document.getElementById("multiplier").style.color = "white";
+
+                        // Stop Tick sound immediately when flight starts
+                        if (sndTick) {
+                            sndTick.pause();
+                            sndTick.currentTime = 0;
+                        }
 
                         // Critical Sync: Adjust client startTime with server offset
                         const serverNow = data.serverTime || Date.now();
@@ -875,8 +887,15 @@
                 // Tik Tik sound logic
                 if (data.timer !== lastTimerValue && data.timer > 0) {
                     lastTimerValue = data.timer;
-                    sndTick.currentTime = 0;
-                    sndTick.play().catch(e => {});
+                    if (sndTick) {
+                        sndTick.currentTime = 0;
+                        sndTick.play().catch(e => {});
+                    }
+                } else if (data.timer === 0) {
+                    if (sndTick) {
+                        sndTick.pause();
+                        sndTick.currentTime = 0;
+                    }
                 }
 
                 if (!isCrashed) {
