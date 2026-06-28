@@ -320,7 +320,6 @@ app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
             return res.json({ success: false, message: "Minimum withdrawal is 100" });
         }
 
-        const user = await User.findById(req.user.id);
         if (user.coins < parsedAmount) {
             return res.json({ success: false, message: "Insufficient coins" });
         }
