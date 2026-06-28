@@ -8,7 +8,6 @@ class LudoManager {
         this.io = null;
 
         this.SAFE_POSITIONS = [1, 9, 14, 22, 27, 35, 40, 48];
-        // Positions for 4 colors: 0:Red, 1:Blue, 2:Yellow, 3:Green
         this.START_POSITIONS = { 0: 1, 1: 14, 2: 27, 3: 40 };
         this.HOME_PATH_START = { 0: 51, 1: 12, 2: 25, 3: 38 };
         this.TOTAL_CELLS = 52;
@@ -41,26 +40,23 @@ class LudoManager {
                 if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 6) this.addBot(roomId);
+                if (room.waitingTime >= 15) { // Increased to 15s to allow user vs user
+                    this.addBot(roomId);
+                }
             }
         }
     }
 
     addBot(roomId) {
         const room = this.rooms[roomId];
-        if (!room || room.players.length >= 2) return;
+        if (!room || room.players.length >= 2 || room.gameState === 'PLAYING') return;
 
         const botName = this.BOT_NAMES[Math.floor(Math.random() * this.BOT_NAMES.length)];
         const botAvatar = this.BOT_AVATARS[Math.floor(Math.random() * this.BOT_AVATARS.length)];
         const botId = "bot_" + Math.random().toString(36).substr(2, 9);
 
-        // Opposite color selection for 2 players
-        // Red(0) vs Yellow(2) or Blue(1) vs Green(3)
         const playerColor = room.players[0].color;
-        let botColor = 2; // Default Yellow
-        if (playerColor === 1) botColor = 3; // Blue vs Green
-        else if (playerColor === 2) botColor = 0; // Yellow vs Red
-        else if (playerColor === 3) botColor = 1; // Green vs Blue
+        const botColor = (playerColor + 2) % 4; // Use opposite corner
 
         room.players.push({
             id: botId, name: botName, avatar: botAvatar, socketId: null,
@@ -69,7 +65,6 @@ class LudoManager {
 
         room.boardState.tokens[botColor] = [-1, -1, -1, -1];
         room.gameState = 'PLAYING';
-        room.turn = 0; // Human always starts or random?
         this.startGame(roomId);
     }
 
@@ -78,16 +73,17 @@ class LudoManager {
         const name = socket.user.name;
         const avatar = socket.user.avatar;
 
+        // Try to find an existing human player waiting
         let roomId = Object.keys(this.rooms).find(id =>
             this.rooms[id].gameState === 'WAITING' &&
             this.rooms[id].stake === stake &&
-            this.rooms[id].players.length === 1
+            this.rooms[id].players.length === 1 &&
+            !this.rooms[id].players[0].isBot
         );
 
         if (!roomId) {
             roomId = `ludo_${Date.now()}_${userId}`;
-            // Randomly assign player color 0:Red or 1:Blue
-            const color = Math.floor(Math.random() * 2);
+            const color = Math.floor(Math.random() * 4);
             this.rooms[roomId] = {
                 id: roomId, stake: stake,
                 players: [{
@@ -103,7 +99,7 @@ class LudoManager {
             if (room.players[0].id === userId.toString()) return;
 
             const playerColor = room.players[0].color;
-            const myColor = (playerColor === 0) ? 2 : 3; // Red->Yellow, Blue->Green
+            const myColor = (playerColor + 2) % 4; // Human vs Human also uses opposite colors
 
             room.players.push({
                 id: userId.toString(), name, avatar, socketId: socket.id,
@@ -111,7 +107,7 @@ class LudoManager {
             });
             room.boardState.tokens[myColor] = [-1, -1, -1, -1];
             room.gameState = 'PLAYING';
-            room.turn = 0;
+            room.turn = Math.floor(Math.random() * 2);
             this.startGame(roomId);
         }
         socket.join(roomId);
@@ -137,17 +133,21 @@ class LudoManager {
         if (!room || room.gameState !== 'PLAYING') return;
         const currentPlayer = room.players[room.turn];
         if (currentPlayer.isBot) {
+            // Bot rolls
             setTimeout(() => {
-                if (!room.rolled) {
+                if (!room.rolled && room.gameState === 'PLAYING') {
                     this.rollDice(currentPlayer.id, roomId);
+                    // Bot moves
                     setTimeout(() => {
-                        const possible = this.getPossibleMoves(roomId);
-                        if (possible.length > 0) {
-                            this.moveToken(currentPlayer.id, roomId, possible[Math.floor(Math.random() * possible.length)]);
+                        if (room.gameState === 'PLAYING') {
+                            const possible = this.getPossibleMoves(roomId);
+                            if (possible.length > 0) {
+                                this.moveToken(currentPlayer.id, roomId, possible[Math.floor(Math.random() * possible.length)]);
+                            }
                         }
-                    }, 1000);
+                    }, 1500);
                 }
-            }, 1500);
+            }, 2000);
         }
     }
 
@@ -282,17 +282,16 @@ class LudoManager {
     async endGameByScore(roomId) {
         const room = this.rooms[roomId];
         if (!room) return;
-        const p1 = room.players[0];
-        const p2 = room.players[1];
-        let winnerId = p1.score >= p2.score ? p1.id : p2.id;
-        this.endGame(roomId, winnerId);
+        const scores = room.players.map(p => p.score);
+        let winnerIdx = scores[0] >= scores[1] ? 0 : 1;
+        this.endGame(roomId, room.players[winnerIdx].id);
     }
 
     async endGameByMiss(roomId, loserId) {
         const room = this.rooms[roomId];
         if (!room) return;
         const winner = room.players.find(p => p.id !== loserId);
-        this.endGame(roomId, winner.id);
+        if (winner) this.endGame(roomId, winner.id);
     }
 
     async endGame(roomId, winnerId) {
@@ -324,7 +323,7 @@ class LudoManager {
         if (!room) return;
         this.io.to(roomId).emit('ludo_state', {
             id: room.id,
-            players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, color: p.color, score: p.score, misses: p.misses })),
+            players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, color: p.color, score: p.score, misses: p.misses, isBot: p.isBot })),
             gameState: room.gameState, board: room.boardState,
             turn: room.turn, dice: room.dice, rolled: room.rolled,
             turnDeadline: room.turnDeadline, gameTimer: room.gameTimer
