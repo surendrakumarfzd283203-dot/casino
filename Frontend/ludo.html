@@ -352,8 +352,13 @@
             myId = socket.user?.id || socket.user?._id;
             myPlayerIndex = state.players.findIndex(p => p.id === myId?.toString());
 
+            if (myPlayerIndex === -1) {
+                console.log("Waiting for profile...");
+                return;
+            }
+
             const me = state.players[myPlayerIndex];
-            const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", score: 0 };
+            const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", score: 0, color: 1 };
             const colorNames = ['red', 'blue', 'yellow', 'green'];
 
             document.getElementById('my-name').innerText = me.name;
