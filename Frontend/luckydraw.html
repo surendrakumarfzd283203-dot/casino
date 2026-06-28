@@ -227,6 +227,7 @@
 
     <audio id="sndSpin" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
     <audio id="sndWin" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
+    <audio id="sndTick" src="sound/fasrtick.mp3"></audio>
 
     <script src="js/config.js"></script>
     <script>
@@ -235,6 +236,10 @@
         let lastRoundId = null;
         let myCurrentBets = [];
         let selectedPrediction = 'ODD';
+        let lastTimerValue = -1;
+
+        // Initialize Audio
+        const sndTick = document.getElementById("sndTick");
 
         function selectPrediction(p) {
             selectedPrediction = p;
@@ -250,8 +255,24 @@
                 if (data.success) {
                     const secs = data.timer;
                     document.getElementById("timer").innerText = `Next Draw: ${secs}s`;
-                    if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
+                    if(secs < 4) document.getElementById("timer").style.color = "#ef4444";
                     else document.getElementById("timer").style.color = "var(--gold)";
+
+                    // Timer Sound (fasrtick.mp3)
+                    if (secs !== lastTimerValue) {
+                        if (secs > 0 && secs <= 10) {
+                            if (sndTick) {
+                                sndTick.currentTime = 0;
+                                sndTick.play().catch(e => {});
+                            }
+                        } else if (secs === 0) {
+                            if (sndTick) {
+                                sndTick.pause();
+                                sndTick.currentTime = 0;
+                            }
+                        }
+                        lastTimerValue = secs;
+                    }
 
                     if (data.history && data.history.length > 0) {
                         const last = data.history[0];
@@ -265,7 +286,7 @@
                         }
                     }
 
-                    if (data.timer < 5) {
+                    if (data.timer < 3) {
                         startRolling();
                         document.getElementById("betBtn").disabled = true;
                         document.getElementById("cancelBtn").disabled = true;
@@ -277,7 +298,7 @@
                         document.getElementById("betBtn").innerText = "PLACE BET";
 
                         // Sync result if round just ended
-                        if (data.timer > 15) {
+                        if (data.timer > 7) {
                             stopRolling(data.history[0]?.result || "777");
                         }
                     }

@@ -6,7 +6,7 @@ const { checkReferralReward } = require("../utils/referral");
 class LuckyDrawManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 20;
+        this.timer = 10;
         this.bets = []; // { userId, name, amount, selection: 'ODD'|'EVEN'|'JACKPOT' }
         this.history = [];
         this.forcedResult = null;
@@ -93,7 +93,7 @@ class LuckyDrawManager {
         if (this.history.length > 50) this.history.pop();
 
         this.roundId = Date.now();
-        this.timer = 20;
+        this.timer = 10;
         this.bets = [];
         this.forcedResult = null;
         this.isResolving = false;
