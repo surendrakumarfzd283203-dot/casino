@@ -284,8 +284,10 @@
     <div style="font-weight: 800; font-size: 14px; margin-top: 10px; opacity: 0.7;">RECENT RESULTS</div>
     <div class="history-list" id="history"></div>
 
-    <audio id="sndDice" src="https://assets.mixkit.co/active_storage/sfx/1018/1018-preview.mp3"></audio>
-    <audio id="sndWin" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
+    <audio id="sndDice" src="sound/dice.mp3"></audio>
+    <audio id="sndTick" src="sound/fasrtick.mp3"></audio>
+    <audio id="sndWin" src="sound/win.mp3"></audio>
+    <audio id="sndLose" src="sound/lose.mp3"></audio>
 
     <script src="js/config.js"></script>
     <script>
@@ -293,6 +295,12 @@
         let selectedValue = null;
         let myCurrentBets = [];
         let lastRoundId = null;
+        let lastTimerValue = -1;
+        let isDicePlaying = false;
+
+        // Initialize Audio
+        const sndDice = document.getElementById("sndDice");
+        const sndTick = document.getElementById("sndTick");
 
         async function fetchState() {
             try {
@@ -305,14 +313,25 @@
         function updateUI(data) {
             const secs = data.timer;
             document.getElementById("timer").innerText = `00:${secs.toString().padStart(2, '0')}`;
-            if(secs < 5) document.getElementById("timer").style.color = "#ef4444";
+            if(secs < 4) document.getElementById("timer").style.color = "#ef4444";
             else document.getElementById("timer").style.color = "var(--gold)";
+
+            // Timer Sound (fasrtick.mp3)
+            if (secs !== lastTimerValue) {
+                if (secs > 0 && secs <= 10 && data.timer >= 1) {
+                    if (sndTick) {
+                        sndTick.currentTime = 0;
+                        sndTick.play().catch(e => {});
+                    }
+                }
+                lastTimerValue = secs;
+            }
 
             const confirmBtn = document.getElementById("confirmBtn");
             const cancelBtn = document.getElementById("cancelBtn");
             const dice = document.querySelectorAll(".die");
 
-            if (data.timer < 5) {
+            if (data.timer < 1) {
                 confirmBtn.disabled = true;
                 confirmBtn.innerText = "WAITING...";
                 cancelBtn.disabled = true;
@@ -320,8 +339,12 @@
                     d.classList.add("rolling-die");
                     d.innerText = Math.floor(Math.random() * 6) + 1;
                 });
-                if(data.timer === 1) document.getElementById("sndDice").play().catch(e=>{});
+                if(data.timer === 0 && !isDicePlaying) {
+                    isDicePlaying = true;
+                    if(sndDice) sndDice.play().catch(e=>{});
+                }
             } else {
+                isDicePlaying = false;
                 dice.forEach(d => d.classList.remove("rolling-die"));
                 confirmBtn.disabled = false;
                 confirmBtn.innerText = "PLACE BET";

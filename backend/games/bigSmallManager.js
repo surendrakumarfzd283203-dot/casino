@@ -6,7 +6,7 @@ const { checkReferralReward } = require("../utils/referral");
 class BigSmallManager {
     constructor() {
         this.roundId = Date.now();
-        this.timer = 20;
+        this.timer = 10;
         this.bets = []; // { userId, name, prediction, amount }
         this.history = [];
         this.forcedResult = null;
@@ -100,7 +100,7 @@ class BigSmallManager {
 
         setTimeout(() => {
             this.roundId = Date.now();
-            this.timer = 20;
+            this.timer = 10;
             this.bets = [];
             this.forcedResult = null;
             this.isResolving = false;
