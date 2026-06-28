@@ -40,7 +40,7 @@ class LudoManager {
                 if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 5) { // Faster bot join (5 seconds)
+                if (room.waitingTime >= 5) { // Match within 5 seconds or add bot
                     this.addBot(roomId);
                 }
             }
@@ -150,7 +150,7 @@ class LudoManager {
                         }
                     }, 1000);
                 }
-            }, 1000); // Faster bot roll (1 second)
+            }, 1000);
         }
     }
 
