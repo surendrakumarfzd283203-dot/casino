@@ -252,6 +252,7 @@
         async function fetchState() {
             if (!canFetchState) return;
             try {
+                const res = await fetch(`${API_URL}/api/game/luckydraw/state`, { headers: { authorization: token } });
                 const data = await res.json();
                 if (data.success) {
                     const secs = data.timer;
