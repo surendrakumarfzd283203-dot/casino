@@ -264,7 +264,8 @@
         </div>
 
         <a class="sidebar-link active" onclick="showSection('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</a>
-        <a class="sidebar-link" onclick="showSection('requests')"><i class="fas fa-hourglass-half"></i> Pending Requests</a>
+        <a class="sidebar-link" onclick="showSection('requests')"><i class="fas fa-hourglass-half"></i> Pending Payments</a>
+        <a class="sidebar-link" onclick="showSection('kyc')"><i class="fas fa-id-card"></i> Pending KYC</a>
         <a class="sidebar-link" onclick="showSection('users')"><i class="fas fa-user-group"></i> Users</a>
         <a class="sidebar-link" onclick="showSection('deposits')"><i class="fas fa-arrow-trend-up"></i> Deposits</a>
         <a class="sidebar-link" onclick="showSection('withdrawals')"><i class="fas fa-arrow-trend-down"></i> Withdrawals</a>
@@ -457,6 +458,17 @@
                 <table>
                     <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Details</th><th>Actions</th></tr></thead>
                     <tbody id="requests-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pending KYC Section -->
+        <div id="section-kyc" style="display:none;">
+            <h2 style="margin-top:0">KYC Approval Queue</h2>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>User</th><th>Full Name</th><th>Aadhar/PAN</th><th>Account/IFSC</th><th>Actions</th></tr></thead>
+                    <tbody id="kyc-body"></tbody>
                 </table>
             </div>
         </div>
@@ -929,6 +941,7 @@
             if(window.innerWidth < 1024) toggleSidebar();
 
             if(id === 'requests') fetchPendingRequests();
+            if(id === 'kyc') fetchPendingKYC();
             if(id === 'users') fetchUsers();
             if(id === 'deposits') fetchDeposits();
             if(id === 'withdrawals') fetchWithdrawals();
@@ -1029,6 +1042,38 @@
                     </tr>
                 `).join('');
             }
+        }
+
+        async function fetchPendingKYC() {
+            const res = await fetch(`${API_URL}/api/admin/users`, { headers: { authorization: token } });
+            const users = await res.json();
+            const body = document.getElementById('kyc-body');
+            const pending = users.filter(u => u.kyc_status === 'pending');
+            body.innerHTML = pending.map(u => {
+                const k = u.kyc_data || {};
+                return `
+                    <tr>
+                        <td><b>${u.name}</b><br><small>${u.email}</small></td>
+                        <td>${k.full_name || 'N/A'}</td>
+                        <td>Aadhaar: ${k.aadhar_no || 'N/A'}<br>PAN: ${k.pan_no || 'N/A'}</td>
+                        <td>A/C: ${k.account_no || 'N/A'}<br>IFSC: ${k.ifsc_code || 'N/A'}</td>
+                        <td style="white-space:nowrap">
+                            <button class="action-btn btn-unblock" onclick="handleKYC('${u.id}', 'approve')">Approve</button>
+                            <button class="action-btn btn-block" onclick="handleKYC('${u.id}', 'reject')">Reject</button>
+                        </td>
+                    </tr>
+                `}).join('') || '<tr><td colspan="5" style="text-align:center">No pending KYC</td></tr>';
+        }
+
+        async function handleKYC(userId, action) {
+            const res = await fetch(`${API_URL}/api/admin/${action}-kyc`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchPendingKYC();
         }
 
         async function handleRequest(requestId, action) {

@@ -144,7 +144,7 @@
             <!-- KYC Check -->
             <div id="kyc-container" style="display: none;">
                 <h3 style="color: var(--casino-gold); text-align: center;"><i class="fas fa-id-card"></i> KYC VERIFICATION REQUIRED</h3>
-                <p style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">Please complete your KYC to enable withdrawals.</p>
+                <p style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">Please complete your KYC to enable withdrawals. Your withdrawal will be sent to the bank account provided here.</p>
 
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     <input type="text" id="kycFullName" placeholder="Full Name (as per Bank)">
@@ -152,21 +152,29 @@
                     <input type="text" id="kycPan" placeholder="PAN Number">
                     <input type="text" id="kycAccount" placeholder="Bank Account Number">
                     <input type="text" id="kycIfsc" placeholder="IFSC Code">
-                    <button class="button-primary" style="width: 100%; height: 50px; margin-top: 10px;" onclick="submitKYC()">VERIFY KYC</button>
+                    <button class="button-primary" style="width: 100%; height: 50px; margin-top: 10px;" onclick="submitKYC()">SUBMIT KYC FOR APPROVAL</button>
                 </div>
+            </div>
+
+            <div id="kyc-pending" style="display: none; text-align: center; padding: 20px;">
+                <i class="fas fa-clock" style="font-size: 50px; color: var(--casino-gold); margin-bottom: 15px;"></i>
+                <h3 style="color: var(--casino-gold);">KYC PENDING</h3>
+                <p style="color: #888;">Your KYC is under review by admin. Payouts will be enabled once verified.</p>
             </div>
 
             <div id="withdraw-form" style="display: none;">
                 <h3 style="color: var(--accent-red);"><i class="fas fa-university"></i> WITHDRAW WINNINGS</h3>
                 <div style="margin: 20px 0;">
-                    <label>Withdraw Amount (INR)</label>
-                    <input type="number" id="withdrawAmount" placeholder="Min 100">
+                    <div id="bankInfoBox" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; border: 1px solid var(--glass-border);">
+                        <p style="margin: 0; color: #888;">Withdrawals will be sent to:</p>
+                        <b id="displayAccount" style="color: var(--casino-gold);">Loading...</b>
+                    </div>
 
-                    <label style="margin-top: 15px;">Your UPI ID</label>
-                    <input type="text" id="withdrawUpi" placeholder="example@ybl">
+                    <label>Withdraw Amount (INR)</label>
+                    <input type="number" id="withdrawAmount" placeholder="Min 200">
 
                     <p style="font-size: 11px; color: var(--text-dim); margin-top: 10px;">
-                        <i class="fas fa-clock"></i> Payouts are processed within 24 hours to your bank account via UPI.
+                        <i class="fas fa-clock"></i> Payouts are processed within 24 hours directly to your bank account.
                     </p>
 
                     <button class="button-primary" style="width: 100%; height: 55px; margin-top: 20px;" onclick="submitWithdraw()">REQUEST PAYOUT</button>
@@ -199,12 +207,23 @@
                 document.getElementById('mainBalance').innerText = data.user.coins.toLocaleString() + " INR";
 
                 // KYC Logic
-                if (data.user.kyc_status === 'verified') {
+                const user = data.user;
+                if (user.kyc_status === 'verified') {
                     document.getElementById('withdraw-form').style.display = 'block';
                     document.getElementById('kyc-container').style.display = 'none';
+                    document.getElementById('kyc-pending').style.display = 'none';
+
+                    // Show bank info
+                    const k = user.kyc_data || {};
+                    document.getElementById('displayAccount').innerText = `${k.account_no} (${k.ifsc_code})`;
+                } else if (user.kyc_status === 'pending') {
+                    document.getElementById('withdraw-form').style.display = 'none';
+                    document.getElementById('kyc-container').style.display = 'none';
+                    document.getElementById('kyc-pending').style.display = 'block';
                 } else {
                     document.getElementById('withdraw-form').style.display = 'none';
                     document.getElementById('kyc-container').style.display = 'block';
+                    document.getElementById('kyc-pending').style.display = 'none';
                 }
             }
         }
@@ -279,19 +298,19 @@
 
         async function submitWithdraw() {
             const amount = document.getElementById('withdrawAmount').value;
-            const upiId = document.getElementById('withdrawUpi').value;
-            if(!amount || !upiId) return alert("Fill all fields");
+            if(!amount || amount < 200) return alert("Minimum withdrawal is 200");
 
             const res = await fetch(`${API_URL}/api/wallet/request-withdrawal`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ amount, upiId })
+                body: JSON.stringify({ amount })
             });
             const data = await res.json();
             alert(data.message);
             if(data.success) {
                 document.getElementById('withdrawAmount').value = '';
                 fetchHistory();
+                fetchWallet();
             }
         }
 

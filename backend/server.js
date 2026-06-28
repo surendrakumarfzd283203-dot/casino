@@ -228,7 +228,7 @@ app.post("/api/kyc/submit", auth, async (req, res) => {
         }
 
         await User.findByIdAndUpdate(req.user.id, {
-            kyc_status: "verified", // Auto-verify for now as per user preference often, or set to 'pending'
+            kyc_status: "pending",
             kyc_data: {
                 full_name: fullName,
                 aadhar_no: aadharNo,
@@ -238,10 +238,26 @@ app.post("/api/kyc/submit", auth, async (req, res) => {
             }
         });
 
-        res.json({ success: true, message: "KYC Verified Successfully" });
+        res.json({ success: true, message: "KYC Submitted. Waiting for admin approval." });
     } catch (error) {
         res.status(500).json({ success: false, message: "Error submitting KYC" });
     }
+});
+
+app.post("/api/admin/approve-kyc", adminAuth, async (req, res) => {
+    try {
+        const { userId } = req.body;
+        await User.findByIdAndUpdate(userId, { kyc_status: "verified" });
+        res.json({ success: true, message: "KYC Approved" });
+    } catch (e) { res.json({ success: false }); }
+});
+
+app.post("/api/admin/reject-kyc", adminAuth, async (req, res) => {
+    try {
+        const { userId } = req.body;
+        await User.findByIdAndUpdate(userId, { kyc_status: "rejected" });
+        res.json({ success: true, message: "KYC Rejected" });
+    } catch (e) { res.json({ success: false }); }
 });
 
 app.post("/api/change-password", auth, async (req, res) => {
@@ -308,7 +324,7 @@ app.get("/api/transactions", auth, async (req, res) => {
 
 app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
     try {
-        const { amount, upiId, note } = req.body;
+        const { amount, note } = req.body;
 
         const user = await User.findById(req.user.id);
         if (user.kyc_status !== 'verified') {
@@ -316,8 +332,8 @@ app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
         }
 
         const parsedAmount = Number(amount);
-        if (!parsedAmount || parsedAmount < 100) {
-            return res.json({ success: false, message: "Minimum withdrawal is 100" });
+        if (!parsedAmount || parsedAmount < 200) {
+            return res.json({ success: false, message: "Minimum withdrawal is 200" });
         }
 
         if (user.coins < parsedAmount) {
@@ -332,13 +348,15 @@ app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
         user.coins -= parsedAmount;
         await user.save();
 
+        const bankDetails = `Bank: ${user.kyc_data.account_no} | IFSC: ${user.kyc_data.ifsc_code} | Name: ${user.kyc_data.full_name}`;
+
         const txn = new Transaction({
             user_id: req.user.id,
             amount: -parsedAmount,
             type: "withdraw",
             status: "pending",
             commission: commission,
-            details: `Withdrawal request to ${upiId}. Final amount: ${finalAmount} (Comm: ${commission})`
+            details: `Withdrawal to Bank Account. ${bankDetails}. Final amount: ${finalAmount} (Comm: ${commission})`
         });
         await txn.save();
 

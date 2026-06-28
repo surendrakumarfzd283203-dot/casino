@@ -466,6 +466,7 @@
     <header>
         <div class="logo">Solo Casino</div>
         <div class="header-actions">
+            <span id="headerUserName" style="font-size: 12px; font-weight: 800; color: #fff; margin-right: -5px;">...</span>
             <div class="header-wallet" onclick="location.href='wallet.html'">
                 <i class="fas fa-coins"></i>
                 <span id="headerCoins">0.00</span>
@@ -694,6 +695,7 @@
 
                 // Update UI instantly
                 document.getElementById("userName").innerText = data.user.name;
+                document.getElementById("headerUserName").innerText = data.user.name;
                 const coinsFormatted = data.user.coins.toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById("coins").innerText = coinsFormatted;
                 document.getElementById("headerCoins").innerText = coinsFormatted;
