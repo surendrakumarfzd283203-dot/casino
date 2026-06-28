@@ -8,6 +8,7 @@ class LudoManager {
         this.io = null;
 
         this.SAFE_POSITIONS = [1, 9, 14, 22, 27, 35, 40, 48];
+        // Standard Ludo Layout: 0:Red(TL), 1:Blue(TR), 2:Yellow(BR), 3:Green(BL)
         this.START_POSITIONS = { 0: 1, 1: 14, 2: 27, 3: 40 };
         this.HOME_PATH_START = { 0: 51, 1: 12, 2: 25, 3: 38 };
         this.TOTAL_CELLS = 52;
@@ -40,9 +41,7 @@ class LudoManager {
                 if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 15) { // Increased to 15s to allow user vs user
-                    this.addBot(roomId);
-                }
+                if (room.waitingTime >= 10) this.addBot(roomId);
             }
         }
     }
@@ -56,7 +55,7 @@ class LudoManager {
         const botId = "bot_" + Math.random().toString(36).substr(2, 9);
 
         const playerColor = room.players[0].color;
-        const botColor = (playerColor + 2) % 4; // Use opposite corner
+        const botColor = (playerColor + 2) % 4; // Always opposite corner
 
         room.players.push({
             id: botId, name: botName, avatar: botAvatar, socketId: null,
@@ -73,16 +72,15 @@ class LudoManager {
         const name = socket.user.name;
         const avatar = socket.user.avatar;
 
-        // Try to find an existing human player waiting
         let roomId = Object.keys(this.rooms).find(id =>
             this.rooms[id].gameState === 'WAITING' &&
             this.rooms[id].stake === stake &&
-            this.rooms[id].players.length === 1 &&
-            !this.rooms[id].players[0].isBot
+            this.rooms[id].players.length === 1
         );
 
         if (!roomId) {
             roomId = `ludo_${Date.now()}_${userId}`;
+            // Randomly assign player to one of the corners
             const color = Math.floor(Math.random() * 4);
             this.rooms[roomId] = {
                 id: roomId, stake: stake,
@@ -99,7 +97,7 @@ class LudoManager {
             if (room.players[0].id === userId.toString()) return;
 
             const playerColor = room.players[0].color;
-            const myColor = (playerColor + 2) % 4; // Human vs Human also uses opposite colors
+            const myColor = (playerColor + 2) % 4; // Join opposite corner
 
             room.players.push({
                 id: userId.toString(), name, avatar, socketId: socket.id,
@@ -133,11 +131,9 @@ class LudoManager {
         if (!room || room.gameState !== 'PLAYING') return;
         const currentPlayer = room.players[room.turn];
         if (currentPlayer.isBot) {
-            // Bot rolls
             setTimeout(() => {
                 if (!room.rolled && room.gameState === 'PLAYING') {
                     this.rollDice(currentPlayer.id, roomId);
-                    // Bot moves
                     setTimeout(() => {
                         if (room.gameState === 'PLAYING') {
                             const possible = this.getPossibleMoves(roomId);
@@ -169,7 +165,7 @@ class LudoManager {
         const dice = Math.floor(Math.random() * 6) + 1;
         room.dice = dice;
         room.rolled = true;
-        this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn });
+        this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn, playerColor: room.players[room.turn].color });
 
         const possibleMoves = this.getPossibleMoves(roomId);
         if (possibleMoves.length === 0) setTimeout(() => this.nextTurn(roomId), 1200);
@@ -204,35 +200,35 @@ class LudoManager {
         const dice = room.dice;
         const playerColor = room.players[playerIndex].color;
         let currentPos = room.boardState.tokens[playerColor][tokenIndex];
+        let path = [];
         let nextPos;
         let pointsEarned = 0;
 
         if (currentPos === -1) {
             nextPos = this.START_POSITIONS[playerColor];
+            path = [nextPos];
             pointsEarned = 1;
-        } else if (currentPos >= 101) {
-            nextPos = currentPos + dice;
-            pointsEarned = dice;
-            if (nextPos === 106) pointsEarned += 56;
         } else {
             let tempPos = currentPos;
-            let enteredHome = false;
-            for (let s = 0; s < dice; s++) {
-                if (tempPos === this.HOME_PATH_START[playerColor]) {
-                    nextPos = 101 + (dice - s - 1);
-                    enteredHome = true;
-                    pointsEarned = dice;
-                    break;
+            for (let s = 1; s <= dice; s++) {
+                if (tempPos >= 101) {
+                    tempPos++;
+                } else if (tempPos === this.HOME_PATH_START[playerColor]) {
+                    tempPos = 101;
+                } else {
+                    tempPos = (tempPos % this.TOTAL_CELLS) + 1;
                 }
-                tempPos = (tempPos % this.TOTAL_CELLS) + 1;
+                path.push(tempPos);
             }
-            if (!enteredHome) { nextPos = tempPos; pointsEarned = dice; }
+            nextPos = path[path.length - 1];
+            pointsEarned = (nextPos >= 101) ? dice + (nextPos === 106 ? 56 : 0) : dice;
         }
 
         room.boardState.tokens[playerColor][tokenIndex] = nextPos;
         room.players[playerIndex].score += pointsEarned;
 
         let killed = false;
+        let killData = null;
         if (nextPos <= 52 && !this.SAFE_POSITIONS.includes(nextPos)) {
             for (let pIdx = 0; pIdx < room.players.length; pIdx++) {
                 if (pIdx === playerIndex) continue;
@@ -243,6 +239,7 @@ class LudoManager {
                         room.boardState.tokens[oppColor][oi] = -1;
                         killed = true;
                         room.players[playerIndex].score += 10;
+                        killData = { color: oppColor, index: oi };
                     }
                 });
             }
@@ -253,9 +250,11 @@ class LudoManager {
             playerColor: playerColor,
             tokenIndex,
             nextPos,
+            path,
             tokens: room.boardState.tokens,
             scores: room.players.map(p => p.score),
-            killed
+            killed,
+            killData
         });
 
         if (room.boardState.tokens[playerColor].every(p => p === 106)) {
