@@ -213,14 +213,22 @@
     <div id="lockedMsg">
         <div class="locked-badge">
             <i class="fas fa-spinner spin-icon"></i>
-            BETS LOCKED (चक्र घूम रहा है)
+            BETS LOCKED (चक्र घूम raha hai)
         </div>
     </div>
+
+    <!-- Audio Elements -->
+    <audio id="sndWheel" src="sound/wheelspin.mp3"></audio>
+    <audio id="sndTick" src="sound/fasrtick.mp3"></audio>
 
     <script src="js/config.js"></script>
     <script>
         const token = localStorage.getItem("token");
-        let selectedChip = 10, myBets = {}, isSpinning = false, lastRoundId = null;
+        let selectedChip = 10, myBets = {}, isSpinning = false, lastRoundId = null, lastTimerValue = -1;
+
+        // Initialize Audio
+        const sndWheel = document.getElementById("sndWheel");
+        const sndTick = document.getElementById("sndTick");
 
         async function init() {
             if (!token) { location.href = "login.html"; return; }
@@ -280,6 +288,17 @@
             const bar = document.getElementById("timerBar");
             bar.style.width = (state.timer / 15 * 100) + "%";
 
+            // Timer Sound (fasrtick.mp3)
+            if (state.timer !== lastTimerValue) {
+                if (state.timer > 0 && !state.isSpinning) {
+                    if (sndTick) {
+                        sndTick.currentTime = 0;
+                        sndTick.play().catch(e => {});
+                    }
+                }
+                lastTimerValue = state.timer;
+            }
+
             const statusOverlay = document.getElementById("statusOverlay");
             if (state.isSpinning) {
                 statusOverlay.style.display = "flex";
@@ -308,6 +327,19 @@
 
         function startSpinAnimation(winningNumber) {
             isSpinning = true;
+
+            // Stop Tick sound when spinning starts
+            if (sndTick) {
+                sndTick.pause();
+                sndTick.currentTime = 0;
+            }
+
+            // Play Wheel Spin sound
+            if (sndWheel) {
+                sndWheel.currentTime = 0;
+                sndWheel.play().catch(e => {});
+            }
+
             const wheel = document.getElementById("wheel");
             const sections = [7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12];
             const sectionAngle = 360 / sections.length;
