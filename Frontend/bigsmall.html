@@ -318,10 +318,15 @@
 
             // Timer Sound (fasrtick.mp3)
             if (secs !== lastTimerValue) {
-                if (secs > 0 && secs <= 10 && data.timer >= 1) {
+                if (secs > 0 && secs <= 10) {
                     if (sndTick) {
                         sndTick.currentTime = 0;
                         sndTick.play().catch(e => {});
+                    }
+                } else if (secs === 0) {
+                    if (sndTick) {
+                        sndTick.pause();
+                        sndTick.currentTime = 0;
                     }
                 }
                 lastTimerValue = secs;
@@ -335,13 +340,24 @@
                 confirmBtn.disabled = true;
                 confirmBtn.innerText = "WAITING...";
                 cancelBtn.disabled = true;
-                dice.forEach(d => {
-                    d.classList.add("rolling-die");
-                    d.innerText = Math.floor(Math.random() * 6) + 1;
-                });
-                if(data.timer === 0 && !isDicePlaying) {
+
+                // Only start rolling if not already playing dice/showing result
+                if (!isDicePlaying) {
+                    dice.forEach(d => d.classList.add("rolling-die"));
                     isDicePlaying = true;
-                    if(sndDice) sndDice.play().catch(e=>{});
+                    if(sndDice) {
+                        sndDice.currentTime = 0;
+                        sndDice.play().catch(e=>{});
+                    }
+                }
+
+                // Show random values during roll animation
+                if (data.timer === 0) {
+                    dice.forEach(d => {
+                        if (d.classList.contains("rolling-die")) {
+                            d.innerText = Math.floor(Math.random() * 6) + 1;
+                        }
+                    });
                 }
             } else {
                 isDicePlaying = false;
