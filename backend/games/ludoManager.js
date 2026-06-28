@@ -40,7 +40,9 @@ class LudoManager {
                 if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 12) this.addBot(roomId);
+                if (room.waitingTime >= 15) {
+                    this.addBot(roomId);
+                }
             }
         }
     }
