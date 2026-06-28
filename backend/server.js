@@ -187,7 +187,7 @@ app.post("/api/admin/login", async (req, res) => {
 
 app.get("/api/profile", auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select("name email coins avatar referral_code");
+        const user = await User.findById(req.user.id).select("name email coins avatar referral_code kyc_status");
         if (!user) {
             return res.json({ success: false, message: "User Not Found" });
         }
@@ -217,6 +217,30 @@ app.post("/api/profile/update", auth, async (req, res) => {
         res.json({ success: true, message: "Avatar Updated" });
     } catch (error) {
         res.json({ success: false });
+    }
+});
+
+app.post("/api/kyc/submit", auth, async (req, res) => {
+    try {
+        const { fullName, aadharNo, panNo, accountNo, ifscCode } = req.body;
+        if (!fullName || !aadharNo || !panNo || !accountNo || !ifscCode) {
+            return res.json({ success: false, message: "All fields are required" });
+        }
+
+        await User.findByIdAndUpdate(req.user.id, {
+            kyc_status: "verified", // Auto-verify for now as per user preference often, or set to 'pending'
+            kyc_data: {
+                full_name: fullName,
+                aadhar_no: aadharNo,
+                pan_no: panNo,
+                account_no: accountNo,
+                ifsc_code: ifscCode
+            }
+        });
+
+        res.json({ success: true, message: "KYC Verified Successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error submitting KYC" });
     }
 });
 
@@ -285,6 +309,12 @@ app.get("/api/transactions", auth, async (req, res) => {
 app.post("/api/wallet/request-withdrawal", auth, async (req, res) => {
     try {
         const { amount, upiId, note } = req.body;
+
+        const user = await User.findById(req.user.id);
+        if (user.kyc_status !== 'verified') {
+            return res.json({ success: false, message: "KYC Verification Required before withdrawal" });
+        }
+
         const parsedAmount = Number(amount);
         if (!parsedAmount || parsedAmount < 100) {
             return res.json({ success: false, message: "Minimum withdrawal is 100" });

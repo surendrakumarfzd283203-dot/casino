@@ -141,20 +141,36 @@
 
         <!-- Withdraw Section -->
         <div id="withdraw-section" class="action-card animate" style="display: none;">
-            <h3 style="color: var(--accent-red);"><i class="fas fa-university"></i> WITHDRAW WINNINGS</h3>
+            <!-- KYC Check -->
+            <div id="kyc-container" style="display: none;">
+                <h3 style="color: var(--casino-gold); text-align: center;"><i class="fas fa-id-card"></i> KYC VERIFICATION REQUIRED</h3>
+                <p style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">Please complete your KYC to enable withdrawals.</p>
 
-            <div style="margin: 20px 0;">
-                <label>Withdraw Amount (INR)</label>
-                <input type="number" id="withdrawAmount" placeholder="Min 100">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <input type="text" id="kycFullName" placeholder="Full Name (as per Bank)">
+                    <input type="text" id="kycAadhar" placeholder="Aadhar Number">
+                    <input type="text" id="kycPan" placeholder="PAN Number">
+                    <input type="text" id="kycAccount" placeholder="Bank Account Number">
+                    <input type="text" id="kycIfsc" placeholder="IFSC Code">
+                    <button class="button-primary" style="width: 100%; height: 50px; margin-top: 10px;" onclick="submitKYC()">VERIFY KYC</button>
+                </div>
+            </div>
 
-                <label style="margin-top: 15px;">Your UPI ID</label>
-                <input type="text" id="withdrawUpi" placeholder="example@ybl">
+            <div id="withdraw-form" style="display: none;">
+                <h3 style="color: var(--accent-red);"><i class="fas fa-university"></i> WITHDRAW WINNINGS</h3>
+                <div style="margin: 20px 0;">
+                    <label>Withdraw Amount (INR)</label>
+                    <input type="number" id="withdrawAmount" placeholder="Min 100">
 
-                <p style="font-size: 11px; color: var(--text-dim); margin-top: 10px;">
-                    <i class="fas fa-clock"></i> Payouts are processed within 24 hours to your bank account via UPI.
-                </p>
+                    <label style="margin-top: 15px;">Your UPI ID</label>
+                    <input type="text" id="withdrawUpi" placeholder="example@ybl">
 
-                <button class="button-primary" style="width: 100%; height: 55px; margin-top: 20px;" onclick="submitWithdraw()">REQUEST PAYOUT</button>
+                    <p style="font-size: 11px; color: var(--text-dim); margin-top: 10px;">
+                        <i class="fas fa-clock"></i> Payouts are processed within 24 hours to your bank account via UPI.
+                    </p>
+
+                    <button class="button-primary" style="width: 100%; height: 55px; margin-top: 20px;" onclick="submitWithdraw()">REQUEST PAYOUT</button>
+                </div>
             </div>
         </div>
 
@@ -181,6 +197,38 @@
             const data = await res.json();
             if(data.success) {
                 document.getElementById('mainBalance').innerText = data.user.coins.toLocaleString() + " INR";
+
+                // KYC Logic
+                if (data.user.kyc_status === 'verified') {
+                    document.getElementById('withdraw-form').style.display = 'block';
+                    document.getElementById('kyc-container').style.display = 'none';
+                } else {
+                    document.getElementById('withdraw-form').style.display = 'none';
+                    document.getElementById('kyc-container').style.display = 'block';
+                }
+            }
+        }
+
+        async function submitKYC() {
+            const fullName = document.getElementById('kycFullName').value;
+            const aadharNo = document.getElementById('kycAadhar').value;
+            const panNo = document.getElementById('kycPan').value;
+            const accountNo = document.getElementById('kycAccount').value;
+            const ifscCode = document.getElementById('kycIfsc').value;
+
+            if (!fullName || !aadharNo || !panNo || !accountNo || !ifscCode) {
+                return alert("All fields are required for KYC");
+            }
+
+            const res = await fetch(`${API_URL}/api/kyc/submit`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ fullName, aadharNo, panNo, accountNo, ifscCode })
+            });
+            const data = await res.json();
+            alert(data.message);
+            if (data.success) {
+                fetchWallet();
             }
         }
 

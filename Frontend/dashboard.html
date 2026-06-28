@@ -475,37 +475,7 @@
         </div>
     </header>
 
-    <div class="hero-banner">
-        <div class="user-welcome">
-            <h2>Welcome back,</h2>
-            <span id="userName">Loading...</span>
-        </div>
-
-        <div class="balance-display">
-            <div class="balance-label">Main Wallet</div>
-            <div class="balance-amount"><i class="fas fa-coins"></i> <span id="coins">0.00</span></div>
-            <div style="font-size:9px; color:#555; font-weight:800; letter-spacing: 1px;">SECURE CRYPTO-BACKED WALLET</div>
-        </div>
-
-        <div class="action-row">
-            <a href="wallet.html" class="btn-action btn-deposit"><i class="fas fa-plus-circle"></i> Deposit</a>
-            <a href="wallet.html" class="btn-action btn-withdraw"><i class="fas fa-arrow-alt-circle-down"></i> Withdraw</a>
-        </div>
-        <a href="history.html" class="btn-action btn-withdraw" style="width: 100%;"><i class="fas fa-history"></i> Transaction History</a>
-    </div>
-
-
-    <div class="bonus-float">
-        <div class="bonus-inner">
-            <div>
-                <h4 style="margin:0; font-size:15px;">Daily Fortune</h4>
-                <p style="margin:2px 0 0; font-size:11px; color:#888;">Claim your ₹5.00 today!</p>
-            </div>
-            <button onclick="claimBonus()" class="btn-claim" id="bonusBtn" style="background:var(--casino-gold); border:none; padding:8px 15px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer;">CLAIM</button>
-        </div>
-    </div>
-
-    <div class="category-tabs">
+    <div class="winners-ticker">
         <div class="tab active" onclick="filterGames('all', this)">ALL GAMES</div>
         <div class="tab" onclick="filterGames('hot', this)">HOT</div>
         <div class="tab" onclick="filterGames('casino', this)">CASINO</div>
@@ -661,13 +631,21 @@
                 <i class="fas fa-times" style="font-size: 20px; color: #888;" onclick="toggleMoreMenu()"></i>
             </div>
             <div class="more-menu-grid">
+                <a href="wallet.html" class="menu-item">
+                    <i class="fas fa-plus-circle" style="color: #22c55e;"></i>
+                    <span>Deposit</span>
+                </a>
+                <a href="wallet.html" class="menu-item">
+                    <i class="fas fa-arrow-alt-circle-down" style="color: #ef4444;"></i>
+                    <span>Withdraw</span>
+                </a>
+                <a href="#" onclick="claimBonus()" class="menu-item">
+                    <i class="fas fa-gift" style="color: #f1c40f;"></i>
+                    <span>Daily Bonus</span>
+                </a>
                 <a href="history.html" class="menu-item">
                     <i class="fas fa-history"></i>
                     <span>History</span>
-                </a>
-                <a href="wallet.html" class="menu-item">
-                    <i class="fas fa-wallet"></i>
-                    <span>Wallet</span>
                 </a>
                 <a href="profile.html" class="menu-item">
                     <i class="fas fa-user"></i>
@@ -676,14 +654,6 @@
                 <a href="#" onclick="window.open('https://t.me/your_helpdesk', '_blank')" class="menu-item">
                     <i class="fas fa-headset"></i>
                     <span>Support</span>
-                </a>
-                <a href="terms.html" class="menu-item">
-                    <i class="fas fa-file-contract"></i>
-                    <span>Terms</span>
-                </a>
-                <a href="#" onclick="logout()" class="menu-item" style="color: #ff4d4d;">
-                    <i class="fas fa-power-off" style="color: #ff4d4d;"></i>
-                    <span>Logout</span>
                 </a>
             </div>
         </div>
