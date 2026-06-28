@@ -272,8 +272,8 @@
 
             // Sound Logic: Ensure no overlap and correct timing
             if (totalSecs !== lastTimerValue) {
-                if (totalSecs >= 6 && totalSecs <= 35) {
-                    // Normal tick during betting phase (30s down to 1s)
+                if (totalSecs >= 6 && totalSecs <= 25) {
+                    // Normal tick during betting phase (20s down to 1s)
                     if (!sndFastTick.paused) { sndFastTick.pause(); sndFastTick.currentTime = 0; }
                     sndTick.currentTime = 0;
                     sndTick.play().catch(e => {});
