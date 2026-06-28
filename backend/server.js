@@ -507,32 +507,7 @@ app.post("/api/game/numberspin/bet", auth, async (req, res) => {
     res.json(betRes);
 });
 
-// --- LUDO ROUTES ---
-app.post("/api/game/ludo/join", auth, async (req, res) => {
-    const { amount } = req.body;
-    const user = await User.findById(req.user.id);
-    if (user.coins < amount) return res.json({ success: false, message: "Insufficient coins" });
-
-    const roomId = `${amount}_${Date.now()}`;
-    const result = ludoManager.joinRoom(roomId, req.user.id, user.name, user.avatar);
-    if (result.success) {
-        user.coins -= amount;
-        await user.save();
-    }
-    res.json(result);
-});
-
-app.get("/api/game/ludo/state/:roomId", auth, (req, res) => {
-    const state = ludoManager.getRoomState(req.params.roomId, req.user.id);
-    res.json({ success: !!state, state });
-});
-
-app.post("/api/game/ludo/move", auth, async (req, res) => {
-    const { roomId } = req.body;
-    ludoManager.makeMove(req.user.id, roomId);
-    res.json({ success: true });
-});
-
+// --- RUMMY ROUTES ---
 app.get("/api/game/rummy/tables", auth, (req, res) => {
     res.json({ success: true, tables: rummyManager.getTables() });
 });
@@ -1372,13 +1347,31 @@ io.on("connection", async (socket) => {
         console.log(`Socket Connected: ${user.name}`);
 
         // Ludo Handlers
-        socket.on('ludo_join', (data) => ludoManager.joinRoom(socket, user.id, data.amount));
-        socket.on('ludo_roll', (data) => ludoManager.rollDice(user.id, data.roomId));
-        socket.on('ludo_move', (data) => ludoManager.moveToken(user.id, data.roomId, data.tokenIndex));
+        socket.on('ludo_join', async (data) => {
+            const user = await User.findById(socket.user.id);
+            if (user.coins < data.amount) return socket.emit('error_msg', { message: "Insufficient coins" });
+
+            user.coins -= data.amount;
+            await user.save();
+
+            await new Transaction({
+                user_id: user._id,
+                amount: -data.amount,
+                type: 'game_loss',
+                game_name: 'Ludo',
+                details: `Joined Ludo match (Stake: ${data.amount})`
+            }).save();
+
+            ludoManager.joinRoom(socket, user._id, data.amount);
+        });
+
+        socket.on('ludo_roll', (data) => ludoManager.rollDice(socket.user.id, data.roomId));
+        socket.on('ludo_move', (data) => ludoManager.moveToken(socket.user.id, data.roomId, data.tokenIndex));
+        socket.on('ludo_chat', (data) => ludoManager.handleChat(socket, data.roomId, data.message, data.emoji));
 
         socket.on("disconnect", () => {
             ludoManager.handleDisconnect(socket.id);
-            console.log(`Socket Disconnected: ${user.name}`);
+            console.log(`Socket Disconnected: ${socket.user?.name}`);
         });
     } catch (e) {
         socket.disconnect();

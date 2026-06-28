@@ -218,8 +218,14 @@
     <script>
         const token = localStorage.getItem("token");
         if (!token) location.href = "login.html";
-        // Fixed: socket needs the server URL if accessed via XAMPP
+
+        // Use API_URL from config.js for connection
+        console.log("Connecting to Socket.io at:", typeof API_URL !== 'undefined' ? API_URL : window.location.origin);
         const socket = io(typeof API_URL !== 'undefined' ? API_URL : window.location.origin, { auth: { token } });
+
+        socket.on('connect', () => { console.log("Socket connected successfully!"); });
+        socket.on('connect_error', (err) => { console.error("Socket connection error:", err.message); });
+
         let myId = "", currentRoom = null, myPlayerIndex = -1, gameState = null, isMoving = false;
 
         const sndDice = document.getElementById('dice-sound');
@@ -293,7 +299,12 @@
         function sendChat() { const i = document.getElementById('chatInput'); if(i.value) { socket.emit('ludo_chat', { roomId: currentRoom, message: i.value }); i.value = ''; } }
         function sendEmoji(e) { socket.emit('ludo_chat', { roomId: currentRoom, emoji: e }); }
 
-        socket.on('ludo_state', (state) => { gameState = state; currentRoom = state.id; updateUI(state); });
+        socket.on('ludo_state', (state) => {
+            gameState = state; currentRoom = state.id;
+            if (state.gameState === 'PLAYING') document.getElementById('search-overlay').style.display = 'none';
+            updateUI(state);
+        });
+
         socket.on('ludo_timer', (data) => { const min = Math.floor(data.gameTimer / 60); const sec = data.gameTimer % 60; document.getElementById('game-clock').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`; });
 
         socket.on('dice_rolled', (data) => {
@@ -335,11 +346,14 @@
             setTimeout(() => b.remove(), 4000);
         });
 
+        socket.on('error_msg', (data) => { alert(data.message); location.reload(); });
+
         function updateUI(state) {
             myId = socket.user?.id || socket.user?._id;
             myPlayerIndex = state.players.findIndex(p => p.id === myId?.toString());
-            if (state.gameState === 'PLAYING') document.getElementById('search-overlay').style.display = 'none';
-            const me = state.players[myPlayerIndex]; const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", score: 0 };
+
+            const me = state.players[myPlayerIndex];
+            const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", score: 0 };
             const colorNames = ['red', 'blue', 'yellow', 'green'];
 
             document.getElementById('my-name').innerText = me.name;

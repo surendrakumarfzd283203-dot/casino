@@ -40,7 +40,7 @@ class LudoManager {
                 if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 15) {
+                if (room.waitingTime >= 5) { // Faster bot join (5 seconds)
                     this.addBot(roomId);
                 }
             }
@@ -51,6 +51,7 @@ class LudoManager {
         const room = this.rooms[roomId];
         if (!room || room.players.length >= 2 || room.gameState === 'PLAYING') return;
 
+        console.log(`Adding bot to room: ${roomId}`);
         const botName = this.BOT_NAMES[Math.floor(Math.random() * this.BOT_NAMES.length)];
         const botAvatar = this.BOT_AVATARS[Math.floor(Math.random() * this.BOT_AVATARS.length)];
         const botId = "bot_" + Math.random().toString(36).substr(2, 9);
@@ -69,6 +70,7 @@ class LudoManager {
     }
 
     async joinRoom(socket, userId, amount) {
+        console.log(`User ${userId} joining Ludo with stake ${amount}`);
         const stake = Number(amount);
         const name = socket.user.name;
         const avatar = socket.user.avatar;
@@ -93,6 +95,7 @@ class LudoManager {
                 boardState: { tokens: { [color]: [-1, -1, -1, -1] } },
                 turn: 0, dice: 1, rolled: false, gameTimer: this.GAME_DURATION, lastUpdate: Date.now()
             };
+            console.log(`Created new room: ${roomId}`);
         } else {
             const room = this.rooms[roomId];
             if (room.players[0].id === userId.toString()) return;
@@ -108,12 +111,15 @@ class LudoManager {
             room.gameState = 'PLAYING';
             room.turn = Math.floor(Math.random() * 2);
             this.startGame(roomId);
+            console.log(`User joined existing room: ${roomId}. Game starting.`);
         }
         socket.join(roomId);
         this.emitState(roomId);
     }
 
     startGame(roomId) {
+        const room = this.rooms[roomId];
+        console.log(`Game started in room: ${roomId}`);
         this.startTurnTimer(roomId);
         this.emitState(roomId);
     }
@@ -142,9 +148,9 @@ class LudoManager {
                                 this.moveToken(currentPlayer.id, roomId, possible[Math.floor(Math.random() * possible.length)]);
                             }
                         }
-                    }, 1500);
+                    }, 1000);
                 }
-            }, 2000);
+            }, 1000); // Faster bot roll (1 second)
         }
     }
 
@@ -169,7 +175,7 @@ class LudoManager {
         this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn, playerColor: room.players[room.turn].color });
 
         const possibleMoves = this.getPossibleMoves(roomId);
-        if (possibleMoves.length === 0) setTimeout(() => this.nextTurn(roomId), 1500);
+        if (possibleMoves.length === 0) setTimeout(() => this.nextTurn(roomId), 1200);
     }
 
     getPossibleMoves(roomId) {
