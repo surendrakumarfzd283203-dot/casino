@@ -29,15 +29,15 @@
         .stake-card .amount { font-size: 24px; font-weight: 900; color: #f1c40f; }
 
         /* Header */
-        .header { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); }
-        .prize-box { background: #1e40af; padding: 5px 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); text-align: center; }
-        .timer-badge { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 10px; display: flex; align-items: center; gap: 8px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .header { width: 100%; padding: 5px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); }
+        .prize-box { background: #1e40af; padding: 3px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); text-align: center; }
+        .timer-badge { background: rgba(0,0,0,0.5); padding: 3px 12px; border-radius: 10px; display: flex; align-items: center; gap: 6px; margin-top: 5px; border: 1px solid rgba(255,255,255,0.1); }
 
         /* Board Area */
-        .game-area { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 10px; }
+        .game-area { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 5px; overflow: hidden; }
 
         .ludo-board {
-            width: 95vw; height: 95vw; max-width: 450px; max-height: 450px;
+            width: 95vw; height: 95vw; max-width: 420px; max-height: 420px;
             background: #fff; border: 6px solid #1e293b; display: grid;
             grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
             position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
@@ -55,62 +55,66 @@
         .yellow-bg { background-color: var(--yellow-main); }
         .green-bg { background-color: var(--green-main); }
 
-        /* Perfect Center UI */
+        /* Center UI */
         .center { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; overflow: hidden; border: 1px solid rgba(0,0,0,0.1); }
         .center svg { width: 100%; height: 100%; display: block; }
 
-        /* 3D Tokens (Standing) */
+        /* Chess Pawn Style Tokens */
         .token {
-            width: 32px; height: 32px; border-radius: 50%;
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -70%);
+            width: 28px; height: 38px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -85%);
             z-index: 100; cursor: pointer; transition: all 0.25s linear;
-            border: 2.5px solid rgba(255,255,255,0.8);
         }
-        .token::before { content: ''; position: absolute; top: -6px; left: -1.5px; width: 100%; height: 100%; border-radius: 50%; background: inherit; filter: brightness(1.2); border: 2px solid rgba(255,255,255,0.6); z-index: 2; }
-        .token::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 8px 0 rgba(0,0,0,0.4); z-index: 1; }
+        .token-body { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; }
+        .token-head { width: 16px; height: 16px; border-radius: 50%; background: inherit; border: 2px solid rgba(255,255,255,0.8); z-index: 3; filter: brightness(1.2); }
+        .token-neck { width: 12px; height: 6px; background: inherit; margin-top: -4px; z-index: 2; border: 1px solid rgba(255,255,255,0.4); }
+        .token-base { width: 26px; height: 20px; background: inherit; border-radius: 50% 50% 20% 20%; margin-top: -6px; border: 2px solid rgba(255,255,255,0.6); box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
 
-        .token.red { background: var(--red-main); }
-        .token.blue { background: var(--blue-main); }
-        .token.yellow { background: var(--yellow-main); }
-        .token.green { background: var(--green-main); }
+        .token.red { color: var(--red-main); }
+        .token.blue { color: var(--blue-main); }
+        .token.yellow { color: var(--yellow-main); }
+        .token.green { color: var(--green-main); }
+        .token .token-head, .token .token-neck, .token .token-base { background-color: currentColor; }
 
         .token.active { animation: bounce 0.6s infinite alternate; z-index: 200; }
-        @keyframes bounce { from { transform: translate(-50%, -70%); } to { transform: translate(-50%, -100%); } }
+        @keyframes bounce { from { transform: translate(-50%, -85%); } to { transform: translate(-50%, -110%); } }
 
-        /* Player Area */
-        .player-bar { width: 95%; display: flex; justify-content: space-between; align-items: center; padding: 10px; }
-        .score-circle { width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 5px solid #333; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        /* Player Area - Compact */
+        .player-bar { width: 95%; display: flex; justify-content: space-between; align-items: center; padding: 5px; }
+        .profile { display: flex; align-items: center; gap: 8px; }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
+        .score-circle { width: 55px; height: 55px; border-radius: 50%; background: #fff; border: 4px solid #333; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        /* White Dice Fixed */
+        /* Dice Fix */
         .dice-wrap {
-            width: 55px; height: 55px; background: #fff !important; border-radius: 12px;
+            width: 45px; height: 45px; background: #fff !important; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 36px; box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-            cursor: pointer; border: 4px solid #333; transition: all 0.3s;
+            font-size: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            cursor: pointer; border: 3px solid #333; transition: all 0.3s;
             position: relative; color: #000 !important; z-index: 500;
         }
         .dice-wrap i { color: #000 !important; }
         .dice-wrap.active { border-color: #4ade80 !important; animation: glow 1s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 5px #4ade80; } to { box-shadow: 0 0 35px #4ade80; } }
+        @keyframes glow { from { box-shadow: 0 0 5px #4ade80; } to { box-shadow: 0 0 25px #4ade80; } }
         .dice-wrap.rolling { animation: jumpSpin 0.8s ease-out; }
         @keyframes jumpSpin {
             0% { transform: translateY(0) rotate(0deg) scale(1); }
-            30% { transform: translateY(-70px) rotate(180deg) scale(1.6); }
+            30% { transform: translateY(-50px) rotate(180deg) scale(1.4); }
             100% { transform: translateY(0) rotate(360deg) scale(1); }
         }
 
         /* Chat UI */
         #chat-ui { position: fixed; bottom: 85px; left: 15px; z-index: 1500; display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; width: 100%; }
-        .chat-bubble { background: rgba(0,0,0,0.9); color: white; padding: 8px 15px; border-radius: 15px; margin-bottom: 5px; font-size: 14px; border-left: 4px solid var(--yellow-main); animation: slideIn 0.3s ease-out; pointer-events: auto; max-width: 70%; }
+        .chat-bubble { background: rgba(0,0,0,0.9); color: white; padding: 6px 12px; border-radius: 15px; margin-bottom: 5px; font-size: 13px; border-left: 4px solid var(--yellow-main); animation: slideIn 0.3s ease-out; pointer-events: auto; max-width: 70%; }
         @keyframes slideIn { from { transform: translateX(-50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        .bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 10px; display: flex; flex-direction: column; gap: 8px; z-index: 1800; border-top: 1px solid rgba(255,255,255,0.1); }
-        .emoji-list { display: flex; justify-content: space-around; padding: 5px 0; }
-        .emoji-btn { font-size: 32px; cursor: pointer; transition: 0.2s; }
+        .bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 8px; display: flex; flex-direction: column; gap: 5px; z-index: 1800; border-top: 1px solid rgba(255,255,255,0.1); }
+        .emoji-list { display: flex; justify-content: space-around; padding: 2px 0; }
+        .emoji-btn { font-size: 28px; cursor: pointer; transition: 0.2s; }
         .emoji-btn:active { transform: scale(1.4); }
         .chat-row { display: flex; gap: 8px; align-items: center; padding: 0 5px; }
-        .chat-input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 12px 15px; border-radius: 25px; font-size: 15px; }
-        .send-btn { background: var(--yellow-main); color: black; border: none; padding: 10px 22px; border-radius: 20px; font-weight: 900; }
+        .chat-input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 10px 15px; border-radius: 20px; font-size: 14px; }
+        .send-btn { background: var(--yellow-main); color: black; border: none; padding: 8px 18px; border-radius: 15px; font-weight: 900; font-size: 13px; }
 
         #search-overlay { position: fixed; inset: 0; background: rgba(0,21,41,0.95); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         #result-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; }
@@ -155,14 +159,14 @@
     <div class="game-area">
         <div class="player-bar" id="opp-bar">
             <div class="profile">
-                <img id="opp-avatar" src="" class="avatar">
+                <img id="opp-avatar" src="" class="avatar" alt="Opponent">
                 <div>
-                    <div id="opp-name" style="font-weight: 800; font-size: 13px;">Waiting...</div>
-                    <div id="opp-dice" class="dice-wrap" style="width: 38px; height: 38px; font-size: 22px;"><i class="fas fa-dice-one"></i></div>
+                    <div id="opp-name" style="font-weight: 800; font-size: 12px; white-space: nowrap;">Waiting...</div>
+                    <div id="opp-dice" class="dice-wrap" style="width: 35px; height: 35px; font-size: 20px;"><i class="fas fa-dice-one"></i></div>
                 </div>
             </div>
             <div class="score-circle" id="opp-score-circle">
-                <div style="font-size: 10px;">SCORE</div>
+                <div style="font-size: 9px;">SCORE</div>
                 <div id="opp-score">0</div>
             </div>
         </div>
@@ -171,13 +175,13 @@
 
         <div class="player-bar" id="my-bar">
             <div class="score-circle" id="my-score-circle">
-                <div style="font-size: 10px;">SCORE</div>
+                <div style="font-size: 9px;">SCORE</div>
                 <div id="my-score">0</div>
             </div>
             <div class="profile" style="flex-direction: row-reverse; text-align: right;">
-                <img id="my-avatar" src="" class="avatar">
+                <img id="my-avatar" src="" class="avatar" alt="Me">
                 <div>
-                    <div id="my-name" style="font-weight: 800; font-size: 13px;">You</div>
+                    <div id="my-name" style="font-weight: 800; font-size: 12px; white-space: nowrap;">You</div>
                     <div id="diceBtn" class="dice-wrap" onclick="rollDice()"><i class="fas fa-dice-one"></i></div>
                 </div>
             </div>
@@ -363,6 +367,7 @@
                     const token = document.createElement('div');
                     token.className = `token ${colorName}`;
                     token.setAttribute('data-idx', tIdx);
+                    token.innerHTML = `<div class="token-body"><div class="token-head"></div><div class="token-neck"></div><div class="token-base"></div></div>`;
 
                     const isMyTurn = gameState.turn === myPlayerIndex;
                     const isMyColor = gameState.players[myPlayerIndex].color == colorIdx;
