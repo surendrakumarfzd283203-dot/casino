@@ -9,118 +9,67 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
-            --red: #ef4444;
-            --blue: #3b82f6;
-            --green: #22c55e;
-            --yellow: #fde047;
-            --bg: #00224d;
-            --panel: #003366;
-            --glass: rgba(255, 255, 255, 0.1);
-            --safe-star: #cbd5e1;
+            --red: #ff3b3b;
+            --blue: #2e90ff;
+            --green: #2ecc71;
+            --yellow: #f1c40f;
+            --bg: #001529;
+            --panel: #00224d;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
         body {
             font-family: 'Outfit', sans-serif;
-            background: #001529;
-            background-image: radial-gradient(circle at 50% 50%, #00224d 0%, #001529 100%);
-            color: white; margin: 0;
-            display: flex; flex-direction: column;
-            height: 100vh; overflow: hidden;
-            align-items: center;
+            background: #000c18;
+            color: white; height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         /* Lobby UI */
         #lobby {
-            position: fixed; inset: 0; background: #001529; z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto;
+            position: fixed; inset: 0; background: #000c18; z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; padding: 20px;
         }
-        .lobby-header { text-align: center; margin-bottom: 40px; margin-top: 40px; }
-        .lobby-header h1 { font-weight: 900; font-size: 42px; margin: 0; color: var(--yellow); text-shadow: 0 4px 10px rgba(0,0,0,0.5); letter-spacing: 2px; }
-
-        .stake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; }
         .stake-card {
             background: linear-gradient(135deg, #003366, #00224d); padding: 20px; border-radius: 20px; text-align: center;
-            border: 2px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.1); cursor: pointer; margin-bottom: 15px; width: 100%; max-width: 300px;
         }
-        .stake-card:active { transform: scale(0.95); }
-        .stake-card h3 { margin: 0; font-size: 14px; color: #94a3b8; text-transform: uppercase; }
-        .stake-card .amount { font-size: 24px; font-weight: 900; color: var(--yellow); margin: 5px 0; }
-        .stake-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); }
+        .stake-card h3 { color: #94a3b8; font-size: 14px; margin-bottom: 5px; }
+        .stake-card .amount { font-size: 24px; font-weight: 900; color: var(--yellow); }
 
-        /* Game Header */
-        .top-nav {
-            width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.2);
-        }
-        .nav-icons { display: flex; gap: 15px; font-size: 18px; color: rgba(255,255,255,0.6); }
+        /* Header */
+        .top-bar { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); }
+        .prize-box { background: #1e3a8a; padding: 5px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }
+        .timer-box { background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 8px; margin-top: 5px; display: flex; align-items: center; gap: 5px; }
 
-        .prize-pool-box {
-            background: linear-gradient(to bottom, #1e40af, #1e3a8a);
-            padding: 5px 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);
-            text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .prize-pool-label { font-size: 10px; color: #cbd5e1; font-weight: 600; text-transform: uppercase; }
-        .prize-pool-value { font-size: 16px; font-weight: 900; color: #fff; }
+        /* Board Styling */
+        .game-container { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 5px; }
 
-        .game-timer {
-            background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 10px;
-            display: flex; align-items: center; gap: 8px; margin-top: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .timer-icon { color: #facc15; font-size: 14px; animation: pulse 1s infinite; }
-        .timer-value { font-family: monospace; font-size: 18px; font-weight: 900; color: #4ade80; }
-
-        /* Main Game Area */
-        .game-area {
-            flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column;
-            align-items: center; justify-content: space-between; padding: 10px 0; position: relative;
-        }
-
-        /* Opponent Info */
-        .player-bar {
-            width: 90%; display: flex; justify-content: space-between; align-items: center;
-            padding: 5px 10px; position: relative;
-        }
-        .player-profile { display: flex; align-items: center; gap: 10px; }
-        .avatar-wrap { position: relative; width: 45px; height: 45px; }
-        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
-        .player-name { font-size: 12px; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-
-        .score-circle {
-            width: 70px; height: 70px; border-radius: 50%; background: #fff;
-            border: 4px solid var(--red); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; color: #334155;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative;
-        }
-        .score-circle.blue { border-color: var(--blue); }
-        .score-label { font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: -2px; }
-        .score-value { font-size: 20px; font-weight: 900; }
-
-        /* Ludo Board */
-        .board-container {
-            width: 95%; aspect-ratio: 1/1; background: #fff; border-radius: 8px;
-            padding: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
-            position: relative; border: 4px solid #1e293b;
+        .ludo-board {
+            width: 98vw; height: 98vw; max-width: 450px; max-height: 450px;
+            background: #fff; border: 4px solid #1e293b; display: grid;
+            grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
+            position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
         .cell { border: 0.1px solid rgba(0,0,0,0.05); position: relative; }
-        .cell.safe::after {
-            content: '\f005'; font-family: "Font Awesome 6 Free"; font-weight: 900;
-            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-            color: rgba(0,0,0,0.1); font-size: 12px;
-        }
+        .cell.safe::before { content: '\f005'; font-family: "Font Awesome 6 Free"; font-weight: 900; color: rgba(0,0,0,0.1); font-size: 10px; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 
-        .home-area { grid-column: span 6; grid-row: span 6; position: relative; }
-        .home-inner {
-            width: 80%; height: 80%; background: #fff; border-radius: 12px;
-            position: absolute; top: 10%; left: 10%; display: grid;
-            grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; padding: 8px;
-        }
-        .token-slot { background: #f1f5f9; border-radius: 50%; border: 2px dashed #cbd5e1; }
+        /* Bases */
+        .base { grid-column: span 6; grid-row: span 6; padding: 10%; position: relative; }
+        .base-inner { width: 100%; height: 100%; background: #fff; border-radius: 15%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10%; padding: 10%; }
+        .slot { background: #eee; border-radius: 50%; border: 1px dashed #ccc; }
 
-        .center-path { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; }
+        /* Colors */
+        .red { background-color: var(--red) !important; }
+        .blue { background-color: var(--blue) !important; }
+        .green { background-color: var(--green) !important; }
+        .yellow { background-color: var(--yellow) !important; }
+
+        /* Center */
+        .center-home {
+            grid-column: span 3; grid-row: span 3; position: relative; background: #fff;
+        }
         .tri { position: absolute; width: 0; height: 0; border-style: solid; }
         .tri-r { border-width: 45px 45px 0 45px; border-color: var(--red) transparent transparent transparent; top: 0; }
         .tri-b { border-width: 45px 0 45px 45px; border-color: transparent transparent transparent var(--blue); left: 0; }
@@ -129,175 +78,98 @@
 
         /* Tokens */
         .token {
-            width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.4); z-index: 100; cursor: pointer;
-            position: absolute; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 70%; height: 70%; border-radius: 50%; border: 2px solid #fff;
+            position: absolute; top: 15%; left: 15%; z-index: 100;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
             display: flex; align-items: center; justify-content: center;
         }
-        .token.red { background: var(--red); }
-        .token.blue { background: var(--blue); }
-        .token.active { animation: bounce 0.6s infinite alternate; z-index: 200; box-shadow: 0 0 10px #fff; }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+        .token::after { content: ''; width: 50%; height: 50%; background: rgba(255,255,255,0.3); border-radius: 50%; }
+        .token.active { animation: bounce 0.6s infinite alternate; z-index: 200; box-shadow: 0 0 15px #fff; border-width: 3px; }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.2); } }
 
-        /* Dice UI */
-        .dice-box {
-            width: 50px; height: 50px; background: #fff; border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
-            font-size: 24px; color: #1e293b; border: 2px solid transparent; transition: 0.2s;
-        }
-        .dice-box.my-turn { border-color: #4ade80; box-shadow: 0 0 15px rgba(74, 222, 128, 0.5); cursor: pointer; }
-        .dice-box.rolling { animation: roll 0.4s infinite; }
-        @keyframes roll { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+        /* Players */
+        .player-row { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; }
+        .score-box { background: #fff; color: #333; padding: 5px 15px; border-radius: 20px; border: 3px solid var(--red); text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .score-box.blue { border-color: var(--blue); }
+        .profile { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
 
-        /* Turn Missed Popup */
-        #missed-popup {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #fff; border-radius: 15px; padding: 15px; width: 220px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 2000; text-align: center;
-            display: none; color: #334155; border: 3px solid #e2e8f0;
-        }
-        .hearts-row { display: flex; justify-content: center; gap: 10px; margin: 10px 0; font-size: 24px; }
-        .heart { color: #cbd5e1; }
-        .heart.lost { color: var(--red); }
+        /* Dice */
+        .dice-wrap { width: 55px; height: 55px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.4); border: 2px solid transparent; transition: 0.2s; }
+        .dice-wrap.active { border-color: #4ade80; animation: glow 1s infinite alternate; cursor: pointer; }
+        @keyframes glow { from { box-shadow: 0 0 5px #4ade80; } to { box-shadow: 0 0 20px #4ade80; } }
+        .dice-wrap.rolling { animation: spin 0.4s infinite linear; }
+        @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
-        /* Bottom Controls */
-        .bottom-bar { width: 100%; padding: 10px 15px; background: rgba(0,0,0,0.3); }
-        .emoji-bar { display: flex; justify-content: space-around; padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.05); }
-        .emoji-btn { font-size: 22px; cursor: pointer; transition: 0.2s; filter: grayscale(0.5); }
-        .emoji-btn:hover { transform: scale(1.2); filter: grayscale(0); }
-
-        /* Color classes */
-        .bg-red { background-color: var(--red) !important; }
-        .bg-blue { background-color: var(--blue) !important; }
-        .bg-green { background-color: var(--green) !important; }
-        .bg-yellow { background-color: var(--yellow) !important; }
-
-        #searching-overlay {
-            position: fixed; inset: 0; background: rgba(0,21,41,0.9); z-index: 1500;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .loader { width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--yellow); border-radius: 50%; animation: spin 1s infinite linear; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        #result-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .res-card { background: #003366; padding: 40px; border-radius: 30px; text-align: center; border: 4px solid var(--yellow); }
+        /* Overlays */
+        #search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .loader { width: 50px; height: 50px; border: 5px solid #333; border-top-color: var(--yellow); border-radius: 50%; animation: spin 1s infinite linear; }
     </style>
 </head>
 <body>
 
     <div id="lobby">
-        <div class="lobby-header">
-            <h1>LUDO TURBO</h1>
-            <p style="color: #94a3b8; font-weight: 600;">Fast Paced Score Battle</p>
-        </div>
-        <div class="stake-grid" id="stakes">
+        <h1 style="color:var(--yellow); font-size: 32px; margin-top: 50px; font-weight: 900;">LUDO TURBO</h1>
+        <div style="width: 100%; margin-top: 40px; display: flex; flex-direction: column; align-items: center;">
             <div class="stake-card" onclick="joinLudo(10)"><h3>Bronze</h3><div class="amount">₹10</div></div>
             <div class="stake-card" onclick="joinLudo(50)"><h3>Silver</h3><div class="amount">₹50</div></div>
             <div class="stake-card" onclick="joinLudo(100)"><h3>Gold</h3><div class="amount">₹100</div></div>
-            <div class="stake-card" onclick="joinLudo(500)"><h3>Platinum</h3><div class="amount">₹500</div></div>
         </div>
-        <button onclick="location.href='dashboard.html'" style="margin-top: 40px; background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer;">← BACK TO DASHBOARD</button>
     </div>
 
-    <div id="searching-overlay">
+    <div id="search-overlay">
         <div class="loader"></div>
-        <h2 style="margin-top: 20px; font-weight: 800;">Finding Opponent...</h2>
-        <p style="color: rgba(255,255,255,0.5);">Game will start in a few seconds</p>
+        <h2 style="margin-top: 20px;">Finding Player...</h2>
     </div>
 
-    <div class="top-nav">
-        <div class="nav-icons"><i class="fas fa-cog"></i> <i class="fas fa-wifi"></i></div>
-        <div class="prize-pool-box">
-            <div class="prize-pool-label">Prize Pool</div>
-            <div class="prize-pool-value">₹<span id="prize-val">0.00</span></div>
+    <div class="top-bar">
+        <i class="fas fa-cog"></i>
+        <div class="prize-box">
+            <div style="font-size: 9px; opacity: 0.8; text-transform: uppercase;">Prize Pool</div>
+            <div style="font-size: 18px; font-weight: 900;">₹<span id="prize-text">0.00</span></div>
         </div>
-        <div class="nav-icons"><i class="fas fa-battery-three-quarters"></i></div>
+        <i class="fas fa-wifi"></i>
     </div>
 
-    <div class="game-timer">
-        <i class="fas fa-bolt timer-icon"></i>
-        <div class="timer-value" id="game-clock">05:00</div>
+    <div class="timer-box">
+        <i class="fas fa-bolt" style="color:var(--yellow)"></i>
+        <span id="game-timer" style="font-weight: 900; font-family: monospace; font-size: 18px; color: #4ade80;">05:00</span>
     </div>
 
-    <div class="game-area">
-        <!-- Opponent -->
-        <div class="player-bar" id="opp-bar">
-            <div class="player-profile">
-                <div class="avatar-wrap">
-                    <img id="opp-avatar" src="https://i.pravatar.cc/100?u=opp" class="avatar-img" alt="opp">
-                </div>
+    <div class="game-container">
+        <!-- Opponent Player -->
+        <div class="player-row">
+            <div class="profile">
+                <img id="opp-avatar" src="https://i.pravatar.cc/100?u=1" class="avatar">
                 <div>
-                    <div class="player-name" id="opp-name">Opponent</div>
-                    <div id="opp-dice-display" class="dice-box" style="width: 35px; height: 35px; font-size: 16px; margin-top: 5px;"><i class="fas fa-dice-one"></i></div>
+                    <div id="opp-name" style="font-weight: 800; font-size: 12px;">Waiting...</div>
+                    <div id="opp-dice" class="dice-wrap" style="width: 35px; height: 35px; font-size: 18px;"><i class="fas fa-dice-one"></i></div>
                 </div>
             </div>
-            <div class="score-circle blue">
-                <div class="score-label">Score</div>
-                <div class="score-value" id="opp-score">0</div>
+            <div class="score-box blue">
+                <div style="font-size: 10px; font-weight: 800;">SCORE</div>
+                <div id="opp-score" style="font-size: 20px; font-weight: 900;">0</div>
             </div>
         </div>
 
-        <div class="board-container" id="board">
-            <!-- Board generated by JS -->
+        <!-- The Board -->
+        <div class="ludo-board" id="board">
+            <!-- Will be generated by JS -->
         </div>
 
-        <!-- Self -->
-        <div class="player-bar" id="my-bar">
-            <div class="score-circle">
-                <div class="score-label">Score</div>
-                <div class="score-value" id="my-score">0</div>
+        <!-- My Player -->
+        <div class="player-row">
+            <div class="score-box">
+                <div style="font-size: 10px; font-weight: 800;">SCORE</div>
+                <div id="my-score" style="font-size: 20px; font-weight: 900;">0</div>
             </div>
-            <div class="player-profile" style="flex-direction: row-reverse; text-align: right;">
-                <div class="avatar-wrap">
-                    <img id="my-avatar" src="https://i.pravatar.cc/100?u=me" class="avatar-img" alt="me">
-                    <div id="my-dice-bubble" style="position: absolute; top: -10px; right: -10px;"></div>
-                </div>
+            <div class="profile" style="flex-direction: row-reverse; text-align: right;">
+                <img id="my-avatar" src="https://i.pravatar.cc/100?u=2" class="avatar">
                 <div>
-                    <div class="player-name" id="my-name">You</div>
-                    <div id="diceBtn" class="dice-box" onclick="rollDice()"><i class="fas fa-dice-one"></i></div>
+                    <div id="my-name" style="font-weight: 800; font-size: 12px;">You</div>
+                    <div id="diceBtn" class="dice-wrap" onclick="rollDice()"><i class="fas fa-dice-one"></i></div>
                 </div>
             </div>
-        </div>
-
-        <div id="missed-popup">
-            <div style="font-weight: 800; font-size: 14px; text-transform: uppercase;">Turn Missed</div>
-            <div class="hearts-row" id="hearts">
-                <i class="fas fa-heart heart"></i>
-                <i class="fas fa-heart heart"></i>
-                <i class="fas fa-heart heart"></i>
-            </div>
-            <div style="font-size: 10px; color: #94a3b8; font-weight: 700;">3 MISSES = GAME OVER</div>
-        </div>
-    </div>
-
-    <div class="bottom-bar">
-        <div class="emoji-bar">
-            <span class="emoji-btn" onclick="sendEmoji('😂')">😂</span>
-            <span class="emoji-btn" onclick="sendEmoji('🔥')">🔥</span>
-            <span class="emoji-btn" onclick="sendEmoji('👍')">👍</span>
-            <span class="emoji-btn" onclick="sendEmoji('😡')">😡</span>
-            <span class="emoji-btn" onclick="sendEmoji('😮')">😮</span>
-        </div>
-    </div>
-
-    <div id="result-overlay">
-        <div class="res-card">
-            <h1 id="res-title" style="font-size: 38px; margin: 0; font-weight: 900; color: var(--yellow);">YOU WIN!</h1>
-            <p id="res-sub" style="font-size: 20px; color: #4ade80; font-weight: 900; margin: 10px 0;">+₹18.00</p>
-            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
-                <div style="text-align: center;">
-                    <div style="font-size: 10px; opacity: 0.6;">Your Score</div>
-                    <div id="res-my-score" style="font-size: 24px; font-weight: 900;">0</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 10px; opacity: 0.6;">Opp Score</div>
-                    <div id="res-opp-score" style="font-size: 24px; font-weight: 900;">0</div>
-                </div>
-            </div>
-            <button onclick="location.reload()" style="margin-top: 20px; padding: 12px 30px; border-radius: 12px; border: none; background: var(--yellow); color: #000; font-weight: 900; cursor: pointer;">PLAY AGAIN</button>
         </div>
     </div>
 
@@ -307,81 +179,94 @@
         if (!token) location.href = "login.html";
 
         const socket = io({ auth: { token } });
-        let myId = "", currentRoom = null, myPlayerIndex = -1;
-        let gameState = null;
-        let isMoving = false;
-
-        const sndMove = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-        const sndDice = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
-        const sndKill = new Audio('https://www.soundjay.com/buttons/sounds/button-2.mp3');
-        const sndWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
-
-        const cellMap = {};
-        function initCellMap() {
-            const cells = [
-                {r: 6, c: 0}, {r: 6, c: 1}, {r: 6, c: 2}, {r: 6, c: 3}, {r: 6, c: 4}, {r: 6, c: 5},
-                {r: 5, c: 6}, {r: 4, c: 6}, {r: 3, c: 6}, {r: 2, c: 6}, {r: 1, c: 6}, {r: 0, c: 6},
-                {r: 0, c: 7},
-                {r: 0, c: 8}, {r: 1, c: 8}, {r: 2, c: 8}, {r: 3, c: 8}, {r: 4, c: 8}, {r: 5, c: 8},
-                {r: 6, c: 9}, {r: 6, c: 10}, {r: 6, c: 11}, {r: 6, c: 12}, {r: 6, c: 13}, {r: 6, c: 14},
-                {r: 7, c: 14},
-                {r: 8, c: 14}, {r: 8, c: 13}, {r: 8, c: 12}, {r: 8, c: 11}, {r: 8, c: 10}, {r: 8, c: 9},
-                {r: 9, c: 8}, {r: 10, c: 8}, {r: 11, c: 8}, {r: 12, c: 8}, {r: 13, c: 8}, {r: 14, c: 8},
-                {r: 14, c: 7},
-                {r: 14, c: 6}, {r: 13, c: 6}, {r: 12, c: 6}, {r: 11, c: 6}, {r: 10, c: 6}, {r: 9, c: 6},
-                {r: 8, c: 5}, {r: 8, c: 4}, {r: 8, c: 3}, {r: 8, c: 2}, {r: 8, c: 1}, {r: 8, c: 0},
-                {r: 7, c: 0}
-            ];
-            cells.forEach((p, i) => cellMap[i + 1] = p);
-            for(let i=0; i<6; i++) cellMap[101 + i] = {r: 7, c: i + 1};
-            for(let i=0; i<6; i++) cellMap[201 + i] = {r: 7, c: 13 - i};
-        }
+        let myId = "", currentRoom = null, myPlayerIndex = -1, gameState = null;
 
         function createBoard() {
             const board = document.getElementById('board');
             board.innerHTML = "";
+
             for (let r = 0; r < 15; r++) {
                 for (let c = 0; c < 15; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
+                    cell.id = `c-${r}-${c}`;
 
-                    if (r < 6 && c < 6) cell.classList.add('bg-red', 'home-area');
-                    else if (r < 6 && c > 8) cell.classList.add('bg-blue', 'home-area');
-                    else if (r > 8 && c < 6) cell.classList.add('bg-green', 'home-area');
-                    else if (r > 8 && c > 8) cell.classList.add('bg-yellow', 'home-area');
+                    // Bases
+                    if (r < 6 && c < 6) {
+                        if (r === 0 && c === 0) {
+                            cell.className = 'base red';
+                            cell.innerHTML = '<div class="base-inner"><div class="slot" id="p0-t0"></div><div class="slot" id="p0-t1"></div><div class="slot" id="p0-t2"></div><div class="slot" id="p0-t3"></div></div>';
+                        } else if (r > 0 || c > 0) { cell.style.display = 'none'; continue; }
+                    }
+                    else if (r > 8 && c > 8) {
+                        if (r === 9 && c === 9) {
+                            cell.className = 'base blue';
+                            cell.innerHTML = '<div class="base-inner"><div class="slot" id="p1-t0"></div><div class="slot" id="p1-t1"></div><div class="slot" id="p1-t2"></div><div class="slot" id="p1-t3"></div></div>';
+                        } else if (r > 9 || c > 9) { cell.style.display = 'none'; continue; }
+                    }
+                    else if (r < 6 && c > 8) { cell.classList.add('yellow'); }
+                    else if (r > 8 && c < 6) { cell.classList.add('green'); }
 
-                    if (r === 7 && c > 0 && c < 6) cell.classList.add('bg-red');
-                    if (r === 7 && c > 8 && c < 14) cell.classList.add('bg-blue');
+                    // Path Colors
+                    if (r === 7 && c > 0 && c < 6) cell.classList.add('red');
+                    if (r === 7 && c > 8 && c < 14) cell.classList.add('blue');
+                    if (c === 7 && r > 0 && r < 6) cell.classList.add('green');
+                    if (c === 7 && r > 8 && r < 14) cell.classList.add('yellow');
 
-                    const cellId = getCellId(r, c);
-                    if ([1, 9, 14, 22, 27, 35, 40, 48].includes(Number(cellId))) cell.classList.add('safe');
-                    if (cellId == 1) cell.classList.add('bg-red');
-                    if (cellId == 27) cell.classList.add('bg-blue');
+                    // Safe Spots
+                    if ((r === 6 && c === 1) || (r === 8 && c === 13) || (r === 1 && c === 8) || (r === 13 && c === 6) ||
+                        (r === 2 && c === 6) || (r === 12 && c === 8) || (r === 6 && c === 12) || (r === 8 && c === 2)) {
+                        cell.classList.add('safe');
+                    }
+
+                    // Center
+                    if (r === 6 && c === 6) {
+                        cell.className = 'center-home';
+                        cell.innerHTML = '<div class="tri tri-r"></div><div class="tri tri-b"></div><div class="tri tri-y"></div><div class="tri tri-g"></div>';
+                        cell.style.gridColumn = "span 3";
+                        cell.style.gridRow = "span 3";
+                    } else if (r >= 6 && r <= 8 && c >= 6 && c <= 8) {
+                        cell.style.display = 'none';
+                        continue;
+                    }
 
                     board.appendChild(cell);
                 }
             }
-            const center = document.createElement('div');
-            center.className = 'center-path';
-            center.style.gridColumn = "7 / span 3"; center.style.gridRow = "7 / span 3";
-            center.innerHTML = '<div class="tri tri-r"></div><div class="tri tri-b"></div><div class="tri tri-y"></div><div class="tri tri-g"></div>';
-            board.appendChild(center);
         }
 
-        function getCellId(r, c) { return Object.keys(cellMap).find(id => cellMap[id].r === r && cellMap[id].c === c); }
+        const cellMap = {};
+        function initCellMap() {
+            const path = [
+                {r:6,c:0},{r:6,c:1},{r:6,c:2},{r:6,c:3},{r:6,c:4},{r:6,c:5},
+                {r:5,c:6},{r:4,c:6},{r:3,c:6},{r:2,c:6},{r:1,c:6},{r:0,c:6},
+                {r:0,c:7},
+                {r:0,c:8},{r:1,c:8},{r:2,c:8},{r:3,c:8},{r:4,c:8},{r:5,c:8},
+                {r:6,c:9},{r:6,c:10},{r:6,c:11},{r:6,c:12},{r:6,c:13},{r:6,c:14},
+                {r:7,c:14},
+                {r:8,c:14},{r:8,c:13},{r:8,c:12},{r:8,c:11},{r:8,c:10},{r:8,c:9},
+                {r:9,c:8},{r:10,c:8},{r:11,c:8},{r:12,c:8},{r:13,c:8},{r:14,c:8},
+                {r:14,c:7},
+                {r:14,c:6},{r:13,c:6},{r:12,c:6},{r:11,c:6},{r:10,c:6},{r:9,c:6},
+                {r:8,c:5},{r:8,c:4},{r:8,c:3},{r:8,c:2},{r:8,c:1},{r:8,c:0},
+                {r:7,c:0}
+            ];
+            path.forEach((p, i) => cellMap[i + 1] = p);
+            for(let i=1; i<=6; i++) cellMap[100+i] = {r:7, c:i};
+            for(let i=1; i<=6; i++) cellMap[200+i] = {r:7, c:14-i};
+        }
 
         function joinLudo(amount) {
             socket.emit('ludo_join', { amount });
             document.getElementById('lobby').style.display = 'none';
-            document.getElementById('searching-overlay').style.display = 'flex';
-            document.getElementById('prize-val').innerText = (amount * 1.8).toFixed(2);
+            document.getElementById('search-overlay').style.display = 'flex';
+            document.getElementById('prize-text').innerText = (amount * 1.8).toFixed(2);
         }
 
         function rollDice() {
-            if (!gameState || gameState.turn !== myPlayerIndex || gameState.rolled || isMoving) return;
+            if (!gameState || gameState.turn !== myPlayerIndex || gameState.rolled) return;
             socket.emit('ludo_roll', { roomId: currentRoom });
             document.getElementById('diceBtn').classList.add('rolling');
-            sndDice.play();
         }
 
         socket.on('ludo_state', (state) => {
@@ -393,147 +278,69 @@
         socket.on('dice_rolled', (data) => {
             const diceIcons = ["one", "two", "three", "four", "five", "six"];
             const icon = `<i class="fas fa-dice-${diceIcons[data.dice - 1]}"></i>`;
-
             if (data.turn === myPlayerIndex) {
-                const diceBtn = document.getElementById('diceBtn');
-                diceBtn.classList.remove('rolling');
-                diceBtn.innerHTML = icon;
+                document.getElementById('diceBtn').classList.remove('rolling');
+                document.getElementById('diceBtn').innerHTML = icon;
             } else {
-                const oppDice = document.getElementById('opp-dice-display');
-                oppDice.innerHTML = icon;
+                document.getElementById('opp-dice').innerHTML = icon;
             }
-
-            if (gameState) {
-                gameState.rolled = true;
-                gameState.dice = data.dice;
-                highlightPossibleMoves();
-            }
-        });
-
-        socket.on('token_moved', async (data) => {
-            isMoving = true;
-            renderTokens(data.tokens);
-            document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
-            document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
-            if (data.killed) sndKill.play(); else sndMove.play();
-            isMoving = false;
-        });
-
-        socket.on('turn_missed', (data) => {
-            if (data.userId === myId) {
-                const popup = document.getElementById('missed-popup');
-                popup.style.display = 'block';
-                const hearts = document.querySelectorAll('#hearts .heart');
-                for(let i=0; i<data.misses; i++) hearts[i].classList.add('lost');
-                setTimeout(() => popup.style.display = 'none', 2000);
-            }
-        });
-
-        socket.on('game_over', (data) => {
-            const overlay = document.getElementById('result-overlay');
-            overlay.style.display = "flex";
-            sndWin.play();
-            if (data.winnerId === myId) {
-                document.getElementById('res-title').innerText = "YOU WIN!";
-                document.getElementById('res-sub').innerText = `+₹${data.prize.toFixed(2)}`;
-            } else {
-                document.getElementById('res-title').innerText = "YOU LOSE";
-                document.getElementById('res-title').style.color = "var(--red)";
-                document.getElementById('res-sub').innerText = `Entry fee lost`;
-            }
-            document.getElementById('res-my-score').innerText = data.scores[myPlayerIndex];
-            document.getElementById('res-opp-score').innerText = data.scores[1 - myPlayerIndex];
         });
 
         function updateUI(state) {
             myId = socket.user?.id || JSON.parse(atob(token.split('.')[1])).id;
             myPlayerIndex = state.players.findIndex(p => p.id === myId);
-
-            if (state.gameState === 'PLAYING') {
-                document.getElementById('searching-overlay').style.display = 'none';
-            }
+            if (state.gameState === 'PLAYING') document.getElementById('search-overlay').style.display = 'none';
 
             const me = state.players[myPlayerIndex];
-            const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", avatar: "", score: 0 };
+            const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", score: 0 };
 
             document.getElementById('my-name').innerText = me.name;
-            document.getElementById('my-avatar').src = me.avatar?.startsWith('http') ? me.avatar : `${API_URL}/${me.avatar}`;
             document.getElementById('my-score').innerText = me.score;
-
             document.getElementById('opp-name').innerText = opp.name;
-            document.getElementById('opp-avatar').src = opp.avatar?.startsWith('http') ? opp.avatar : `${API_URL}/${opp.avatar}`;
             document.getElementById('opp-score').innerText = opp.score;
+            document.getElementById('diceBtn').classList.toggle('active', state.turn === myPlayerIndex);
 
-            document.getElementById('diceBtn').classList.toggle('my-turn', state.turn === myPlayerIndex);
+            const min = Math.floor(state.gameTimer / 60);
+            const sec = state.gameTimer % 60;
+            document.getElementById('game-timer').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
 
-            const minutes = Math.floor(state.gameTimer / 60);
-            const seconds = state.gameTimer % 60;
-            document.getElementById('game-clock').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-            if (!isMoving) renderTokens(state.board.tokens);
+            renderTokens(state.board.tokens);
         }
 
         function renderTokens(tokens) {
             document.querySelectorAll('.token').forEach(t => t.remove());
-            const board = document.getElementById('board');
-            const boardRect = board.getBoundingClientRect();
-            const cellSize = boardRect.width / 15;
-
             [0, 1].forEach(pIdx => {
                 tokens[pIdx].forEach((pos, tIdx) => {
                     const token = document.createElement('div');
                     token.className = `token ${pIdx === 0 ? 'red' : 'blue'}`;
+                    if (gameState.turn === myPlayerIndex && pIdx === myPlayerIndex && gameState.rolled) token.classList.add('active');
 
-                    let r, c;
-                    if (pos === -1) {
-                        const basePos = getBaseCoords(pIdx, tIdx);
-                        r = basePos.r; c = basePos.c;
-                    } else {
-                        let actualId = pos >= 101 ? (pIdx === 0 ? pos : pos + 100) : pos;
-                        const coords = cellMap[actualId];
-                        r = coords.r; c = coords.c;
-                    }
-
-                    token.style.left = (c * cellSize + (cellSize - 24)/2) + "px";
-                    token.style.top = (r * cellSize + (cellSize - 24)/2) + "px";
-
-                    token.onclick = () => {
-                        if (gameState.turn === myPlayerIndex && gameState.rolled && !isMoving) {
+                    token.onclick = (e) => {
+                        e.stopPropagation();
+                        if (gameState.turn === myPlayerIndex && pIdx === myPlayerIndex) {
                             socket.emit('ludo_move', { roomId: currentRoom, tokenIndex: tIdx });
                         }
                     };
-                    board.appendChild(token);
+
+                    if (pos === -1) {
+                        const slot = document.getElementById(`p${pIdx}-t${tIdx}`);
+                        if (slot) slot.appendChild(token);
+                    } else {
+                        const actualId = pos >= 101 ? (pIdx === 0 ? pos : pos + 100) : pos;
+                        const coords = cellMap[actualId];
+                        if (coords) {
+                            const cell = document.getElementById(`c-${coords.r}-${coords.c}`);
+                            if (cell) cell.appendChild(token);
+                        }
+                    }
                 });
             });
-            highlightPossibleMoves();
         }
 
-        function highlightPossibleMoves() {
-            if (!gameState || gameState.turn !== myPlayerIndex || !gameState.rolled) return;
-            const tokens = document.querySelectorAll(`.token.${myPlayerIndex === 0 ? 'red' : 'blue'}`);
-            tokens.forEach(t => t.classList.add('active'));
-        }
-
-        function getBaseCoords(pIdx, tIdx) {
-            const offsets = [{r:1.2, c:1.2}, {r:1.2, c:3.8}, {r:3.8, c:1.2}, {r:3.8, c:3.8}];
-            const baseOrigin = pIdx === 0 ? {r:0, c:0} : {r:9, c:9};
-            return { r: baseOrigin.r + offsets[tIdx].r, c: baseOrigin.c + offsets[tIdx].c };
-        }
-
-        function sendEmoji(e) {
-            // socket.emit('game_emoji', { emoji: e, roomId: currentRoom });
-        }
-
-        async function init() {
-            initCellMap();
-            createBoard();
-            const res = await fetch(`${API_URL}/api/profile`, { headers: { authorization: token } });
-            const data = await res.json();
-            if (data.success) {
-                socket.user = data.user;
-            }
-        }
-        init();
+        initCellMap();
+        createBoard();
+        fetch(`${API_URL}/api/profile`, { headers: { authorization: token } })
+            .then(r => r.json()).then(d => { if(d.success) socket.user = d.user; });
     </script>
 </body>
 </html>
