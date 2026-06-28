@@ -27,7 +27,7 @@
             height: 300px;
             border-radius: 50%;
             position: relative;
-            transition: transform 4s cubic-bezier(.17,.67,.12,.99);
+            transition: transform 2s cubic-bezier(0.1, 0.7, 0.1, 1);
             box-shadow: 0 0 30px rgba(0,0,0,0.5);
             background: #000;
             z-index: 5;
@@ -402,16 +402,23 @@
 
             // Calculate target angle
             const targetOffset = -(winningIndex * sectionAngle);
-            const baseRotations = 1;
+            const baseRotations = 2; // Extra rotations for "teji se" feel
 
             // Add to current rotation to keep it smooth
             const targetRotation = currentRotation + (baseRotations * 360) + targetOffset - (currentRotation % 360);
 
-            wheel.style.transition = 'transform 4s cubic-bezier(.17,.67,.12,.99)';
+            // Speed up transition to 2s
+            wheel.style.transition = 'transform 2s cubic-bezier(0.1, 0.7, 0.1, 1)';
             wheel.style.transform = `rotate(${targetRotation}deg)`;
             currentRotation = targetRotation;
 
             setTimeout(() => {
+                // Stop Wheel Spin sound
+                if (sndWheel) {
+                    sndWheel.pause();
+                    sndWheel.currentTime = 0;
+                }
+
                 const sndWin = document.getElementById("sndWin");
                 const sndLose = document.getElementById("sndLose");
 
