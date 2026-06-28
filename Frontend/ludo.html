@@ -3,130 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ludo Pro | Solo Casino</title>
+    <title>Ludo Turbo | Solo Casino</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
             --red: #ef4444;
             --blue: #3b82f6;
             --green: #22c55e;
-            --yellow: #eab308;
-            --bg: #0f172a;
-            --panel: #1e293b;
+            --yellow: #fde047;
+            --bg: #00224d;
+            --panel: #003366;
+            --glass: rgba(255, 255, 255, 0.1);
+            --safe-star: #cbd5e1;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg);
+            font-family: 'Outfit', sans-serif;
+            background: #001529;
+            background-image: radial-gradient(circle at 50% 50%, #00224d 0%, #001529 100%);
             color: white; margin: 0;
             display: flex; flex-direction: column;
             height: 100vh; overflow: hidden;
+            align-items: center;
+        }
+
         /* Lobby UI */
         #lobby {
-            position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+            position: fixed; inset: 0; background: #001529; z-index: 1000;
             display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto;
         }
-        .stake-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px;
-        }
+        .lobby-header { text-align: center; margin-bottom: 40px; margin-top: 40px; }
+        .lobby-header h1 { font-weight: 900; font-size: 42px; margin: 0; color: var(--yellow); text-shadow: 0 4px 10px rgba(0,0,0,0.5); letter-spacing: 2px; }
+
+        .stake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; }
         .stake-card {
-            background: var(--panel); padding: 20px; border-radius: 20px; text-align: center;
-            border: 2px solid #334155; cursor: pointer; transition: 0.2s;
+            background: linear-gradient(135deg, #003366, #00224d); padding: 20px; border-radius: 20px; text-align: center;
+            border: 2px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
         }
         .stake-card:active { transform: scale(0.95); }
-        .stake-card h3 { margin: 0; font-size: 14px; color: #94a3b8; }
+        .stake-card h3 { margin: 0; font-size: 14px; color: #94a3b8; text-transform: uppercase; }
         .stake-card .amount { font-size: 24px; font-weight: 900; color: var(--yellow); margin: 5px 0; }
+        .stake-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); }
 
-        /* Game UI */
-        .header {
-            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); z-index: 100;
+        /* Game Header */
+        .top-nav {
+            width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.2);
         }
-        .balance { color: var(--green); font-weight: 800; }
+        .nav-icons { display: flex; gap: 15px; font-size: 18px; color: rgba(255,255,255,0.6); }
 
-        .game-container {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative; padding: 10px;
+        .prize-pool-box {
+            background: linear-gradient(to bottom, #1e40af, #1e3a8a);
+            padding: 5px 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);
+            text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
+        .prize-pool-label { font-size: 10px; color: #cbd5e1; font-weight: 600; text-transform: uppercase; }
+        .prize-pool-value { font-size: 16px; font-weight: 900; color: #fff; }
+
+        .game-timer {
+            background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 10px;
+            display: flex; align-items: center; gap: 8px; margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .timer-icon { color: #facc15; font-size: 14px; animation: pulse 1s infinite; }
+        .timer-value { font-family: monospace; font-size: 18px; font-weight: 900; color: #4ade80; }
+
+        /* Main Game Area */
+        .game-area {
+            flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; padding: 10px 0; position: relative;
+        }
+
+        /* Opponent Info */
+        .player-bar {
+            width: 90%; display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 10px; position: relative;
+        }
+        .player-profile { display: flex; align-items: center; gap: 10px; }
+        .avatar-wrap { position: relative; width: 45px; height: 45px; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
+        .player-name { font-size: 12px; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        .score-circle {
+            width: 70px; height: 70px; border-radius: 50%; background: #fff;
+            border: 4px solid var(--red); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: #334155;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative;
+        }
+        .score-circle.blue { border-color: var(--blue); }
+        .score-label { font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: -2px; }
+        .score-value { font-size: 20px; font-weight: 900; }
 
         /* Ludo Board */
-        .ludo-board {
-            width: 100%; max-width: 450px; aspect-ratio: 1/1;
-            background: #fff; border: 6px solid #1e293b; border-radius: 12px;
+        .board-container {
+            width: 95%; aspect-ratio: 1/1; background: #fff; border-radius: 8px;
+            padding: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-            position: relative;
+            position: relative; border: 4px solid #1e293b;
         }
 
         .cell { border: 0.1px solid rgba(0,0,0,0.05); position: relative; }
-        .home-box { grid-column: span 6; grid-row: span 6; position: relative; border: 1px solid rgba(0,0,0,0.1); }
-        .home-inner { width: 80%; height: 80%; background: white; border-radius: 15px; position: absolute; top: 10%; left: 10%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; padding: 10px; border: 2px solid rgba(0,0,0,0.05); }
-        .base-slot { background: #f1f5f9; border-radius: 50%; border: 2px dashed #cbd5e1; }
+        .cell.safe::after {
+            content: '\f005'; font-family: "Font Awesome 6 Free"; font-weight: 900;
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            color: rgba(0,0,0,0.1); font-size: 12px;
+        }
 
-        .center-home { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; overflow: hidden; border: 1px solid rgba(0,0,0,0.1); }
-        .triangle { position: absolute; width: 0; height: 0; border-style: solid; }
-        .tri-red { border-width: 45px 45px 0 45px; border-color: var(--red) transparent transparent transparent; top: 0; }
-        .tri-blue { border-width: 45px 0 45px 45px; border-color: transparent transparent transparent var(--blue); left: 0; }
-        .tri-yellow { border-width: 0 45px 45px 45px; border-color: transparent transparent var(--yellow) transparent; bottom: 0; }
-        .tri-green { border-width: 45px 45px 45px 0; border-color: transparent var(--green) transparent transparent; right: 0; }
+        .home-area { grid-column: span 6; grid-row: span 6; position: relative; }
+        .home-inner {
+            width: 80%; height: 80%; background: #fff; border-radius: 12px;
+            position: absolute; top: 10%; left: 10%; display: grid;
+            grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; padding: 8px;
+        }
+        .token-slot { background: #f1f5f9; border-radius: 50%; border: 2px dashed #cbd5e1; }
 
-        .safe { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2394a3b8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'); background-size: 70%; background-repeat: no-repeat; background-position: center; }
-
-        .red-bg { background-color: var(--red) !important; }
-        .blue-bg { background-color: var(--blue) !important; }
-        .green-bg { background-color: var(--green) !important; }
-        .yellow-bg { background-color: var(--yellow) !important; }
+        .center-path { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; }
+        .tri { position: absolute; width: 0; height: 0; border-style: solid; }
+        .tri-r { border-width: 45px 45px 0 45px; border-color: var(--red) transparent transparent transparent; top: 0; }
+        .tri-b { border-width: 45px 0 45px 45px; border-color: transparent transparent transparent var(--blue); left: 0; }
+        .tri-y { border-width: 0 45px 45px 45px; border-color: transparent transparent var(--yellow) transparent; bottom: 0; }
+        .tri-g { border-width: 45px 45px 45px 0; border-color: transparent var(--green) transparent transparent; right: 0; }
 
         /* Tokens */
         .token {
-            width: 32px; height: 32px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.8);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4); z-index: 100; cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: absolute; display: flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4); z-index: 100; cursor: pointer;
+            position: absolute; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; justify-content: center;
         }
-        .token::after { content: ''; width: 50%; height: 50%; background: rgba(255,255,255,0.3); border-radius: 50%; }
-        .token.active { animation: pulse 0.6s infinite alternate; z-index: 200; border-color: #fff; box-shadow: 0 0 15px #fff; }
-        @keyframes pulse { from { transform: scale(1) translateY(0); } to { transform: scale(1.2) translateY(-5px); } }
+        .token.red { background: var(--red); }
+        .token.blue { background: var(--blue); }
+        .token.active { animation: bounce 0.6s infinite alternate; z-index: 200; box-shadow: 0 0 10px #fff; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 
-        /* Controls */
-        .game-footer {
-            width: 100%; max-width: 450px; padding: 20px; display: flex; justify-content: space-between; align-items: center;
+        /* Dice UI */
+        .dice-box {
+            width: 50px; height: 50px; background: #fff; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #1e293b; border: 2px solid transparent; transition: 0.2s;
         }
-        .player-info { display: flex; align-items: center; gap: 10px; padding: 10px 15px; background: var(--panel); border-radius: 20px; border: 2px solid transparent; width: 42%; }
-        .player-info.active { border-color: var(--yellow); box-shadow: 0 0 20px rgba(234, 179, 8, 0.3); background: #2d3a4f; }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #475569; }
+        .dice-box.my-turn { border-color: #4ade80; box-shadow: 0 0 15px rgba(74, 222, 128, 0.5); cursor: pointer; }
+        .dice-box.rolling { animation: roll 0.4s infinite; }
+        @keyframes roll { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
 
-        .dice-container { position: relative; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
-        .dice {
-            width: 60px; height: 60px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 32px; color: #1e293b; box-shadow: 0 8px 20px rgba(0,0,0,0.4); cursor: pointer; transition: 0.1s; border: 1px solid #e2e8f0;
+        /* Turn Missed Popup */
+        #missed-popup {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; border-radius: 15px; padding: 15px; width: 220px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 2000; text-align: center;
+            display: none; color: #334155; border: 3px solid #e2e8f0;
         }
-        .dice.rolling { animation: dice-roll 0.4s infinite linear; pointer-events: none; }
-        @keyframes dice-roll {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(180deg) scale(0.9); }
-            100% { transform: rotate(360deg) scale(1); }
-        }
+        .hearts-row { display: flex; justify-content: center; gap: 10px; margin: 10px 0; font-size: 24px; }
+        .heart { color: #cbd5e1; }
+        .heart.lost { color: var(--red); }
 
-        #status-msg { margin: 15px 0; font-weight: 800; text-align: center; height: 24px; color: var(--yellow); text-transform: uppercase; letter-spacing: 1px; font-size: 14px; }
+        /* Bottom Controls */
+        .bottom-bar { width: 100%; padding: 10px 15px; background: rgba(0,0,0,0.3); }
+        .emoji-bar { display: flex; justify-content: space-around; padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+        .emoji-btn { font-size: 22px; cursor: pointer; transition: 0.2s; filter: grayscale(0.5); }
+        .emoji-btn:hover { transform: scale(1.2); filter: grayscale(0); }
 
-        /* Result Overlay */
-        #result-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000;
+        /* Color classes */
+        .bg-red { background-color: var(--red) !important; }
+        .bg-blue { background-color: var(--blue) !important; }
+        .bg-green { background-color: var(--green) !important; }
+        .bg-yellow { background-color: var(--yellow) !important; }
+
+        #searching-overlay {
+            position: fixed; inset: 0; background: rgba(0,21,41,0.9); z-index: 1500;
             display: none; flex-direction: column; align-items: center; justify-content: center;
         }
-        .res-card { background: var(--panel); padding: 50px; border-radius: 40px; text-align: center; border: 4px solid var(--yellow); box-shadow: 0 0 50px rgba(234, 179, 8, 0.2); }
+        .loader { width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--yellow); border-radius: 50%; animation: spin 1s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #result-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .res-card { background: #003366; padding: 40px; border-radius: 30px; text-align: center; border: 4px solid var(--yellow); }
     </style>
 </head>
 <body>
 
     <div id="lobby">
-        <div style="text-align: center; margin-bottom: 40px;">
-            <h1 style="font-weight: 900; font-size: 48px; margin: 0; color: var(--yellow); text-shadow: 0 5px 15px rgba(0,0,0,0.5);">LUDO PRO</h1>
-            <p style="color: #94a3b8; font-weight: 600;">Multiplayer Real Cash Battle</p>
+        <div class="lobby-header">
+            <h1>LUDO TURBO</h1>
+            <p style="color: #94a3b8; font-weight: 600;">Fast Paced Score Battle</p>
         </div>
         <div class="stake-grid" id="stakes">
             <div class="stake-card" onclick="joinLudo(10)"><h3>Bronze</h3><div class="amount">₹10</div></div>
@@ -137,46 +202,102 @@
         <button onclick="location.href='dashboard.html'" style="margin-top: 40px; background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer;">← BACK TO DASHBOARD</button>
     </div>
 
-    <div class="header">
-        <div onclick="location.href='dashboard.html'"><i class="fas fa-chevron-left"></i></div>
-        <div style="font-weight: 900; letter-spacing: 2px; color: var(--yellow);">LUDO PRO</div>
-        <div class="balance">₹<span id="balance">0.00</span></div>
+    <div id="searching-overlay">
+        <div class="loader"></div>
+        <h2 style="margin-top: 20px; font-weight: 800;">Finding Opponent...</h2>
+        <p style="color: rgba(255,255,255,0.5);">Game will start in a few seconds</p>
     </div>
 
-    <div class="game-container">
-        <div id="status-msg">Connecting to server...</div>
-        <div class="ludo-board" id="board">
+    <div class="top-nav">
+        <div class="nav-icons"><i class="fas fa-cog"></i> <i class="fas fa-wifi"></i></div>
+        <div class="prize-pool-box">
+            <div class="prize-pool-label">Prize Pool</div>
+            <div class="prize-pool-value">₹<span id="prize-val">0.00</span></div>
+        </div>
+        <div class="nav-icons"><i class="fas fa-battery-three-quarters"></i></div>
+    </div>
+
+    <div class="game-timer">
+        <i class="fas fa-bolt timer-icon"></i>
+        <div class="timer-value" id="game-clock">05:00</div>
+    </div>
+
+    <div class="game-area">
+        <!-- Opponent -->
+        <div class="player-bar" id="opp-bar">
+            <div class="player-profile">
+                <div class="avatar-wrap">
+                    <img id="opp-avatar" src="https://i.pravatar.cc/100?u=opp" class="avatar-img" alt="opp">
+                </div>
+                <div>
+                    <div class="player-name" id="opp-name">Opponent</div>
+                    <div id="opp-dice-display" class="dice-box" style="width: 35px; height: 35px; font-size: 16px; margin-top: 5px;"><i class="fas fa-dice-one"></i></div>
+                </div>
+            </div>
+            <div class="score-circle blue">
+                <div class="score-label">Score</div>
+                <div class="score-value" id="opp-score">0</div>
+            </div>
+        </div>
+
+        <div class="board-container" id="board">
             <!-- Board generated by JS -->
         </div>
 
-        <div class="game-footer">
-            <div class="player-info" id="p1-info">
-                <img id="p1-avatar" src="" class="avatar" alt="p1">
-                <div style="overflow: hidden;">
-                    <div id="p1-name" style="font-size: 11px; font-weight: 900; white-space: nowrap; text-overflow: ellipsis;">YOU</div>
-                    <div style="color: var(--red); font-size: 9px; font-weight: 800;">RED</div>
+        <!-- Self -->
+        <div class="player-bar" id="my-bar">
+            <div class="score-circle">
+                <div class="score-label">Score</div>
+                <div class="score-value" id="my-score">0</div>
+            </div>
+            <div class="player-profile" style="flex-direction: row-reverse; text-align: right;">
+                <div class="avatar-wrap">
+                    <img id="my-avatar" src="https://i.pravatar.cc/100?u=me" class="avatar-img" alt="me">
+                    <div id="my-dice-bubble" style="position: absolute; top: -10px; right: -10px;"></div>
+                </div>
+                <div>
+                    <div class="player-name" id="my-name">You</div>
+                    <div id="diceBtn" class="dice-box" onclick="rollDice()"><i class="fas fa-dice-one"></i></div>
                 </div>
             </div>
+        </div>
 
-            <div class="dice-container">
-                <div class="dice" id="diceBtn" onclick="rollDice()"><i class="fas fa-dice-one"></i></div>
+        <div id="missed-popup">
+            <div style="font-weight: 800; font-size: 14px; text-transform: uppercase;">Turn Missed</div>
+            <div class="hearts-row" id="hearts">
+                <i class="fas fa-heart heart"></i>
+                <i class="fas fa-heart heart"></i>
+                <i class="fas fa-heart heart"></i>
             </div>
+            <div style="font-size: 10px; color: #94a3b8; font-weight: 700;">3 MISSES = GAME OVER</div>
+        </div>
+    </div>
 
-            <div class="player-info" id="p2-info">
-                <div style="overflow: hidden; text-align: right;">
-                    <div id="p2-name" style="font-size: 11px; font-weight: 900; white-space: nowrap; text-overflow: ellipsis;">WAITING...</div>
-                    <div style="color: var(--blue); font-size: 9px; font-weight: 800;">BLUE</div>
-                </div>
-                <img id="p2-avatar" src="" class="avatar" alt="p2">
-            </div>
+    <div class="bottom-bar">
+        <div class="emoji-bar">
+            <span class="emoji-btn" onclick="sendEmoji('😂')">😂</span>
+            <span class="emoji-btn" onclick="sendEmoji('🔥')">🔥</span>
+            <span class="emoji-btn" onclick="sendEmoji('👍')">👍</span>
+            <span class="emoji-btn" onclick="sendEmoji('😡')">😡</span>
+            <span class="emoji-btn" onclick="sendEmoji('😮')">😮</span>
         </div>
     </div>
 
     <div id="result-overlay">
         <div class="res-card">
-            <h1 id="res-title" style="font-size: 48px; margin: 0; font-weight: 900;">YOU WIN!</h1>
-            <p id="res-sub" style="font-size: 24px; color: var(--green); font-weight: 900; margin: 10px 0;">+₹180.00</p>
-            <button onclick="location.reload()" style="margin-top: 30px; padding: 15px 40px; border-radius: 15px; border: none; background: var(--yellow); color: #000; font-weight: 900; cursor: pointer; box-shadow: 0 5px 15px rgba(234, 179, 8, 0.4);">PLAY AGAIN</button>
+            <h1 id="res-title" style="font-size: 38px; margin: 0; font-weight: 900; color: var(--yellow);">YOU WIN!</h1>
+            <p id="res-sub" style="font-size: 20px; color: #4ade80; font-weight: 900; margin: 10px 0;">+₹18.00</p>
+            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+                <div style="text-align: center;">
+                    <div style="font-size: 10px; opacity: 0.6;">Your Score</div>
+                    <div id="res-my-score" style="font-size: 24px; font-weight: 900;">0</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 10px; opacity: 0.6;">Opp Score</div>
+                    <div id="res-opp-score" style="font-size: 24px; font-weight: 900;">0</div>
+                </div>
+            </div>
+            <button onclick="location.reload()" style="margin-top: 20px; padding: 12px 30px; border-radius: 12px; border: none; background: var(--yellow); color: #000; font-weight: 900; cursor: pointer;">PLAY AGAIN</button>
         </div>
     </div>
 
@@ -223,25 +344,27 @@
                 for (let c = 0; c < 15; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
-                    if (r < 6 && c < 6) cell.classList.add('red-bg');
-                    else if (r < 6 && c > 8) cell.classList.add('blue-bg');
-                    else if (r > 8 && c < 6) cell.classList.add('green-bg');
-                    else if (r > 8 && c > 8) cell.classList.add('yellow-bg');
 
-                    if (r === 7 && c > 0 && c < 6) cell.classList.add('red-bg');
-                    if (r === 7 && c > 8 && c < 14) cell.classList.add('blue-bg');
+                    if (r < 6 && c < 6) cell.classList.add('bg-red', 'home-area');
+                    else if (r < 6 && c > 8) cell.classList.add('bg-blue', 'home-area');
+                    else if (r > 8 && c < 6) cell.classList.add('bg-green', 'home-area');
+                    else if (r > 8 && c > 8) cell.classList.add('bg-yellow', 'home-area');
+
+                    if (r === 7 && c > 0 && c < 6) cell.classList.add('bg-red');
+                    if (r === 7 && c > 8 && c < 14) cell.classList.add('bg-blue');
 
                     const cellId = getCellId(r, c);
                     if ([1, 9, 14, 22, 27, 35, 40, 48].includes(Number(cellId))) cell.classList.add('safe');
-                    if (cellId == 1) cell.classList.add('red-bg');
-                    if (cellId == 27) cell.classList.add('blue-bg');
+                    if (cellId == 1) cell.classList.add('bg-red');
+                    if (cellId == 27) cell.classList.add('bg-blue');
+
                     board.appendChild(cell);
                 }
             }
             const center = document.createElement('div');
-            center.className = 'center-home';
+            center.className = 'center-path';
             center.style.gridColumn = "7 / span 3"; center.style.gridRow = "7 / span 3";
-            center.innerHTML = '<div class="triangle tri-red"></div><div class="triangle tri-blue"></div><div class="triangle tri-yellow"></div><div class="triangle tri-green"></div>';
+            center.innerHTML = '<div class="tri tri-r"></div><div class="tri tri-b"></div><div class="tri tri-y"></div><div class="tri tri-g"></div>';
             board.appendChild(center);
         }
 
@@ -250,6 +373,8 @@
         function joinLudo(amount) {
             socket.emit('ludo_join', { amount });
             document.getElementById('lobby').style.display = 'none';
+            document.getElementById('searching-overlay').style.display = 'flex';
+            document.getElementById('prize-val').innerText = (amount * 1.8).toFixed(2);
         }
 
         function rollDice() {
@@ -267,9 +392,17 @@
 
         socket.on('dice_rolled', (data) => {
             const diceIcons = ["one", "two", "three", "four", "five", "six"];
-            const diceBtn = document.getElementById('diceBtn');
-            diceBtn.classList.remove('rolling');
-            diceBtn.innerHTML = `<i class="fas fa-dice-${diceIcons[data.dice - 1]}"></i>`;
+            const icon = `<i class="fas fa-dice-${diceIcons[data.dice - 1]}"></i>`;
+
+            if (data.turn === myPlayerIndex) {
+                const diceBtn = document.getElementById('diceBtn');
+                diceBtn.classList.remove('rolling');
+                diceBtn.innerHTML = icon;
+            } else {
+                const oppDice = document.getElementById('opp-dice-display');
+                oppDice.innerHTML = icon;
+            }
+
             if (gameState) {
                 gameState.rolled = true;
                 gameState.dice = data.dice;
@@ -279,8 +412,21 @@
 
         socket.on('token_moved', async (data) => {
             isMoving = true;
-            await animateMovement(data);
+            renderTokens(data.tokens);
+            document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
+            document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
+            if (data.killed) sndKill.play(); else sndMove.play();
             isMoving = false;
+        });
+
+        socket.on('turn_missed', (data) => {
+            if (data.userId === myId) {
+                const popup = document.getElementById('missed-popup');
+                popup.style.display = 'block';
+                const hearts = document.querySelectorAll('#hearts .heart');
+                for(let i=0; i<data.misses; i++) hearts[i].classList.add('lost');
+                setTimeout(() => popup.style.display = 'none', 2000);
+            }
         });
 
         socket.on('game_over', (data) => {
@@ -295,35 +441,36 @@
                 document.getElementById('res-title').style.color = "var(--red)";
                 document.getElementById('res-sub').innerText = `Entry fee lost`;
             }
+            document.getElementById('res-my-score').innerText = data.scores[myPlayerIndex];
+            document.getElementById('res-opp-score').innerText = data.scores[1 - myPlayerIndex];
         });
 
         function updateUI(state) {
             myId = socket.user?.id || JSON.parse(atob(token.split('.')[1])).id;
             myPlayerIndex = state.players.findIndex(p => p.id === myId);
-            const p1 = state.players[myPlayerIndex] || state.players[0];
-            const p2 = state.players.find(p => p.id !== p1.id) || { name: "Waiting...", avatar: "" };
 
-            document.getElementById('p1-name').innerText = p1.name;
-            document.getElementById('p1-avatar').src = p1.avatar ? `${API_URL}/${p1.avatar}` : `https://i.pravatar.cc/100?u=${p1.id}`;
-            document.getElementById('p2-name').innerText = p2.name;
-            document.getElementById('p2-avatar').src = p2.avatar ? `${API_URL}/${p2.avatar}` : `https://i.pravatar.cc/100?u=${p2.id}`;
+            if (state.gameState === 'PLAYING') {
+                document.getElementById('searching-overlay').style.display = 'none';
+            }
 
-            document.getElementById('p1-info').classList.toggle('active', state.turn === myPlayerIndex);
-            document.getElementById('p2-info').classList.toggle('active', state.turn !== myPlayerIndex);
+            const me = state.players[myPlayerIndex];
+            const opp = state.players.find(p => p.id !== me.id) || { name: "Waiting...", avatar: "", score: 0 };
 
-            const status = document.getElementById('status-msg');
-            if (state.gameState === 'WAITING') status.innerText = "Searching for opponent...";
-            else if (state.turn === myPlayerIndex) status.innerText = state.rolled ? "Pick a token to move" : "Your turn! Roll now";
-            else status.innerText = `${p2.name.toUpperCase()}'s turn...`;
+            document.getElementById('my-name').innerText = me.name;
+            document.getElementById('my-avatar').src = me.avatar?.startsWith('http') ? me.avatar : `${API_URL}/${me.avatar}`;
+            document.getElementById('my-score').innerText = me.score;
+
+            document.getElementById('opp-name').innerText = opp.name;
+            document.getElementById('opp-avatar').src = opp.avatar?.startsWith('http') ? opp.avatar : `${API_URL}/${opp.avatar}`;
+            document.getElementById('opp-score').innerText = opp.score;
+
+            document.getElementById('diceBtn').classList.toggle('my-turn', state.turn === myPlayerIndex);
+
+            const minutes = Math.floor(state.gameTimer / 60);
+            const seconds = state.gameTimer % 60;
+            document.getElementById('game-clock').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
             if (!isMoving) renderTokens(state.board.tokens);
-        }
-
-        async function animateMovement(data) {
-            // Simplified: for now just re-render and play sound.
-            // In production, we'd loop through cells for path animation.
-            renderTokens(data.tokens);
-            if (data.killed) sndKill.play(); else sndMove.play();
         }
 
         function renderTokens(tokens) {
@@ -335,7 +482,7 @@
             [0, 1].forEach(pIdx => {
                 tokens[pIdx].forEach((pos, tIdx) => {
                     const token = document.createElement('div');
-                    token.className = `token ${pIdx === 0 ? 'red-bg' : 'blue-bg'}`;
+                    token.className = `token ${pIdx === 0 ? 'red' : 'blue'}`;
 
                     let r, c;
                     if (pos === -1) {
@@ -347,8 +494,8 @@
                         r = coords.r; c = coords.c;
                     }
 
-                    token.style.left = (c * cellSize + (cellSize - 32)/2) + "px";
-                    token.style.top = (r * cellSize + (cellSize - 32)/2) + "px";
+                    token.style.left = (c * cellSize + (cellSize - 24)/2) + "px";
+                    token.style.top = (r * cellSize + (cellSize - 24)/2) + "px";
 
                     token.onclick = () => {
                         if (gameState.turn === myPlayerIndex && gameState.rolled && !isMoving) {
@@ -363,14 +510,18 @@
 
         function highlightPossibleMoves() {
             if (!gameState || gameState.turn !== myPlayerIndex || !gameState.rolled) return;
-            const tokens = document.querySelectorAll(`.token.${myPlayerIndex === 0 ? 'red-bg' : 'blue-bg'}`);
+            const tokens = document.querySelectorAll(`.token.${myPlayerIndex === 0 ? 'red' : 'blue'}`);
             tokens.forEach(t => t.classList.add('active'));
         }
 
         function getBaseCoords(pIdx, tIdx) {
             const offsets = [{r:1.2, c:1.2}, {r:1.2, c:3.8}, {r:3.8, c:1.2}, {r:3.8, c:3.8}];
-            const baseOrigin = pIdx === 0 ? {r:0, c:0} : {r:0, c:9};
+            const baseOrigin = pIdx === 0 ? {r:0, c:0} : {r:9, c:9};
             return { r: baseOrigin.r + offsets[tIdx].r, c: baseOrigin.c + offsets[tIdx].c };
+        }
+
+        function sendEmoji(e) {
+            // socket.emit('game_emoji', { emoji: e, roomId: currentRoom });
         }
 
         async function init() {
@@ -380,7 +531,6 @@
             const data = await res.json();
             if (data.success) {
                 socket.user = data.user;
-                document.getElementById("balance").innerText = data.user.coins.toFixed(2);
             }
         }
         init();
