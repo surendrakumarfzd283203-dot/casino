@@ -69,27 +69,27 @@
 
         /* Location Pin Style Tokens */
         .token {
-            width: 30px; height: 38px;
+            width: 20px; height: 28px;
             position: absolute; top: 50%; left: 50%;
             z-index: 100; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-origin: center center;
+            transform: translate(-50%, -50%);
         }
         .token-body {
             width: 100%; height: 100%;
             position: relative;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
             display: flex; flex-direction: column; align-items: center;
         }
         .pin-head {
-            width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
+            width: 18px; height: 18px; border-radius: 50% 50% 50% 0;
             background: currentColor;
             transform: rotate(-45deg);
-            border: 2px solid white;
+            border: 1.5px solid white;
             display: flex; align-items: center; justify-content: center;
         }
         .pin-head::after {
-            content: ''; width: 10px; height: 10px; background: white; border-radius: 50%;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            content: ''; width: 6px; height: 6px; background: white; border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
         }
         .token.red { color: #ff3232; }
         .token.blue { color: #2874ed; }
@@ -327,16 +327,15 @@
 
         const cellMap = {};
         function initCellMap() {
+            // Standard Ludo common path starting from Red Star
             const p = [ {r:6,c:1},{r:6,c:2},{r:6,c:3},{r:6,c:4},{r:6,c:5},{r:5,c:6},{r:4,c:6},{r:3,c:6},{r:2,c:6},{r:1,c:6},{r:0,c:6},{r:0,c:7},{r:0,c:8},{r:1,c:8},{r:2,c:8},{r:3,c:8},{r:4,c:8},{r:5,c:8},{r:6,c:9},{r:6,c:10},{r:6,c:11},{r:6,c:12},{r:6,c:13},{r:6,c:14},{r:7,c:14},{r:8,c:14},{r:8,c:13},{r:8,c:12},{r:8,c:11},{r:8,c:10},{r:8,c:9},{r:9,c:8},{r:10,c:8},{r:11,c:8},{r:12,c:8},{r:13,c:8},{r:14,c:8},{r:14,c:7},{r:14,c:6},{r:13,c:6},{r:12,c:6},{r:11,c:6},{r:10,c:6},{r:9,c:6},{r:8,c:5},{r:8,c:4},{r:8,c:3},{r:8,c:2},{r:8,c:1},{r:8,c:0},{r:7,c:0},{r:6,c:0} ];
-            // Map common path (both 0 and 1 based indices for compatibility)
-            p.forEach((pos, i) => {
-                cellMap[i] = pos;
-                cellMap[i + 1] = pos;
-            });
-            for(let i=1; i<=6; i++) cellMap[100+i] = {r:7, c:i};
-            for(let i=1; i<=6; i++) cellMap[200+i] = {r:i, c:7};
-            for(let i=1; i<=6; i++) cellMap[300+i] = {r:7, c:14-i};
-            for(let i=1; i<=6; i++) cellMap[400+i] = {r:14-i, c:7};
+            p.forEach((pos, i) => cellMap[i] = pos);
+
+            // Home paths for each color
+            for(let i=1; i<=6; i++) cellMap[100+i] = {r:7, c:i};    // Red Home
+            for(let i=1; i<=6; i++) cellMap[200+i] = {r:i, c:7};    // Blue Home
+            for(let i=1; i<=6; i++) cellMap[300+i] = {r:7, c:14-i}; // Yellow Home
+            for(let i=1; i<=6; i++) cellMap[400+i] = {r:14-i, c:7};// Green Home
         }
 
         function joinLudo(amount) {
@@ -381,16 +380,28 @@
             const token = document.querySelector(`.token.${colors[data.playerColor]}[data-idx="${data.tokenIndex}"]`);
 
             if (token) {
+                // Token size fix and upright rotation
+                token.style.width = "22px"; token.style.height = "30px";
+
                 for (let i = 0; i < data.path.length; i++) {
                     const pos = data.path[i];
                     await new Promise(res => setTimeout(res, 220));
-                    const coords = (pos >= 101) ? cellMap[pos + (data.playerColor * 100)] : cellMap[pos];
+
+                    let actualId;
+                    if (pos >= 101) {
+                        actualId = pos + (data.playerColor * 100);
+                    } else {
+                        // Offset common path based on player color (0:Red, 1:Blue, 2:Yellow, 3:Green)
+                        actualId = (pos + (data.playerColor * 13)) % 52;
+                    }
+
+                    const coords = cellMap[actualId];
                     const cell = document.getElementById(`c-${coords.r}-${coords.c}`);
 
                     if (cell) {
                         cell.appendChild(token);
                         const exist = cell.querySelectorAll('.token').length - 1;
-                        const offset = exist * 3;
+                        const offset = exist * 2;
 
                         if (cell.classList.contains('safe')) {
                             token.classList.add('on-star');
@@ -402,17 +413,11 @@
                     }
 
                     if (i === data.path.length - 1) { // Final position
-                        if (pos >= 57) { // Reached Home (6 steps home path + center)
-                             sndWin.play().catch(e=>{});
-                        } else if (cell && cell.classList.contains('safe')) {
-                             sndStar.play().catch(e=>{});
-                        } else {
-                             sndMove.currentTime = 0;
-                             sndMove.play().catch(e=>{});
-                        }
+                        if (pos >= 57) { sndWin.play().catch(e=>{}); }
+                        else if (cell && cell.classList.contains('safe')) { sndStar.play().catch(e=>{}); }
+                        else { sndMove.currentTime = 0; sndMove.play().catch(e=>{}); }
                     } else {
-                        sndMove.currentTime = 0;
-                        sndMove.play().catch(e=>{});
+                        sndMove.currentTime = 0; sndMove.play().catch(e=>{});
                     }
                 }
             }
@@ -436,7 +441,6 @@
             document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
             document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
             isMoving = false;
-            // Final sync
             updateUI(gameState);
         });
 
@@ -505,24 +509,32 @@
                     if (isMyTurn && isMyColor && gameState.rolled) token.classList.add('active');
                     token.onclick = (e) => { if (isMyTurn && isMyColor && !isMoving) socket.emit('ludo_move', { roomId: currentRoom, tokenIndex: tIdx }); };
 
-                    // Counter-rotate token content
+                    // Counter-rotate token content and center it
                     token.style.transform = `translate(-50%, -50%) rotate(${-boardRotation}deg)`;
 
                     if (pos === -1) {
                         const slot = document.getElementById(`s${colorIdx}-${tIdx}`);
-                        if (slot) slot.appendChild(token);
+                        if (slot) {
+                            slot.appendChild(token);
+                            token.style.transform = `translate(-50%, -50%) rotate(${-boardRotation}deg)`;
+                        }
                     } else {
-                        const baseOffset = (Number(colorIdx) * 100);
-                        const actualId = pos >= 101 ? (pos + baseOffset) : pos;
+                        let actualId;
+                        if (pos >= 101) {
+                            actualId = pos + (Number(colorIdx) * 100);
+                        } else {
+                            actualId = (pos + (Number(colorIdx) * 13)) % 52;
+                        }
+
                         const coords = cellMap[actualId];
                         if (coords) {
                             const cell = document.getElementById(`c-${coords.r}-${coords.c}`);
                             if (cell) {
                                 if (cell.classList.contains('safe')) token.classList.add('on-star');
                                 const exist = cell.querySelectorAll('.token').length;
-                                const offset = exist * 3;
-                                const tPos = cell.classList.contains('safe') ? `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) scale(0.7)` : `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px))`;
-                                token.style.transform = `${tPos} rotate(${-boardRotation}deg)`;
+                                const offset = exist * 2;
+                                const tScale = cell.classList.contains('safe') ? 0.65 : 1;
+                                token.style.transform = `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) scale(${tScale}) rotate(${-boardRotation}deg)`;
                                 cell.appendChild(token);
                             }
                         }
