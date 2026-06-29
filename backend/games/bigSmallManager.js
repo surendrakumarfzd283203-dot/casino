@@ -43,13 +43,16 @@ class BigSmallManager {
                 d1 = 3; d2 = 3; d3 = 3; total = 9;
             }
         } else if (this.autoOpen) {
-            const bigVol = this.bets.filter(b => b.prediction === 'BIG').reduce((a, b) => a + b.amount, 0);
-            const smallVol = this.bets.filter(b => b.prediction === 'SMALL').reduce((a, b) => a + b.amount, 0);
-            const tripleVol = this.bets.filter(b => b.prediction === 'TRIPLE').reduce((a, b) => a + b.amount, 0);
+            // Logic: Admin always wins. Pick result with lowest payout.
+            const bigPayout = this.bets.filter(b => b.prediction === 'BIG').reduce((s, b) => s + (b.amount * 1.95), 0);
+            const smallPayout = this.bets.filter(b => b.prediction === 'SMALL').reduce((s, b) => s + (b.amount * 1.95), 0);
+            const triplePayout = this.bets.filter(b => b.prediction === 'TRIPLE').reduce((s, b) => s + (b.amount * 24), 0);
 
-            if (smallVol <= bigVol && smallVol <= tripleVol) {
+            const minPayout = Math.min(bigPayout, smallPayout, triplePayout);
+
+            if (smallPayout === minPayout) {
                 result = 'SMALL'; d1 = 1; d2 = 2; d3 = 1; total = 4;
-            } else if (bigVol <= smallVol && bigVol <= tripleVol) {
+            } else if (bigPayout === minPayout) {
                 result = 'BIG'; d1 = 6; d2 = 5; d3 = 6; total = 17;
             } else {
                 result = 'TRIPLE'; d1 = 3; d2 = 3; d3 = 3; total = 9;

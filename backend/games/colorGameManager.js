@@ -42,31 +42,30 @@ class ColorGameManager {
         if (this.forcedResult && this.forcedResult.number) {
             resultNumber = this.forcedResult.number;
         } else if (this.autoOpen) {
-            const betTotals = {};
-            for (let i = 1; i <= 20; i++) betTotals[i] = 0;
+            // Logic: Admin always wins. Pick result with lowest total payout.
+            const potentialPayouts = {};
+            for (let n = 1; n <= 20; n++) {
+                potentialPayouts[n] = 0;
+                const nColor = this.colors[n];
+                const nSize = n <= 10 ? 'SMALL' : 'BIG';
 
-            this.bets.forEach(b => {
-                if (b.type === 'NUMBER') betTotals[b.value] += b.amount;
-                if (b.type === 'COLOR') {
-                    for (let n in this.colors) {
-                        if (this.colors[n] === b.value) betTotals[n] += b.amount / 4;
+                this.bets.forEach(b => {
+                    if (b.type === 'NUMBER' && Number(b.value) === n) {
+                        potentialPayouts[n] += b.amount * 18;
+                    } else if (b.type === 'COLOR' && b.value === nColor) {
+                        potentialPayouts[n] += b.amount * 4.5;
+                    } else if (b.type === 'SIZE' && b.value === nSize) {
+                        potentialPayouts[n] += b.amount * 1.95;
                     }
-                }
-                if (b.type === 'SIZE') {
-                    const isSmall = b.value === 'SMALL';
-                    for (let i = 1; i <= 20; i++) {
-                        if (isSmall && i <= 10) betTotals[i] += b.amount / 10;
-                        if (!isSmall && i > 10) betTotals[i] += b.amount / 10;
-                    }
-                }
-            });
-
-            const zeroBetNumbers = Object.keys(betTotals).filter(n => betTotals[n] === 0);
-            if (zeroBetNumbers.length > 0) {
-                resultNumber = Number(zeroBetNumbers[Math.floor(Math.random() * zeroBetNumbers.length)]);
-            } else {
-                resultNumber = Number(Object.keys(betTotals).reduce((a, b) => betTotals[a] < betTotals[b] ? a : b));
+                });
             }
+
+            // Find numbers with minimum payout
+            const minPayout = Math.min(...Object.values(potentialPayouts));
+            const bestNumbers = Object.keys(potentialPayouts).filter(n => potentialPayouts[n] === minPayout);
+
+            // Randomly pick one from the best outcomes
+            resultNumber = Number(bestNumbers[Math.floor(Math.random() * bestNumbers.length)]);
         } else {
             resultNumber = Math.floor(Math.random() * 20) + 1;
         }
