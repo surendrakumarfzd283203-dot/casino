@@ -13,7 +13,7 @@
             --blue-main: #2874ed; --blue-light: #76a5ff;
             --yellow-main: #f1c40f; --yellow-light: #f9e38c;
             --green-main: #2ecc71; --green-light: #82eab1;
-            --bg: #000c18; --panel: #00224d;
+            --bg: #1a0b2e; --panel: #2d144d;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
@@ -34,12 +34,12 @@
         .timer-badge { background: rgba(0,0,0,0.5); padding: 3px 12px; border-radius: 10px; display: flex; align-items: center; gap: 6px; margin-top: 5px; border: 1px solid rgba(255,255,255,0.1); }
 
         /* Board Area */
-        .game-area { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; position: relative; padding: 10px; overflow: hidden; }
+        .game-area { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 10px; overflow: hidden; gap: 20px; }
 
-        .player-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 5px 15px; background: rgba(255,255,255,0.05); border-radius: 15px; }
-        .profile { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        .score-circle { width: 50px; height: 50px; border-radius: 50%; background: #fff; border: 3px solid #333; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; }
+        .player-bar { width: 92%; display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px); }
+        .profile { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .score-circle { width: 45px; height: 45px; border-radius: 50%; background: #fff; border: 2px solid #333; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0; }
 
         .ludo-board {
             width: 92vw; height: 92vw; max-width: 400px; max-height: 400px;
@@ -123,7 +123,7 @@
         }
 
         /* Chat UI */
-        #chat-ui { position: fixed; bottom: 85px; left: 15px; z-index: 1500; display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; width: 100%; }
+        #chat-ui { position: fixed; bottom: 125px; left: 15px; z-index: 1500; display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; width: 100%; }
         .chat-bubble { background: rgba(0,0,0,0.9); color: white; padding: 6px 12px; border-radius: 15px; margin-bottom: 5px; font-size: 13px; border-left: 4px solid var(--yellow-main); animation: slideIn 0.3s ease-out; pointer-events: auto; max-width: 70%; }
         @keyframes slideIn { from { transform: translateX(-50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
