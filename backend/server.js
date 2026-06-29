@@ -621,41 +621,37 @@ async function startAviatorFlight() {
             aviatorState.crashMultiplier = Number(forcedAviatorMultiplier);
             forcedAviatorMultiplier = null;
         } else {
-            const realBets = activeBets.aviator.filter(b => !b.isFake).length;
-            const totalBetAmt = activeBets.aviator.filter(b => !b.isFake).reduce((s, b) => s + b.betAmount, 0);
+            const realBets = activeBets.aviator.filter(b => !b.isFake);
+            const maxRealBet = realBets.length > 0 ? Math.max(...realBets.map(b => b.betAmount)) : 0;
 
-            if (realBets === 0) {
+            if (realBets.length === 0) {
                 aviatorState.noBetStreak++;
-                if (aviatorState.noBetStreak >= 3 && aviatorState.noBetStreak <= 8) {
-                    // Streak 3-8: 6x to 50x
-                    aviatorState.crashMultiplier = 6 + Math.random() * 44;
-                } else if (aviatorState.noBetStreak >= 9 && aviatorState.noBetStreak <= 20) {
-                    // Streak 9-20: 55x to 60x
-                    aviatorState.crashMultiplier = 55 + Math.random() * 5;
-                } else {
-                    // Default/Streak reset: 1.04x to 4.50x
-                    if (aviatorState.noBetStreak > 20) aviatorState.noBetStreak = 1;
-                    aviatorState.crashMultiplier = 1.04 + Math.random() * 3.46;
-                }
-            } else if (realBets >= 1 && realBets <= 5) {
-                aviatorState.noBetStreak = 0; // Reset streak
-                aviatorState.rareHighCounter++;
 
-                if (aviatorState.rareHighCounter >= 10) {
-                    // 1 in 10 chance: Up to 3x
-                    aviatorState.crashMultiplier = 1.5 + Math.random() * 1.5;
-                    aviatorState.rareHighCounter = 0;
+                // Logic: 10 rounds [1.02x - 6x], then every 5th round [4x - 15x]
+                if (aviatorState.noBetStreak <= 10) {
+                    aviatorState.crashMultiplier = 1.02 + (Math.random() * 4.98);
                 } else {
-                    // Normal: 1.03x to 2.0x
-                    aviatorState.crashMultiplier = 1.03 + Math.random() * 0.97;
+                    // After 10 rounds, every 5th round (11, 16, 21...) goes high
+                    if ((aviatorState.noBetStreak - 10) % 5 === 1) {
+                        aviatorState.crashMultiplier = 4 + (Math.random() * 11);
+                    } else {
+                        aviatorState.crashMultiplier = 1.02 + (Math.random() * 4.98);
+                    }
+                    // Prevent streak from going to infinity
+                    if (aviatorState.noBetStreak > 100) aviatorState.noBetStreak = 11;
                 }
-            } else if (realBets >= 6 || totalBetAmt > 60) {
-                aviatorState.noBetStreak = 0;
-                // High volume: 1.02x to 1.4x
-                aviatorState.crashMultiplier = 1.02 + Math.random() * 0.38;
             } else {
-                // Fallback
-                aviatorState.crashMultiplier = 1.1 + Math.random() * 1.5;
+                aviatorState.noBetStreak = 0; // Reset streak when real players join
+
+                // Logic: If bet is 50 -> max 1.4x, if > 50 -> max 1.2x
+                if (maxRealBet === 50) {
+                    aviatorState.crashMultiplier = 1.01 + (Math.random() * 0.39); // 1.01 to 1.40
+                } else if (maxRealBet > 50) {
+                    aviatorState.crashMultiplier = 1.01 + (Math.random() * 0.19); // 1.01 to 1.20
+                } else {
+                    // Small bets (< 50): Keep it low to ensure admin profit
+                    aviatorState.crashMultiplier = 1.01 + (Math.random() * 0.49); // 1.01 to 1.50
+                }
             }
         }
 
