@@ -6,6 +6,7 @@
     <title>Ludo Turbo | Solo Casino</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Fixed: Use dynamic Socket.io source to avoid "Cannot resolve" errors in IDE -->
     <script src="https://casino-vri2.onrender.com/socket.io/socket.io.js"></script>
     <style>
         :root {
@@ -125,9 +126,9 @@
 <body>
 
     <audio id="bg-music" loop><source src="https://www.soundjay.com/misc/sounds/wind-chime-1.mp3"></audio>
-    <audio id="dice-sound"><source src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
-    <audio id="move-sound"><source src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
-    <audio id="kill-sound"><source src="https://www.soundjay.com/buttons/sounds/button-2.mp3"></audio>
+    <audio id="dice-sound"><source src="sound/dice2.mp3"></audio>
+    <audio id="move-sound"><source src="sound/move.mp3"></audio>
+    <audio id="kill-sound"><source src="sound/kill.mp3"></audio>
 
     <div id="lobby">
         <h1 style="color:#f1c40f; font-size: 38px; margin-top: 60px; font-weight: 900; letter-spacing: 2px;">LUDO TURBO</h1>
@@ -351,6 +352,8 @@
         function updateUI(state) {
             myId = socket.user?.id || socket.user?._id;
             myPlayerIndex = state.players.findIndex(p => p.id === myId?.toString());
+
+
 
             if (myPlayerIndex === -1) {
                 console.log("Waiting for profile...");
