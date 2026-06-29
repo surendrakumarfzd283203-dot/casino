@@ -34,14 +34,20 @@
         .timer-badge { background: rgba(0,0,0,0.5); padding: 3px 12px; border-radius: 10px; display: flex; align-items: center; gap: 6px; margin-top: 5px; border: 1px solid rgba(255,255,255,0.1); }
 
         /* Board Area */
-        .game-area { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 5px; overflow: hidden; }
+        .game-area { flex: 1; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; position: relative; padding: 10px; overflow: hidden; }
+
+        .player-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 5px 15px; background: rgba(255,255,255,0.05); border-radius: 15px; }
+        .profile { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .score-circle { width: 50px; height: 50px; border-radius: 50%; background: #fff; border: 3px solid #333; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; }
 
         .ludo-board {
-            width: 95vw; height: 95vw; max-width: 420px; max-height: 420px;
+            width: 92vw; height: 92vw; max-width: 400px; max-height: 400px;
             background: #fff; border: 6px solid #1e293b; display: grid;
             grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
             position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 10px 0;
         }
 
         .cell { border: 0.1px solid rgba(0,0,0,0.1); position: relative; background: #fff; }
@@ -61,40 +67,34 @@
         .center { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; overflow: hidden; border: 1px solid rgba(0,0,0,0.1); }
         .center svg { width: 100%; height: 100%; display: block; }
 
-        /* 3D Pawn Style Tokens */
+        /* Location Pin Style Tokens */
         .token {
-            width: 28px; height: 38px;
+            width: 30px; height: 38px;
             position: absolute; top: 50%; left: 50%;
             z-index: 100; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-origin: center bottom;
         }
         .token-body {
             width: 100%; height: 100%;
+            position: relative;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
             display: flex; flex-direction: column; align-items: center;
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4));
         }
-        .pawn-head {
-            width: 16px; height: 16px; border-radius: 50%;
-            background: currentColor; border: 1px solid rgba(255,255,255,0.4);
-            background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), transparent);
-            z-index: 3;
+        .pin-head {
+            width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
+            background: currentColor;
+            transform: rotate(-45deg);
+            border: 2px solid white;
+            display: flex; align-items: center; justify-content: center;
         }
-        .pawn-neck {
-            width: 10px; height: 6px; background: currentColor;
-            margin-top: -3px; z-index: 2; border-radius: 2px;
-            filter: brightness(0.9);
+        .pin-head::after {
+            content: ''; width: 10px; height: 10px; background: white; border-radius: 50%;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
-        .pawn-base {
-            width: 26px; height: 20px; background: currentColor;
-            border-radius: 50% 50% 20% 20%; margin-top: -4px;
-            background-image: linear-gradient(to right, rgba(0,0,0,0.2), transparent, rgba(255,255,255,0.3));
-            border-bottom: 2px solid rgba(0,0,0,0.3);
-        }
-
-        .token.red { color: #d32f2f; }
-        .token.blue { color: #1976d2; }
-        .token.yellow { color: #fbc02d; }
-        .token.green { color: #388e3c; }
+        .token.red { color: #ff3232; }
+        .token.blue { color: #2874ed; }
+        .token.yellow { color: #f1c40f; }
+        .token.green { color: #2ecc71; }
 
         .token.on-star { transform: translate(-50%, -50%) scale(0.7) rotate(${-boardRotation}deg) !important; filter: brightness(0.9); }
 
@@ -494,7 +494,7 @@
                     const token = document.createElement('div');
                     token.className = `token ${colorName}`;
                     token.setAttribute('data-idx', tIdx);
-                    token.innerHTML = `<div class="token-body"><div class="pawn-head"></div><div class="pawn-neck"></div><div class="pawn-base"></div></div>`;
+                    token.innerHTML = `<div class="token-body"><div class="pin-head"></div></div>`;
 
                     const isMyTurn = gameState.turn === myPlayerIndex;
                     const isMyColor = gameState.players[myPlayerIndex].color == colorIdx;
