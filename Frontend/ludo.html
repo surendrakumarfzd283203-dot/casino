@@ -45,7 +45,8 @@
         }
 
         .cell { border: 0.1px solid rgba(0,0,0,0.1); position: relative; background: #fff; }
-        .cell.safe::after { content: '\f005'; font-family: "Font Awesome 6 Free"; font-weight: 900; color: rgba(0,0,0,0.1); font-size: 14px; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.8s; }
+        .cell.safe::after { content: '\f005'; font-family: "Font Awesome 6 Free"; font-weight: 900; color: #cbd5e1; font-size: 14px; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.8s; }
+        .cell.safe.red-bg::after, .cell.safe.blue-bg::after, .cell.safe.yellow-bg::after, .cell.safe.green-bg::after { color: rgba(255,255,255,0.8); }
 
         .base { grid-column: span 6; grid-row: span 6; position: relative; border: 1px solid rgba(0,0,0,0.1); }
         .base-inner { width: 80%; height: 80%; background: #fff; border-radius: 50%; position: absolute; top: 10%; left: 10%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10%; padding: 15%; border: 1px solid rgba(0,0,0,0.05); transition: transform 0.8s; }
@@ -60,52 +61,59 @@
         .center { grid-column: span 3; grid-row: span 3; position: relative; background: #fff; overflow: hidden; border: 1px solid rgba(0,0,0,0.1); }
         .center svg { width: 100%; height: 100%; display: block; }
 
-        /* Flat Unique Animated Tokens */
+        /* 3D Pawn Style Tokens */
         .token {
-            width: 32px; height: 32px;
+            width: 28px; height: 38px;
             position: absolute; top: 50%; left: 50%;
             z-index: 100; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: center bottom;
         }
         .token-body {
-            width: 100%; height: 100%; border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.9);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.2);
-            background-color: currentColor;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4));
         }
-        .token-body::after {
-            content: ''; width: 50%; height: 50%;
-            background: rgba(255,255,255,0.3); border-radius: 50%;
+        .pawn-head {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: currentColor; border: 1px solid rgba(255,255,255,0.4);
+            background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), transparent);
+            z-index: 3;
+        }
+        .pawn-neck {
+            width: 10px; height: 6px; background: currentColor;
+            margin-top: -3px; z-index: 2; border-radius: 2px;
+            filter: brightness(0.9);
+        }
+        .pawn-base {
+            width: 26px; height: 20px; background: currentColor;
+            border-radius: 50% 50% 20% 20%; margin-top: -4px;
+            background-image: linear-gradient(to right, rgba(0,0,0,0.2), transparent, rgba(255,255,255,0.3));
+            border-bottom: 2px solid rgba(0,0,0,0.3);
         }
 
-        .token.red { color: var(--red-main); }
-        .token.blue { color: var(--blue-main); }
-        .token.yellow { color: var(--yellow-main); }
-        .token.green { color: var(--green-main); }
+        .token.red { color: #d32f2f; }
+        .token.blue { color: #1976d2; }
+        .token.yellow { color: #fbc02d; }
+        .token.green { color: #388e3c; }
 
-        .token.active { animation: tokenPulse 0.6s infinite alternate; z-index: 200; }
-        @keyframes tokenPulse {
-            from { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
-            to { transform: translate(-50%, -50%) scale(1.25); filter: brightness(1.2); }
+        .token.on-star { transform: translate(-50%, -50%) scale(0.7) rotate(${-boardRotation}deg) !important; filter: brightness(0.9); }
+
+        .token.active { animation: tokenJump 0.6s infinite alternate; z-index: 200; }
+        @keyframes tokenJump {
+            from { transform: translate(-50%, -60%) scale(1.1); }
+            to { transform: translate(-50%, -85%) scale(1.2); }
         }
 
-        /* Player Area - Compact */
-        .player-bar { width: 95%; display: flex; justify-content: space-between; align-items: center; padding: 5px; }
-        .profile { display: flex; align-items: center; gap: 8px; }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
-        .score-circle { width: 55px; height: 55px; border-radius: 50%; background: #fff; border: 4px solid #333; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-
-        /* Dice Fix */
+        /* Wooden Dice Design */
         .dice-wrap {
-            width: 45px; height: 45px; background: #fff !important; border-radius: 10px;
+            width: 45px; height: 45px; background: #f3e5ab !important; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            cursor: pointer; border: 3px solid #333; transition: all 0.3s;
-            position: relative; color: #000 !important; z-index: 500;
+            font-size: 28px; box-shadow: inset 0 0 10px #d4a76a, 0 4px 10px rgba(0,0,0,0.5);
+            cursor: pointer; border: 2px solid #8b4513; transition: all 0.3s;
+            position: relative; color: #3e2723 !important; z-index: 500;
         }
-        .dice-wrap i { color: #000 !important; }
-        .dice-wrap.active { border-color: #4ade80 !important; animation: glow 1s infinite alternate; }
+        .dice-wrap i { color: #3e2723 !important; }
+        .dice-wrap.active { border-color: #2ecc71 !important; box-shadow: 0 0 15px #2ecc71; }
         @keyframes glow { from { box-shadow: 0 0 5px #4ade80; } to { box-shadow: 0 0 25px #4ade80; } }
         .dice-wrap.rolling { animation: jumpSpin 0.8s ease-out; }
         @keyframes jumpSpin {
@@ -254,14 +262,14 @@
         const sndDice = new Audio('sound/dice2.mp3');
         const sndMove = new Audio('sound/move.mp3');
         const sndKill = new Audio('sound/kill.mp3');
+        const sndStar = new Audio('sound/collect-token.mp3');
+        const sndWin = new Audio('sound/gotiwun.mp3');
         const sndBg = new Audio('https://www.soundjay.com/misc/sounds/wind-chime-1.mp3');
         sndBg.loop = true;
 
         function initSounds() {
             const unlock = () => {
-                sndDice.play().then(() => { sndDice.pause(); sndDice.currentTime = 0; });
-                sndMove.play().then(() => { sndMove.pause(); sndMove.currentTime = 0; });
-                sndKill.play().then(() => { sndKill.pause(); sndKill.currentTime = 0; });
+                [sndDice, sndMove, sndKill, sndStar, sndWin].forEach(s => { s.play().then(() => { s.pause(); s.currentTime = 0; }); });
                 sndBg.play().catch(e => {});
                 window.removeEventListener('touchstart', unlock);
                 window.removeEventListener('click', unlock);
@@ -293,7 +301,15 @@
                     if (c === 7 && r > 0 && r < 6) cell.classList.add('blue-bg');
                     if (r === 7 && c > 8 && c < 14) cell.classList.add('yellow-bg');
                     if (c === 7 && r > 8 && r < 14) cell.classList.add('green-bg');
-                    if ((r === 6 && c === 1) || (r === 1 && c === 8) || (r === 8 && c === 13) || (r === 13 && c === 6) || (r === 2 && c === 6) || (r === 6 && c === 12) || (r === 12 && c === 8) || (r === 8 && c === 2)) cell.classList.add('safe');
+
+                    if ((r === 6 && c === 1) || (r === 1 && c === 8) || (r === 8 && c === 13) || (r === 13 && c === 6)) {
+                        cell.classList.add('safe');
+                        if (r === 6 && c === 1) cell.classList.add('red-bg');
+                        if (r === 1 && c === 8) cell.classList.add('blue-bg');
+                        if (r === 8 && c === 13) cell.classList.add('yellow-bg');
+                        if (r === 13 && c === 6) cell.classList.add('green-bg');
+                    }
+                    if ((r === 2 && c === 6) || (r === 6 && c === 12) || (r === 12 && c === 8) || (r === 8 && c === 2)) cell.classList.add('safe');
                     if (r === 6 && c === 6) {
                         cell.className = 'center';
                         cell.innerHTML = `<svg viewBox="0 0 100 100">
@@ -361,18 +377,39 @@
             const token = document.querySelector(`.token.${colors[data.playerColor]}[data-idx="${data.tokenIndex}"]`);
 
             if (token) {
-                for (let pos of data.path) {
+                for (let i = 0; i < data.path.length; i++) {
+                    const pos = data.path[i];
                     await new Promise(res => setTimeout(res, 220));
                     const coords = (pos >= 101) ? cellMap[pos + (data.playerColor * 100)] : cellMap[pos];
                     const cell = document.getElementById(`c-${coords.r}-${coords.c}`);
+
                     if (cell) {
                         cell.appendChild(token);
                         const exist = cell.querySelectorAll('.token').length - 1;
                         const offset = exist * 3;
-                        token.style.transform = `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) rotate(${-boardRotation}deg)`;
+
+                        if (cell.classList.contains('safe')) {
+                            token.classList.add('on-star');
+                            token.style.transform = `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) scale(0.7) rotate(${-boardRotation}deg)`;
+                        } else {
+                            token.classList.remove('on-star');
+                            token.style.transform = `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) rotate(${-boardRotation}deg)`;
+                        }
                     }
-                    sndMove.currentTime = 0;
-                    sndMove.play().catch(e=>{});
+
+                    if (i === data.path.length - 1) { // Final position
+                        if (pos >= 57) { // Reached Home (6 steps home path + center)
+                             sndWin.play().catch(e=>{});
+                        } else if (cell && cell.classList.contains('safe')) {
+                             sndStar.play().catch(e=>{});
+                        } else {
+                             sndMove.currentTime = 0;
+                             sndMove.play().catch(e=>{});
+                        }
+                    } else {
+                        sndMove.currentTime = 0;
+                        sndMove.play().catch(e=>{});
+                    }
                 }
             }
 
@@ -457,7 +494,7 @@
                     const token = document.createElement('div');
                     token.className = `token ${colorName}`;
                     token.setAttribute('data-idx', tIdx);
-                    token.innerHTML = `<div class="token-body"></div>`;
+                    token.innerHTML = `<div class="token-body"><div class="pawn-head"></div><div class="pawn-neck"></div><div class="pawn-base"></div></div>`;
 
                     const isMyTurn = gameState.turn === myPlayerIndex;
                     const isMyColor = gameState.players[myPlayerIndex].color == colorIdx;
@@ -465,7 +502,7 @@
                     token.onclick = (e) => { if (isMyTurn && isMyColor && !isMoving) socket.emit('ludo_move', { roomId: currentRoom, tokenIndex: tIdx }); };
 
                     // Counter-rotate token content
-                    token.style.transform = `translate(-50%, -50%) rotate(${-boardRotation}deg)`;
+                    token.style.transform = `translate(-50%, -80%) rotate(${-boardRotation}deg)`;
 
                     if (pos === -1) {
                         const slot = document.getElementById(`s${colorIdx}-${tIdx}`);
@@ -477,9 +514,11 @@
                         if (coords) {
                             const cell = document.getElementById(`c-${coords.r}-${coords.c}`);
                             if (cell) {
+                                if (cell.classList.contains('safe')) token.classList.add('on-star');
                                 const exist = cell.querySelectorAll('.token').length;
                                 const offset = exist * 3;
-                                token.style.transform = `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) rotate(${-boardRotation}deg)`;
+                                const tPos = cell.classList.contains('safe') ? `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) scale(0.7)` : `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px))`;
+                                token.style.transform = `${tPos} rotate(${-boardRotation}deg)`;
                                 cell.appendChild(token);
                             }
                         }
