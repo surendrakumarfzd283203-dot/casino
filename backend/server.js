@@ -990,8 +990,15 @@ app.post("/api/admin/force-result", adminAuth, (req, res) => {
         }
         numberSpinManager.forceResult(result);
         return res.json({ success: true, message: `Next Number Spin result set to: ${result}` });
-    }
- else if (game === 'ludo') {
+    } else if (game === 'ludo') {
+        const { roomId, action, dice, winnerId } = req.body;
+        if (action === 'forceDice') {
+            ludoManager.forceDice(roomId, dice);
+            return res.json({ success: true, message: `Next dice for room ${roomId} set to ${dice}` });
+        } else if (action === 'forceWin') {
+            ludoManager.forceWin(roomId, winnerId);
+            return res.json({ success: true, message: `Room ${roomId} forced winner set to ${winnerId}` });
+        }
         return res.json({ success: true, message: "Ludo control updated" });
     } else if (game === 'rummy') {
         rummyManager.forceWinner(tableId, result); // result is winner userId

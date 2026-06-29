@@ -415,9 +415,23 @@
 
                 <!-- Ludo Control -->
                 <div class="control-card">
-                    <h4><i class="fas fa-gamepad"></i> Ludo Turbo</h4>
+                    <h4><i class="fas fa-gamepad"></i> Ludo Turbo Control</h4>
                     <div id="ludo-active-games" style="font-size: 14px; margin-bottom: 10px;">Active Games: 0</div>
-                    <div id="live-bets-ludo" class="live-bet-table"></div>
+
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                        <label style="font-size: 11px; color: var(--text-dim);">GLOBAL ROOM CONTROL</label>
+                        <input type="text" id="ludoRoomId" placeholder="Room ID (e.g. ludo_...)" class="input-dark" style="margin: 8px 0;">
+
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <input type="number" id="ludoDiceVal" placeholder="Dice (1-6)" class="input-dark" style="width: 80px;">
+                            <button class="action-btn btn-edit" style="flex: 1;" onclick="controlLudo('forceDice')">FORCE DICE</button>
+                        </div>
+
+                        <input type="text" id="ludoWinnerId" placeholder="Winner User ID" class="input-dark" style="margin-bottom: 8px;">
+                        <button class="action-btn btn-unblock" style="width: 100%;" onclick="controlLudo('forceWin')">INSTANT WIN</button>
+                    </div>
+
+                    <div id="live-bets-ludo" class="live-bet-table" style="max-height: 200px; overflow-y: auto;"></div>
                 </div>
 
                 <!-- Spin Game (Existing) -->
@@ -784,16 +798,19 @@
                 const games = statsData?.ludoState?.activeGames || [];
                 document.getElementById('ludo-active-games').innerText = `Active Games: ${games.length}`;
                 container.innerHTML = games.map(g => `
-                    <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(255,152,0,0.05); margin-bottom:5px; border-radius:8px;">
-                        <div style="display:flex; justify-content:space-between; font-size:11px;">
-                            <span>Room: ${g.id}</span>
-                            <span style="color:#fde047">Pot: ₹${(Number(g.id.split('_')[0]) * 1.8).toFixed(2)}</span>
+                    <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(255,152,0,0.05); margin-bottom:8px; border-radius:10px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom: 8px;">
+                            <span style="font-weight: 800;">ID: ${g.id}</span>
+                            <button class="action-btn btn-edit" style="padding: 2px 6px; font-size: 9px;" onclick="copyToLudoControl('${g.id}')">COPY ID</button>
                         </div>
-                        <div style="font-size:10px; margin-top:4px;">
-                            ${Object.values(g.players).map(p => `
-                                <div style="display:flex; justify-content:space-between; color:${p.isBot?'#fde047':'#fff'}">
-                                    <span>${p.name} ${p.isBot?'[BOT]':''}</span>
-                                    <span>Score: ${g.scores[p.id]}</span>
+                        <div style="font-size:10px;">
+                            ${g.players.map(p => `
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; color:${p.isBot?'#fde047':'#fff'}">
+                                    <span>${p.name} ${p.isBot?'[BOT]':''} (${p.id})</span>
+                                    <div style="display: flex; gap: 4px;">
+                                        <span class="badge" style="background: #333; font-size: 9px;">Score: ${p.score}</span>
+                                        <button class="action-btn btn-unblock" style="padding: 2px 6px; font-size: 8px;" onclick="copyToLudoControl('${g.id}', '${p.id}')">WIN</button>
+                                    </div>
                                 </div>
                             `).join('')}
                         </div>
@@ -860,6 +877,27 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
                 body: JSON.stringify({ game, result, tableId, number, autoOpen })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        function copyToLudoControl(roomId, userId = null) {
+            document.getElementById('ludoRoomId').value = roomId;
+            if (userId) document.getElementById('ludoWinnerId').value = userId;
+        }
+
+        async function controlLudo(action) {
+            const roomId = document.getElementById('ludoRoomId').value;
+            const dice = document.getElementById('ludoDiceVal').value;
+            const winnerId = document.getElementById('ludoWinnerId').value;
+
+            if (!roomId) return alert("Please select a Room ID");
+
+            const res = await fetch(`${API_URL}/api/admin/force-result`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ game: 'ludo', action, roomId, dice, winnerId })
             });
             const data = await res.json();
             alert(data.message);

@@ -161,15 +161,85 @@ class LudoManager {
     rollDice(userId, roomId) {
         const room = this.rooms[roomId];
         if (!room || room.gameState !== 'PLAYING' || room.rolled) return;
-        if (room.players[room.turn].id !== userId.toString()) return;
+        const playerIndex = room.turn;
+        if (room.players[playerIndex].id !== userId.toString()) return;
 
-        const dice = Math.floor(Math.random() * 6) + 1;
+        let dice = Math.floor(Math.random() * 6) + 1;
+
+        // Logic: Bot always wins vs User
+        const hasBot = room.players.some(p => p.isBot);
+        if (hasBot) {
+            const player = room.players[playerIndex];
+            if (player.isBot) {
+                // Bot turn: High probability of 6 if needed, or kill user
+                const myTokens = room.boardState.tokens[player.color];
+                const userPlayer = room.players.find(p => !p.isBot);
+                const userTokens = room.boardState.tokens[userPlayer.color];
+
+                // 1. If all in base, roll 6
+                if (myTokens.every(p => p === -1)) {
+                    dice = 6;
+                } else {
+                    // 2. Try to roll a number that kills user
+                    for (let d = 1; d <= 6; d++) {
+                        if (this.checkKillPotential(room, player.color, d)) {
+                            dice = d;
+                            break;
+                        }
+                    }
+                    // 3. High chance of big numbers for bot
+                    if (dice < 4 && Math.random() > 0.4) dice = 4 + Math.floor(Math.random() * 3);
+                }
+            } else {
+                // User turn: Low probability of 6, especially if it can kill bot
+                if (dice === 6 && Math.random() > 0.2) dice = Math.floor(Math.random() * 5) + 1;
+
+                // If user is about to kill bot, change dice
+                if (this.checkKillPotential(room, player.color, dice) && Math.random() > 0.1) {
+                    dice = (dice % 5) + 1; // Change to a non-killing number
+                }
+            }
+        }
+
+        // Admin Forced Dice
+        if (room.forcedDice) {
+            dice = room.forcedDice;
+            delete room.forcedDice;
+        }
+
         room.dice = dice;
         room.rolled = true;
         this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn, playerColor: room.players[room.turn].color });
 
         const possibleMoves = this.getPossibleMoves(roomId);
         if (possibleMoves.length === 0) setTimeout(() => this.nextTurn(roomId), 1200);
+    }
+
+    checkKillPotential(room, color, dice) {
+        const tokens = room.boardState.tokens[color];
+        for (let pos of tokens) {
+            if (pos === -1) continue;
+            let nextPos;
+            if (pos >= 101) continue;
+            nextPos = (pos + dice - 1) % this.TOTAL_CELLS + 1;
+
+            if (this.SAFE_POSITIONS.includes(nextPos)) continue;
+
+            for (let c in room.boardState.tokens) {
+                if (Number(c) === color) continue;
+                if (room.boardState.tokens[c].includes(nextPos)) return true;
+            }
+        }
+        return false;
+    }
+
+    forceDice(roomId, dice) {
+        if (this.rooms[roomId]) this.rooms[roomId].forcedDice = Number(dice);
+    }
+
+    forceWin(roomId, userId) {
+        const room = this.rooms[roomId];
+        if (room) this.endGame(roomId, userId);
     }
 
     getPossibleMoves(roomId) {
