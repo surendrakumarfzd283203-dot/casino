@@ -327,9 +327,9 @@
 
         const cellMap = {};
         function initCellMap() {
-            // Standard Ludo common path starting from Red Star
+            // Standard Ludo common path starting from Red Star (Position 1)
             const p = [ {r:6,c:1},{r:6,c:2},{r:6,c:3},{r:6,c:4},{r:6,c:5},{r:5,c:6},{r:4,c:6},{r:3,c:6},{r:2,c:6},{r:1,c:6},{r:0,c:6},{r:0,c:7},{r:0,c:8},{r:1,c:8},{r:2,c:8},{r:3,c:8},{r:4,c:8},{r:5,c:8},{r:6,c:9},{r:6,c:10},{r:6,c:11},{r:6,c:12},{r:6,c:13},{r:6,c:14},{r:7,c:14},{r:8,c:14},{r:8,c:13},{r:8,c:12},{r:8,c:11},{r:8,c:10},{r:8,c:9},{r:9,c:8},{r:10,c:8},{r:11,c:8},{r:12,c:8},{r:13,c:8},{r:14,c:8},{r:14,c:7},{r:14,c:6},{r:13,c:6},{r:12,c:6},{r:11,c:6},{r:10,c:6},{r:9,c:6},{r:8,c:5},{r:8,c:4},{r:8,c:3},{r:8,c:2},{r:8,c:1},{r:8,c:0},{r:7,c:0},{r:6,c:0} ];
-            p.forEach((pos, i) => cellMap[i] = pos);
+            p.forEach((pos, i) => cellMap[i + 1] = pos);
 
             // Home paths for each color
             for(let i=1; i<=6; i++) cellMap[100+i] = {r:7, c:i};    // Red Home
@@ -389,10 +389,10 @@
 
                     let actualId;
                     if (pos >= 101) {
-                        actualId = pos + (data.playerColor * 100);
+                        actualId = (data.playerColor + 1) * 100 + (pos % 100);
                     } else {
-                        // Offset common path based on player color (0:Red, 1:Blue, 2:Yellow, 3:Green)
-                        actualId = (pos + (data.playerColor * 13)) % 52;
+                        // Use server position directly (1-52)
+                        actualId = pos;
                     }
 
                     const coords = cellMap[actualId];
@@ -413,7 +413,7 @@
                     }
 
                     if (i === data.path.length - 1) { // Final position
-                        if (pos >= 57) { sndWin.play().catch(e=>{}); }
+                        if (pos >= 106) { sndWin.play().catch(e=>{}); }
                         else if (cell && cell.classList.contains('safe')) { sndStar.play().catch(e=>{}); }
                         else { sndMove.currentTime = 0; sndMove.play().catch(e=>{}); }
                     } else {
@@ -521,9 +521,9 @@
                     } else {
                         let actualId;
                         if (pos >= 101) {
-                            actualId = pos + (Number(colorIdx) * 100);
+                            actualId = (Number(colorIdx) + 1) * 100 + (pos % 100);
                         } else {
-                            actualId = (pos + (Number(colorIdx) * 13)) % 52;
+                            actualId = pos;
                         }
 
                         const coords = cellMap[actualId];
@@ -532,7 +532,7 @@
                             if (cell) {
                                 if (cell.classList.contains('safe')) token.classList.add('on-star');
                                 const exist = cell.querySelectorAll('.token').length;
-                                const offset = exist * 2;
+                                const offset = (exist - 1) * 2;
                                 const tScale = cell.classList.contains('safe') ? 0.65 : 1;
                                 token.style.transform = `translate(calc(-50% + ${offset}px), calc(-50% + ${offset}px)) scale(${tScale}) rotate(${-boardRotation}deg)`;
                                 cell.appendChild(token);
