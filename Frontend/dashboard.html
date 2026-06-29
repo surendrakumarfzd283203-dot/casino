@@ -632,33 +632,30 @@
                 <i class="fas fa-times" style="font-size: 20px; color: #888;" onclick="toggleMoreMenu()"></i>
             </div>
             <div class="more-menu-grid">
-                <a href="wallet.html" class="menu-item">
-                    <i class="fas fa-plus-circle" style="color: #22c55e;"></i>
-                    <span>Deposit</span>
-                </a>
-                <a href="wallet.html" class="menu-item">
-                    <i class="fas fa-arrow-alt-circle-down" style="color: #ef4444;"></i>
-                    <span>Withdraw</span>
+                <a href="#" onclick="shareWhatsApp()" class="menu-item" style="grid-column: span 3; background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%); border: 1px solid var(--casino-gold);">
+                    <i class="fas fa-gift" style="color: var(--casino-gold); font-size: 24px;"></i>
+                    <span style="color: var(--casino-gold); font-weight: 900;">REFER & EARN</span>
+                    <p style="font-size: 9px; color: #ccc; margin: 0; text-align: center;">Get ₹50 per refer & ₹40 bonus for friend!</p>
                 </a>
                 <a href="#" onclick="claimBonus()" class="menu-item">
-                    <i class="fas fa-gift" style="color: #f1c40f;"></i>
+                    <i class="fas fa-calendar-check" style="color: #f1c40f;"></i>
                     <span>Daily Bonus</span>
                 </a>
                 <a href="history.html" class="menu-item">
-                    <i class="fas fa-history"></i>
+                    <i class="fas fa-history" style="color: #34b4ff;"></i>
                     <span>History</span>
                 </a>
                 <a href="profile.html" class="menu-item">
-                    <i class="fas fa-user"></i>
+                    <i class="fas fa-user-cog" style="color: #9d50bb;"></i>
                     <span>Profile</span>
+                </a>
+                <a href="#" onclick="window.open('https://t.me/your_helpdesk', '_blank')" class="menu-item" style="grid-column: span 2;">
+                    <i class="fas fa-headset"></i>
+                    <span>Support Helpdesk</span>
                 </a>
                 <a href="#" onclick="logout()" class="menu-item" style="color: #ff4d4d;">
                     <i class="fas fa-power-off" style="color: #ff4d4d;"></i>
                     <span>Logout</span>
-                </a>
-                <a href="#" onclick="window.open('https://t.me/your_helpdesk', '_blank')" class="menu-item" style="grid-column: span 3;">
-                    <i class="fas fa-headset"></i>
-                    <span>Support Helpdesk</span>
                 </a>
             </div>
         </div>
@@ -733,11 +730,11 @@
             const refCode = document.getElementById("referralCode").innerText;
             if (refCode === "LOADING..." || refCode === "N/A") return;
 
-            // Construct absolute registration link
-            const baseUrl = window.location.origin;
+            // Netlify App Link
+            const baseUrl = "https://solo-casino.netlify.app";
             const link = `${baseUrl}/register.html?ref=${refCode}`;
 
-            const text = `🎰 Join *Solo Casino* and earn 120 INR instantly! \n\n🚀 Use my Referral Code: *${refCode}*\n\n🔗 Register here: ${link}`;
+            const text = `🎰 *SOLO CASINO* 🎰\n\n🔥 *Bumper Offer!* 🔥\n💰 Register with my link & add ₹100 to get *₹40 Bonus* instantly!\n🤝 Refer friends and earn *₹50 per referral!*\n\n🚀 Use my Referral Code: *${refCode}*\n\n🔗 Click to Register: ${link}`;
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(whatsappUrl, '_blank');
         }
