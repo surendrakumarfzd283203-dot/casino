@@ -8,6 +8,7 @@ class LudoManager {
         this.io = null;
 
         this.SAFE_POSITIONS = [1, 9, 14, 22, 27, 35, 40, 48];
+        // 0:Red(TL), 1:Blue(TR), 2:Yellow(BR), 3:Green(BL)
         this.START_POSITIONS = { 0: 1, 1: 14, 2: 27, 3: 40 };
         this.HOME_PATH_START = { 0: 51, 1: 12, 2: 25, 3: 38 };
         this.TOTAL_CELLS = 52;
@@ -40,9 +41,7 @@ class LudoManager {
                 if (room.gameTimer <= 0) this.endGameByScore(roomId);
             } else if (room.gameState === 'WAITING') {
                 room.waitingTime++;
-                if (room.waitingTime >= 5) { // Match within 5 seconds or add bot
-                    this.addBot(roomId);
-                }
+                if (room.waitingTime >= 10) this.addBot(roomId);
             }
         }
     }
@@ -51,11 +50,11 @@ class LudoManager {
         const room = this.rooms[roomId];
         if (!room || room.players.length >= 2 || room.gameState === 'PLAYING') return;
 
-        console.log(`Adding bot to room: ${roomId}`);
         const botName = this.BOT_NAMES[Math.floor(Math.random() * this.BOT_NAMES.length)];
         const botAvatar = this.BOT_AVATARS[Math.floor(Math.random() * this.BOT_AVATARS.length)];
         const botId = "bot_" + Math.random().toString(36).substr(2, 9);
 
+        // Standard logic: Bot hamesha opposite corner lega
         const playerColor = room.players[0].color;
         const botColor = (playerColor + 2) % 4;
 
@@ -70,7 +69,6 @@ class LudoManager {
     }
 
     async joinRoom(socket, userId, amount) {
-        console.log(`User ${userId} joining Ludo with stake ${amount}`);
         const stake = Number(amount);
         const name = socket.user.name;
         const avatar = socket.user.avatar;
@@ -78,13 +76,13 @@ class LudoManager {
         let roomId = Object.keys(this.rooms).find(id =>
             this.rooms[id].gameState === 'WAITING' &&
             this.rooms[id].stake === stake &&
-            this.rooms[id].players.length === 1 &&
-            !this.rooms[id].players[0].isBot
+            this.rooms[id].players.length === 1
         );
 
         if (!roomId) {
             roomId = `ludo_${Date.now()}_${userId}`;
-            const color = Math.floor(Math.random() * 4);
+            // Player 1 ko Bottom side assign karte hain (Yellow(2) ya Green(3)) taaki gotiya UI ke paas rahein
+            const color = 2 + Math.floor(Math.random() * 2);
             this.rooms[roomId] = {
                 id: roomId, stake: stake,
                 players: [{
@@ -95,13 +93,12 @@ class LudoManager {
                 boardState: { tokens: { [color]: [-1, -1, -1, -1] } },
                 turn: 0, dice: 1, rolled: false, gameTimer: this.GAME_DURATION, lastUpdate: Date.now()
             };
-            console.log(`Created new room: ${roomId}`);
         } else {
             const room = this.rooms[roomId];
             if (room.players[0].id === userId.toString()) return;
 
             const playerColor = room.players[0].color;
-            const myColor = (playerColor + 2) % 4;
+            const myColor = (playerColor + 2) % 4; // Top corner for joining player
 
             room.players.push({
                 id: userId.toString(), name, avatar, socketId: socket.id,
@@ -111,15 +108,12 @@ class LudoManager {
             room.gameState = 'PLAYING';
             room.turn = Math.floor(Math.random() * 2);
             this.startGame(roomId);
-            console.log(`User joined existing room: ${roomId}. Game starting.`);
         }
         socket.join(roomId);
         this.emitState(roomId);
     }
 
     startGame(roomId) {
-        const room = this.rooms[roomId];
-        console.log(`Game started in room: ${roomId}`);
         this.startTurnTimer(roomId);
         this.emitState(roomId);
     }
@@ -148,9 +142,9 @@ class LudoManager {
                                 this.moveToken(currentPlayer.id, roomId, possible[Math.floor(Math.random() * possible.length)]);
                             }
                         }
-                    }, 1000);
+                    }, 1500);
                 }
-            }, 1000);
+            }, 2000);
         }
     }
 
