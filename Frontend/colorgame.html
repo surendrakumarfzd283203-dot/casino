@@ -291,14 +291,13 @@
             }
 
             if (totalSecs > 5) {
-                // Betting phase (15s)
-                const bettingSecs = totalSecs - 5;
-                timerEl.innerText = `00:${bettingSecs.toString().padStart(2, '0')}`;
+                // Betting phase (20s down to 6s)
+                timerEl.innerText = `00:${totalSecs.toString().padStart(2, '0')}`;
                 timerEl.style.color = "var(--gold)";
                 btn.disabled = false;
                 btn.innerText = "PLACE BET";
             } else {
-                // Admin phase (5s)
+                // Locked phase (5s down to 0s)
                 timerEl.innerText = `00:${totalSecs.toString().padStart(2, '0')}`;
                 timerEl.style.color = "#ef4444";
                 btn.disabled = true;
