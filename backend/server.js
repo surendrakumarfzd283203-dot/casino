@@ -154,7 +154,7 @@ app.post("/api/admin/login", async (req, res) => {
         if (!admin && username === (process.env.ADMIN_USERNAME || "solo")) {
             console.log("Admin not found in DB, creating default admin...");
             // Create default admin if not exists
-            const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "Vivek@123", 10);
+            const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "Vivek321", 10);
             admin = new Admin({
                 username: process.env.ADMIN_USERNAME || "solo",
                 password: hash
