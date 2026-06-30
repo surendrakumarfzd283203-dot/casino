@@ -276,16 +276,49 @@ class TeenPattiTable {
         if (!this.sideShowTarget || this.sideShowTarget !== userId) return { success: false };
 
         if (accepted) {
-            const reqScore = evaluateHand(this.players[this.sideShowRequester].hand).score;
-            const tarScore = evaluateHand(this.players[this.sideShowTarget].hand).score;
-            if (reqScore > tarScore) this.players[this.sideShowTarget].status = 'PACKED';
-            else this.players[this.sideShowRequester].status = 'PACKED';
+            const reqId = this.sideShowRequester;
+            const tarId = this.sideShowTarget;
+            const reqScore = evaluateHand(this.players[reqId].hand).score;
+            const tarScore = evaluateHand(this.players[tarId].hand).score;
+
+            let loserId;
+            if (reqScore > tarScore) {
+                loserId = tarId;
+            } else {
+                loserId = reqId;
+            }
+
+            // Set animation data
+            this.sideShowAnimation = {
+                requester: { id: reqId, name: this.players[reqId].name, hand: this.players[reqId].hand },
+                target: { id: tarId, name: this.players[tarId].name, hand: this.players[tarId].hand },
+                loserId: loserId
+            };
+
+            // Delay the actual "packing" and turn move to allow animation
+            this.timer = 5; // 5 seconds for animation
+            this.state = 'SIDESHOW_RESOLVING';
+        } else {
+            this.sideShowRequester = null;
+            this.sideShowTarget = null;
+            this.nextTurn();
         }
 
+        return { success: true };
+    }
+
+    async resolveSideShow() {
+        if (this.sideShowAnimation) {
+            const loserId = this.sideShowAnimation.loserId;
+            if (this.players[loserId]) {
+                this.players[loserId].status = 'PACKED';
+            }
+            this.sideShowAnimation = null;
+        }
         this.sideShowRequester = null;
         this.sideShowTarget = null;
+        this.state = 'PLAYING';
         this.nextTurn();
-        return { success: true };
     }
 
     nextTurn() {
@@ -396,6 +429,7 @@ setInterval(async () => {
                 if (t.state === 'WAITING') await t.start();
                 else if (t.state === 'DEALING') t.deal();
                 else if (t.state === 'SHOW') t.reset();
+                else if (t.state === 'SIDESHOW_RESOLVING') await t.resolveSideShow();
                 else if (t.state === 'PLAYING') {
                     const currentP = t.players[t.currentTurn];
                     if (t.sideShowTarget) await t.respondSideShow(t.sideShowTarget, true);
@@ -436,7 +470,8 @@ module.exports = {
             id: t.id, state: t.state, timer: t.timer, pot: t.pot,
             currentTurn: t.currentTurn, lastBet: t.lastBet, boot: t.bootAmount,
             players: plys, maxBet: t.maxBet,
-            sideShowRequester: t.sideShowRequester, sideShowTarget: t.sideShowTarget
+            sideShowRequester: t.sideShowRequester, sideShowTarget: t.sideShowTarget,
+            sideShowAnimation: t.sideShowAnimation
         };
     }),
     leaveTable(userId, force = false) {

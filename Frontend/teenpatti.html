@@ -352,6 +352,36 @@
         #resultOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 7000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .res-card { background: radial-gradient(circle, #7c2d12, #1a0505); padding: 40px; border-radius: 30px; border: 3px solid var(--gold); text-align: center; width: 85%; max-width: 450px; box-shadow: 0 0 60px rgba(251,191,36,0.3); }
 
+        /* SIDESHOW ANIMATION */
+        #sideshowAnimOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .sideshow-box { display: flex; gap: 40px; align-items: center; position: relative; }
+        .ss-player { text-align: center; transition: 0.5s; }
+        .ss-player.loser { filter: grayscale(0.8) brightness(0.5); }
+        .ss-name { color: var(--gold); font-weight: 900; margin-bottom: 10px; font-size: 18px; }
+        .ss-vs { font-size: 48px; font-weight: 950; color: #ef4444; text-shadow: 0 0 20px #ef4444; }
+
+        .thunder-bolt {
+            position: absolute;
+            top: -200px;
+            width: 100px;
+            height: 400px;
+            background: url('https://i.imgur.com/3YpA3k8.png') no-repeat center; /* Use a lightning bolt image or SVG */
+            background-size: contain;
+            filter: drop-shadow(0 0 20px #fff);
+            opacity: 0;
+            z-index: 100;
+            pointer-events: none;
+        }
+        @keyframes thunderStrike {
+            0% { transform: translateY(-100px) scaleY(0); opacity: 0; }
+            10% { opacity: 1; }
+            20% { transform: translateY(0) scaleY(1.2); opacity: 1; }
+            30% { opacity: 0.5; }
+            40% { opacity: 1; }
+            100% { transform: translateY(50px) scaleY(1); opacity: 0; }
+        }
+        .strike-anim { animation: thunderStrike 0.8s ease-in forwards; }
+
         @media (max-width: 600px) {
             .poker-table { height: 60%; width: 100%; border-radius: 100px; }
             .card-big { width: 65px; height: 95px; font-size: 18px; }
@@ -478,6 +508,13 @@
         <h2 style="color:var(--gold)">Select Avatar</h2>
         <div class="avatar-grid" id="avGrid"></div>
         <button class="btn-act btn-pack" style="width:200px; height:40px;" onclick="closeAv()">CLOSE</button>
+    </div>
+
+    <div id="sideshowAnimOverlay">
+        <div class="sideshow-box" id="ssAnimBox">
+            <!-- Animation content injected here -->
+        </div>
+        <div id="thunder" class="thunder-bolt"></div>
     </div>
 
     <script src="js/config.js"></script>
@@ -734,7 +771,52 @@
                 showCustomShowdown(t);
                 fetchBalance();
             }
+
+            if (t.sideShowAnimation && lastState !== 'SIDESHOW_RESOLVING') {
+                triggerSideshowAnimation(t.sideShowAnimation);
+            }
+
             lastState = t.state;
+        }
+
+        function triggerSideshowAnimation(anim) {
+            const overlay = document.getElementById("sideshowAnimOverlay");
+            const box = document.getElementById("ssAnimBox");
+            const thunder = document.getElementById("thunder");
+
+            overlay.style.display = "flex";
+            thunder.classList.remove("strike-anim");
+
+            box.innerHTML = `
+                <div class="ss-player ${anim.loserId === anim.requester.id ? 'target-loser' : ''}" id="p-req">
+                    <div class="ss-name">${anim.requester.name}</div>
+                    <div style="display:flex; gap:10px;">${renderBigCards(anim.requester.hand, false)}</div>
+                </div>
+                <div class="ss-vs">VS</div>
+                <div class="ss-player ${anim.loserId === anim.target.id ? 'target-loser' : ''}" id="p-tar">
+                    <div class="ss-name">${anim.target.name}</div>
+                    <div style="display:flex; gap:10px;">${renderBigCards(anim.target.hand, false)}</div>
+                </div>
+            `;
+
+            // Start thunder after 1.5s
+            setTimeout(() => {
+                const loserEl = anim.loserId === anim.requester.id ? document.getElementById("p-req") : document.getElementById("p-tar");
+                const rect = loserEl.getBoundingClientRect();
+                thunder.style.left = (rect.left + rect.width / 2 - 50) + "px";
+                thunder.style.top = (rect.top - 100) + "px";
+                thunder.classList.add("strike-anim");
+
+                // Pack loser visually
+                setTimeout(() => {
+                    loserEl.classList.add("loser");
+                }, 400);
+            }, 1500);
+
+            // Close overlay after 4.5s
+            setTimeout(() => {
+                overlay.style.display = "none";
+            }, 4500);
         }
 
         function showCustomShowdown(t) {
