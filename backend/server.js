@@ -1173,9 +1173,9 @@ app.post("/api/admin/approve-request", adminAuth, async (req, res) => {
             // First deposit logic
             if (user.total_deposited === 0 && txn.amount >= 100) {
                 if (user.referred_by) {
-                    totalToAdd += 40; // 100 -> 140
+                    totalToAdd += 20; // 100 -> 120 (User gets ₹20 bonus)
                 } else {
-                    totalToAdd += 20; // 100 -> 120
+                    totalToAdd += 10; // Normal first deposit bonus (optional, keeping it low)
                 }
             }
 
@@ -1184,8 +1184,18 @@ app.post("/api/admin/approve-request", adminAuth, async (req, res) => {
             await user.save();
             await Admin.findOneAndUpdate({}, { $inc: { balance: -totalToAdd } });
 
-            // Check Referral Reward for Referrer
-            await checkReferralReward(user._id, txn.amount);
+            // Check Referral Reward for Referrer (Referrer gets ₹50)
+            if (user.referred_by && user.total_deposited >= 100 && !user.referral_reward_paid) {
+                 await User.findByIdAndUpdate(user.referred_by, { $inc: { coins: 50 } });
+                 user.referral_reward_paid = true;
+                 await user.save();
+
+                 // Log referrer transaction
+                 await new Transaction({
+                     user_id: user.referred_by, amount: 50, type: 'referral_bonus',
+                     details: `Referral bonus for ${user.name}'s first deposit`
+                 }).save();
+            }
         } else if (txn.type === 'withdraw') {
             await Admin.findOneAndUpdate({}, { $inc: { balance: txn.commission } });
         }

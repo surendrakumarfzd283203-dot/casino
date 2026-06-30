@@ -488,7 +488,7 @@
         <span class="ticker-label">LIVE WINNERS</span>
         <div class="ticker-content" id="tickerContent">
             User 982*** won ₹4,500 in Aviator • User 771*** won ₹1,200 in Color Game • User 442*** won ₹8,900 in Teen Patti • User 102*** won ₹500 in Spin & Win
-        </div>
+ \          </div>
     </div>
 
     <div class="section-header">
@@ -635,7 +635,7 @@
                 <a href="#" onclick="shareWhatsApp()" class="menu-item" style="grid-column: span 3; background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%); border: 1px solid var(--casino-gold);">
                     <i class="fas fa-gift" style="color: var(--casino-gold); font-size: 24px;"></i>
                     <span style="color: var(--casino-gold); font-weight: 900;">REFER & EARN</span>
-                    <p style="font-size: 9px; color: #ccc; margin: 0; text-align: center;">Get ₹50 per refer & ₹40 bonus for friend!</p>
+                    <p style="font-size: 9px; color: #ccc; margin: 0; text-align: center;">Get ₹50 per refer & ₹20 bonus for friend!</p>
                 </a>
                 <a href="#" onclick="claimBonus()" class="menu-item">
                     <i class="fas fa-calendar-check" style="color: #f1c40f;"></i>
@@ -730,13 +730,25 @@
             const refCode = document.getElementById("referralCode").innerText;
             if (refCode === "LOADING..." || refCode === "N/A") return;
 
-            // Netlify App Link
-            const baseUrl = "https://solo-casino.netlify.app";
+            // New Netlify App Link
+            const baseUrl = "https://comfy-dango-890001.netlify.app";
             const link = `${baseUrl}/register.html?ref=${refCode}`;
 
-            const text = `🎰 *SOLO CASINO* 🎰\n\n🔥 *Bumper Offer!* 🔥\n💰 Register with my link & add ₹100 to get *₹40 Bonus* instantly!\n🤝 Refer friends and earn *₹50 per referral!*\n\n🚀 Use my Referral Code: *${refCode}*\n\n🔗 Click to Register: ${link}`;
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-            window.open(whatsappUrl, '_blank');
+            const text = `🎰 *SOLO CASINO* 🎰\n\n🔥 *Bumper Offer!* 🔥\n💰 Register with my link & add ₹100 to get *₹20 Bonus* instantly!\n🤝 Refer friends and earn *₹50 per referral!*\n\n🚀 Use my Referral Code: *${refCode}*\n\n🔗 Click to Register: ${link}`;
+
+            // Use whatsapp:// protocol for mobile apps, fallback to web
+            const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(text)}`;
+            const webWhatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+
+            // Try to open WhatsApp app directly
+            window.location.href = whatsappUrl;
+
+            // Fallback for browsers/WebViews that don't support custom protocols
+            setTimeout(() => {
+                if (document.hasFocus()) {
+                    window.open(webWhatsappUrl, '_blank');
+                }
+            }, 1000);
         }
 
         function filterGames(category, el) {
