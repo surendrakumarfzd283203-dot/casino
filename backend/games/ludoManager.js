@@ -98,7 +98,8 @@ class LudoManager {
                 }],
                 gameState: 'WAITING', waitingTime: 0,
                 boardState: { tokens: { [color]: [-1, -1, -1, -1] } },
-                turn: 0, dice: 1, rolled: false, gameTimer: this.GAME_DURATION, lastUpdate: Date.now()
+                turn: 0, dice: 1, rolled: false, gameTimer: this.GAME_DURATION, lastUpdate: Date.now(),
+                consecutiveSixes: 0
             };
         } else {
             const room = this.rooms[roomId];
@@ -114,6 +115,7 @@ class LudoManager {
             room.boardState.tokens[myColor] = [-1, -1, -1, -1];
             room.gameState = 'PLAYING';
             room.turn = Math.floor(Math.random() * 2);
+            room.consecutiveSixes = 0;
             this.startGame(roomId);
         }
         socket.join(roomId);
@@ -222,6 +224,21 @@ class LudoManager {
 
         room.dice = dice;
         room.rolled = true;
+
+        if (dice === 6) {
+            room.consecutiveSixes++;
+        } else {
+            room.consecutiveSixes = 0;
+        }
+
+        // Logic: 3 consecutive sixes -> cancel turn
+        if (room.consecutiveSixes === 3) {
+            this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn, playerColor: room.players[room.turn].color, invalidated: true });
+            room.consecutiveSixes = 0;
+            setTimeout(() => this.nextTurn(roomId), 1500);
+            return;
+        }
+
         this.io.to(roomId).emit('dice_rolled', { dice, turn: room.turn, playerColor: room.players[room.turn].color });
 
         const possibleMoves = this.getPossibleMoves(roomId);
@@ -421,6 +438,7 @@ class LudoManager {
         if (!room || room.gameState !== 'PLAYING') return;
         room.turn = (room.turn + 1) % room.players.length;
         room.rolled = false;
+        room.consecutiveSixes = 0; // Reset for next player
         this.startTurnTimer(roomId);
         this.emitState(roomId);
 

@@ -364,14 +364,38 @@
 
         socket.on('dice_rolled', (data) => {
             const icons = ["one", "two", "three", "four", "five", "six"];
-            const html = `<i class="fas fa-dice-${icons[data.dice - 1]}"></i>`;
+            const finalHtml = `<i class="fas fa-dice-${icons[data.dice - 1]}"></i>`;
             const el = (data.turn === myPlayerIndex) ? document.getElementById('diceBtn') : document.getElementById('opp-dice');
+
             el.classList.remove('rolling'); void el.offsetWidth; el.classList.add('rolling');
 
             sndDice.currentTime = 0;
-            sndDice.play().catch(e=> console.warn("Audio blocked", e));
+            sndDice.play().catch(e=> {});
 
-            setTimeout(() => { el.classList.remove('rolling'); el.innerHTML = html; }, 800);
+            // Unique Rolling Effect: Rapidly cycle numbers while jumping
+            let count = 0;
+            const rollInterval = setInterval(() => {
+                const randomIcon = icons[Math.floor(Math.random() * 6)];
+                el.innerHTML = `<i class="fas fa-dice-${randomIcon}"></i>`;
+                count++;
+                if (count > 10) clearInterval(rollInterval);
+            }, 70);
+
+            setTimeout(() => {
+                clearInterval(rollInterval);
+                el.classList.remove('rolling');
+                el.innerHTML = finalHtml;
+
+                if (data.invalidated) {
+                    el.style.border = '3px solid #ef4444';
+                    el.style.boxShadow = '0 0 20px #ef4444';
+                    setTimeout(() => {
+                        el.style.border = '';
+                        el.style.boxShadow = '';
+                        alert("3 Sixes! Turn Skipped.");
+                    }, 800);
+                }
+            }, 800);
         });
 
         socket.on('token_moved', async (data) => {
