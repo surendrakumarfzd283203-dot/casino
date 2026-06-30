@@ -270,6 +270,19 @@
                 document.getElementById("balance").innerText = data.user.coins.toFixed(2);
             }
             startStateLoop();
+
+            // Sound Unlock on first interaction (Better for WebView)
+            const unlockAudio = () => {
+                [sndWheel, sndTick, sndWin, sndLose].forEach(s => {
+                    if (s) {
+                        s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(() => {});
+                    }
+                });
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+            };
+            document.addEventListener('click', unlockAudio);
+            document.addEventListener('touchstart', unlockAudio);
         }
         init();
 

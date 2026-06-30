@@ -1078,8 +1078,8 @@
 
             // Draw Plane
             if (planeImg.complete) {
-                const pW = 120; // Slightly smaller plane for better scale
-                const pH = 60;
+                const pW = 180; // Increased plane size further
+                const pH = 90;
                 ctx.save();
                 ctx.translate(endX, endY);
 
@@ -1087,7 +1087,7 @@
                 const rotation = elapsed > 0 ? -Math.atan2(y, x * 0.8) * 0.6 : 0;
                 ctx.rotate(rotation);
 
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = 25;
                 ctx.shadowColor = "#d10214";
 
                 ctx.drawImage(planeImg, -pW/2, -pH/2, pW, pH);
@@ -1288,21 +1288,18 @@
         setInterval(fetchState, 200);
         fetchBalance();
 
-        // Sound Unlock Overlay
-        const unlocker = document.createElement('div');
-        unlocker.style = "position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; cursor:pointer;";
-        unlocker.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.8); padding:20px; border-radius:10px; border:1px solid #d10214; text-align:center;">' +
-            '<i class="fas fa-volume-up" style="font-size:30px; color:#d10214; margin-bottom:10px;"></i><br>' +
-            '<span style="font-weight:900;">TAP TO START GAME</span></div>';
-        document.body.appendChild(unlocker);
-        unlocker.onclick = () => {
-            sndFly.play().then(() => { sndFly.pause(); }).catch(() => {});
-            sndWin.play().then(() => { sndWin.pause(); }).catch(() => {});
-            sndCrash.play().then(() => { sndCrash.pause(); }).catch(() => {});
-            sndLose.play().then(() => { sndLose.pause(); }).catch(() => {});
-            sndTick.play().then(() => { sndTick.pause(); }).catch(() => {});
-            unlocker.remove();
+        // Sound Unlock on first interaction (Better for WebView)
+        const unlockAudio = () => {
+            [sndFly, sndWin, sndCrash, sndLose, sndTick].forEach(s => {
+                if (s) {
+                    s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(() => {});
+                }
+            });
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
         };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
     </script>
 </body>
 </html>

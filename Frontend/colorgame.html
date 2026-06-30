@@ -457,6 +457,19 @@
 
         setInterval(fetchState, 500);
         fetchBalance();
+
+        // Sound Unlock on first interaction (Better for WebView)
+        const unlockAudio = () => {
+            [sndTick, sndFastTick].forEach(s => {
+                if (s) {
+                    s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(() => {});
+                }
+            });
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
     </script>
 </body>
 </html>
