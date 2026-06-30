@@ -746,7 +746,7 @@
             content.innerHTML = participants.map((p, idx) => `
                 ${idx === 1 ? '<div class="vs-showdown">VS</div>' : ''}
                 <div class="player-hand-show" style="position:relative;">
-                    ${p.result === 'WIN' ? '<div class="winner-crown">👑</div>' : ''}
+                    ${p.result === 'WIN' ? '<div class="winner-crown"></div>' : ''}
                     <div class="hand-name">${p.name}</div>
                     <div style="display:flex; gap:10px;">${renderBigCards(p.hand, false)}</div>
                     <div class="hand-rank-text">${p.handRank || ''}</div>
@@ -888,7 +888,7 @@
                 handsHtml += `
                     ${vsText}
                     <div style="margin: 5px 0; display: flex; flex-direction: column; align-items: center;">
-                        <div style="font-size:14px; color:var(--gold); font-weight:900; margin-bottom:5px;">${p.name} ${p.result === 'WIN' ? '🏆' : ''}</div>
+                        <div style="font-size:14px; color:var(--gold); font-weight:900; margin-bottom:5px;">${p.name} ${p.result === 'WIN' ? '' : ''}</div>
                         <div style="display:flex; justify-content:center; gap:5px;">${renderBigCards(p.hand, false)}</div>
                         <div style="font-size:12px; color:#fff; margin-top:3px; font-weight:700;">${p.handRank || ''}</div>
                     </div>
