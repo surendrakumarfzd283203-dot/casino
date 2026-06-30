@@ -572,17 +572,23 @@
             const waitMsg = document.getElementById("waitMsg");
             const me = t.players[myId];
 
-            if (t.state === 'WAITING' || t.state === 'STARTING') {
+            if (t.state === 'WAITING' || t.state === 'STARTING' || t.state === 'SHOW') {
                 rt.style.display = "block";
-                rt.innerText = t.timer;
+                rt.innerText = t.state === 'SHOW' ? `NEXT ROUND IN ${t.timer}` : t.timer;
+                if (t.state === 'SHOW') rt.style.fontSize = "24px"; else rt.style.fontSize = "64px";
                 waitMsg.style.display = "none";
-                if (t.timer > 0) document.getElementById('snd-tick').play().catch(e=>{});
+                if (t.timer > 0 && t.state !== 'SHOW') document.getElementById('snd-tick').play().catch(e=>{});
             } else if (me && me.status === 'WAITING' && t.state !== 'PLAYING') {
                 rt.style.display = "none";
                 waitMsg.style.display = "block";
+            } else if (me && me.status === 'WAITING' && t.state === 'PLAYING') {
+                rt.style.display = "none";
+                waitMsg.style.display = "block";
+                waitMsg.innerText = "Game in progress... Waiting for next round";
             } else {
                 rt.style.display = "none";
                 waitMsg.style.display = "none";
+                waitMsg.innerText = "Wait for next round...";
             }
 
             if (t.state === 'DEALING' && lastState !== 'DEALING') animateDealing(t);
@@ -669,15 +675,18 @@
                     seat.appendChild(namePlate);
                 } else {
                     const isTurn = t.currentTurn === myId && t.state === 'PLAYING' && p.status === 'ACTIVE';
+                    const isWaiting = p.status === 'WAITING';
+
                     seat.className = seatClasses;
                     seat.innerHTML = `
                         ${resultLabel}
-                        <div class="my-hand-grouped">
+                        <div class="my-hand-grouped" style="${isWaiting ? 'display:none' : ''}">
                             ${packedOverlay}
                             ${renderBigCards(p.hand, p.blind && t.state !== 'SHOW')}
                             ${(!p.blind || isShowdown) && p.handRank ? `<div class="rank-label">${p.handRank}</div>` : ''}
                             ${(p.blind && (t.state === 'PLAYING' || t.state === 'DEALING')) ? `<div class="see-btn" onclick="event.stopPropagation(); handleMove('SEE')">SEE</div>` : ''}
                         </div>
+                        ${isWaiting ? '<div style="margin-bottom:20px; font-weight:900; color:var(--gold);">WAITING...</div>' : ''}
                     `;
                     avatarGroup.innerHTML = `
                         ${t.currentTurn === uid ? `<div class="turn-timer-text">${t.timer}</div>` : ''}
@@ -745,13 +754,13 @@
 
             content.innerHTML = participants.map((p, idx) => `
                 ${idx === 1 ? '<div class="vs-showdown">VS</div>' : ''}
-                <div class="player-hand-show" style="position:relative;">
-                    ${p.result === 'WIN' ? '<div class="winner-crown"></div>' : ''}
-                    <div class="hand-name">${p.name}</div>
+                <div class="player-hand-show" style="position:relative; border-color:${p.result==='WIN'?'var(--gold)':'rgba(255,255,255,0.1)'}; background:${p.result==='WIN'?'rgba(255,193,7,0.1)':'rgba(255,255,255,0.05)'}">
+                    ${p.result === 'WIN' ? '<div class="winner-crown">👑</div>' : ''}
+                    <div class="hand-name" style="color:${p.result==='WIN'?'var(--gold)':'#fff'}">${p.name}</div>
                     <div style="display:flex; gap:10px;">${renderBigCards(p.hand, false)}</div>
                     <div class="hand-rank-text">${p.handRank || ''}</div>
-                    <div style="margin-top:10px; color:${p.result==='WIN'?'#22c55e':'#ef4444'}; font-weight:900; font-size: 12px;">
-                        ${p.result === 'WIN' ? 'WINNER!' : 'LOSER'}
+                    <div style="margin-top:10px; color:${p.result==='WIN'?'var(--gold)':'#ef4444'}; font-weight:900; font-size: 20px; text-shadow: ${p.result==='WIN'?'0 0 10px gold':''}">
+                        ${p.result === 'WIN' ? 'WINNER' : 'LOSER'}
                     </div>
                 </div>
             `).join('');
@@ -888,7 +897,7 @@
                 handsHtml += `
                     ${vsText}
                     <div style="margin: 5px 0; display: flex; flex-direction: column; align-items: center;">
-                        <div style="font-size:14px; color:var(--gold); font-weight:900; margin-bottom:5px;">${p.name} ${p.result === 'WIN' ? '' : ''}</div>
+                        <div style="font-size:14px; color:var(--gold); font-weight:900; margin-bottom:5px;">${p.name} ${p.result === 'WIN' ? '🏆' : ''}</div>
                         <div style="display:flex; justify-content:center; gap:5px;">${renderBigCards(p.hand, false)}</div>
                         <div style="font-size:12px; color:#fff; margin-top:3px; font-weight:700;">${p.handRank || ''}</div>
                     </div>
