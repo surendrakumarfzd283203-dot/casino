@@ -151,12 +151,12 @@ app.post("/api/admin/login", async (req, res) => {
 
         // Initial Admin Check
         let admin = await Admin.findOne({ username });
-        if (!admin && username === (process.env.ADMIN_USERNAME || "admin")) {
+        if (!admin && username === (process.env.ADMIN_USERNAME || "solo")) {
             console.log("Admin not found in DB, creating default admin...");
             // Create default admin if not exists
-            const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 10);
+            const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "Vivek@123", 10);
             admin = new Admin({
-                username: process.env.ADMIN_USERNAME || "admin",
+                username: process.env.ADMIN_USERNAME || "solo",
                 password: hash
             });
             await admin.save();
@@ -567,7 +567,8 @@ let aviatorState = {
     currentFakeCount: 50,
     cashoutBlocked: false,
     noBetStreak: 0,
-    rareHighCounter: 0
+    rareHighCounter: 0,
+    realRoundCounter: 0
 };
 
 function resetAviator() {
@@ -642,14 +643,16 @@ async function startAviatorFlight() {
                 }
             } else {
                 aviatorState.noBetStreak = 0; // Reset streak when real players join
+                aviatorState.realRoundCounter++;
 
-                // Logic: If bet is 50 -> max 1.4x, if > 50 -> max 1.2x
-                if (maxRealBet === 50) {
-                    aviatorState.crashMultiplier = 1.01 + (Math.random() * 0.39); // 1.01 to 1.40
-                } else if (maxRealBet > 50) {
-                    aviatorState.crashMultiplier = 1.01 + (Math.random() * 0.19); // 1.01 to 1.20
+                if (aviatorState.realRoundCounter % 8 === 2 || aviatorState.realRoundCounter % 8 === 6) {
+                    // 2 out of 8: between 2.7 and 3.6
+                    aviatorState.crashMultiplier = 2.7 + (Math.random() * (3.6 - 2.7));
+                } else if (aviatorState.realRoundCounter % 4 === 0) {
+                    // 1 out of 4: up to 2.5X
+                    aviatorState.crashMultiplier = 2.1 + (Math.random() * 0.4);
                 } else {
-                    // Small bets (< 50): Keep it low to ensure admin profit
+                    // Normal random crash (mostly low to keep house profit)
                     aviatorState.crashMultiplier = 1.01 + (Math.random() * 0.49); // 1.01 to 1.50
                 }
             }
