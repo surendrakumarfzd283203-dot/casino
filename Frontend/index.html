@@ -95,5 +95,18 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script>
+        // Pass referral code to registration link
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref) {
+                const regLinks = document.querySelectorAll('a[href="register.html"]');
+                regLinks.forEach(link => {
+                    link.href = `register.html?ref=${ref}`;
+                });
+            }
+        };
+    </script>
 </body>
 </html>

@@ -727,14 +727,7 @@
         }
 
         function shareWhatsApp() {
-            const refCode = document.getElementById("referralCode").innerText;
-            if (refCode === "LOADING..." || refCode === "N/A") return;
-
-            // New Netlify App Link
-            const baseUrl = "https://soloapk.netlify.app";
-            const link = `${baseUrl}/register.html?ref=${refCode}`;
-
-            const text = `🎰 *SOLO GAMES* 🎰\n\n🔥 *Bumper Offer!* 🔥\n💰 Register with my link & add ₹100 to get *₹20 Bonus* instantly!\n🤝 Refer friends and earn *₹50 per referral!*\n\n🚀 Use my Referral Code: *${refCode}*\n\n🔗 Click to Register: ${link}`;
+            const text = "https://soloapk.netlify.app/";
 
             // Use whatsapp:// protocol for mobile apps, fallback to web
             const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(text)}`;
