@@ -989,29 +989,63 @@
             const res = await fetch(`${API_URL}/api/admin/users`, { headers: { authorization: token } });
             const users = await res.json();
             const body = document.getElementById('users-table');
-            body.innerHTML = `<thead><tr><th>Name</th><th>Email</th><th>Coins</th><th>Status</th><th>Actions</th></tr></thead>
+            body.innerHTML = `<thead><tr><th>Name / Email</th><th>Balance / Deposit</th><th>KYC / Status</th><th>Actions</th></tr></thead>
                 <tbody>${users.map(u => `
                     <tr>
-                        <td><b>${u.name}</b></td>
-                        <td><small>${u.email}</small></td>
                         <td>
-                            <div style="display:flex; gap:5px;">
-                                <input type="number" value="${u.coins}" id="coins-${u.id}" class="input-dark" style="width: 100px;">
-                                <button class="action-btn btn-edit" onclick="updateCoins('${u.id}')"><i class="fas fa-save"></i></button>
+                            <b>${u.name}</b><br>
+                            <small>${u.email}</small><br>
+                            <small style="color:var(--primary)">Ref: ${u.referral_code || 'N/A'}</small>
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                                <input type="number" value="${u.coins}" id="coins-${u.id}" class="input-dark" style="width: 80px; padding:5px; height:30px; font-size:12px;">
+                                <button class="action-btn btn-edit" style="padding:5px 10px;" onclick="updateCoins('${u.id}')"><i class="fas fa-save"></i></button>
+                            </div>
+                            <small>Total Dep: ₹${u.total_deposited || 0}</small>
+                        </td>
+                        <td>
+                            <span class="badge ${u.kyc_status === 'verified' ? 'badge-success' : (u.kyc_status === 'rejected' ? 'badge-danger' : '')}" style="font-size:10px;">KYC: ${u.kyc_status.toUpperCase()}</span><br>
+                            <div style="margin-top:5px;">
+                                <span class="badge ${u.status === 'blocked' ? 'badge-danger' : 'badge-success'}" style="font-size:10px;">Acc: ${u.status.toUpperCase()}</span>
                             </div>
                         </td>
-                        <td><span class="badge ${u.status === 'blocked' ? 'badge-danger' : 'badge-success'}">${u.status}</span></td>
                         <td>
-                            <div style="display:flex; gap:5px;">
-                                <button class="action-btn btn-edit" onclick="showUserHistory('${u.id}', '${u.name}')">History</button>
+                            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                                <button class="action-btn btn-edit" style="padding:5px 10px; font-size:10px;" onclick="showUserHistory('${u.id}', '${u.name}')">History</button>
                                 ${u.status === 'blocked' ?
-                                    `<button class="action-btn btn-unblock" onclick="toggleBlock('${u.id}', 'unblock')">Unblock</button>` :
-                                    `<button class="action-btn btn-block" onclick="toggleBlock('${u.id}', 'block')">Block</button>`
+                                    `<button class="action-btn btn-unblock" style="padding:5px 10px; font-size:10px;" onclick="toggleBlock('${u.id}', 'unblock')">Unblock</button>` :
+                                    `<button class="action-btn btn-block" style="padding:5px 10px; font-size:10px;" onclick="toggleBlock('${u.id}', 'block')">Block</button>`
                                 }
+                                <button class="action-btn btn-block" style="background:#dc2626; padding:5px 10px; font-size:10px;" onclick="deleteUser('${u.id}', '${u.name}')"><i class="fas fa-trash"></i></button>
                             </div>
                         </td>
                     </tr>`).join('')}</tbody>`;
         }
+
+        async function deleteUser(userId, name) {
+            if(!confirm(`Are you sure you want to PERMANENTLY DELETE user ${name}? This cannot be undone!`)) return;
+            const res = await fetch(`${API_URL}/api/admin/delete-user`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchUsers();
+        }
+
+        async function toggleBlock(userId, action) {
+            const res = await fetch(`${API_URL}/api/admin/${action}-user`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", authorization: token },
+                body: JSON.stringify({ userId })
+            });
+            const data = await res.json();
+            alert(data.message);
+            fetchUsers();
+        }
+
 
         async function showUserHistory(userId, userName) {
             const res = await fetch(`${API_URL}/api/admin/user-history/${userId}`, { headers: { authorization: token } });
@@ -1104,10 +1138,15 @@
         }
 
         async function handleKYC(userId, action) {
+            let reason = null;
+            if (action === 'reject') {
+                reason = prompt("Optional: Enter reason for KYC rejection:");
+                if (reason === null) return; // Cancelled
+            }
             const res = await fetch(`${API_URL}/api/admin/${action}-kyc`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", authorization: token },
-                body: JSON.stringify({ userId })
+                body: JSON.stringify({ userId, reason })
             });
             const data = await res.json();
             alert(data.message);

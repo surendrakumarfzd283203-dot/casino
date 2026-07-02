@@ -250,15 +250,18 @@ app.post("/api/kyc/submit", auth, async (req, res) => {
 app.post("/api/admin/approve-kyc", adminAuth, async (req, res) => {
     try {
         const { userId } = req.body;
-        await User.findByIdAndUpdate(userId, { kyc_status: "verified" });
+        await User.findByIdAndUpdate(userId, { kyc_status: "verified", kyc_rejection_reason: null });
         res.json({ success: true, message: "KYC Approved" });
     } catch (e) { res.json({ success: false }); }
 });
 
 app.post("/api/admin/reject-kyc", adminAuth, async (req, res) => {
     try {
-        const { userId } = req.body;
-        await User.findByIdAndUpdate(userId, { kyc_status: "rejected" });
+        const { userId, reason } = req.body;
+        await User.findByIdAndUpdate(userId, {
+            kyc_status: "rejected",
+            kyc_rejection_reason: reason || "KYC documents were not clear or invalid."
+        });
         res.json({ success: true, message: "KYC Rejected" });
     } catch (e) { res.json({ success: false }); }
 });
