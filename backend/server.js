@@ -1344,7 +1344,7 @@ app.get("/api/db-status", async (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-    res.json({ success: true, message: "Solo Casino Demo API Running with MongoDB" });
+    res.json({ success: true, message: "Solo Games Skills Demo API Running with MongoDB" });
 });
 
 const http = require("http");
