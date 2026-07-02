@@ -190,7 +190,7 @@ app.post("/api/admin/login", async (req, res) => {
 
 app.get("/api/profile", auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select("name email coins avatar referral_code kyc_status");
+        const user = await User.findById(req.user.id).select("name email coins avatar referral_code kyc_status kyc_rejection_reason kyc_rejected_at");
         if (!user) {
             return res.json({ success: false, message: "User Not Found" });
         }
@@ -260,7 +260,8 @@ app.post("/api/admin/reject-kyc", adminAuth, async (req, res) => {
         const { userId, reason } = req.body;
         await User.findByIdAndUpdate(userId, {
             kyc_status: "rejected",
-            kyc_rejection_reason: reason || "KYC documents were not clear or invalid."
+            kyc_rejection_reason: reason || "KYC documents were not clear or invalid.",
+            kyc_rejected_at: new Date()
         });
         res.json({ success: true, message: "KYC Rejected" });
     } catch (e) { res.json({ success: false }); }
@@ -1062,7 +1063,7 @@ app.get("/api/admin/game-logs", adminAuth, async (req, res) => {
 
 app.get("/api/admin/users", adminAuth, async (req, res) => {
     try {
-        const users = await User.find({}).sort({ created_at: -1 });
+        const users = await User.find({}).sort({ created_at: -1 }).populate("referred_by", "name");
         res.json(users.map(u => ({ ...u.toObject(), id: u._id })));
     } catch (error) {
         res.status(500).json({ success: false, message: "Database Error" });

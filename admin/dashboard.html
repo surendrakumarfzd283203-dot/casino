@@ -995,7 +995,8 @@
                         <td>
                             <b>${u.name}</b><br>
                             <small>${u.email}</small><br>
-                            <small style="color:var(--primary)">Ref: ${u.referral_code || 'N/A'}</small>
+                            <small style="color:var(--primary)">Ref: ${u.referral_code || 'N/A'}</small><br>
+                            <small style="color:#10b981">By: ${u.referred_by ? u.referred_by.name : 'Direct'}</small>
                         </td>
                         <td>
                             <div style="display:flex; gap:5px; margin-bottom:5px;">

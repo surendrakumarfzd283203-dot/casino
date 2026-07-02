@@ -220,6 +220,39 @@
                     document.getElementById('withdraw-form').style.display = 'none';
                     document.getElementById('kyc-container').style.display = 'none';
                     document.getElementById('kyc-pending').style.display = 'block';
+                } else if (user.kyc_status === 'rejected') {
+                    const rejectedAt = new Date(user.kyc_rejected_at).getTime();
+                    const now = new Date().getTime();
+                    const diffHours = (now - rejectedAt) / (1000 * 60 * 60);
+
+                    if (diffHours < 1) {
+                        // Less than 1 hour, show wait message
+                        const remainingMin = Math.ceil(60 - ((now - rejectedAt) / (1000 * 60)));
+                        document.getElementById('withdraw-form').style.display = 'none';
+                        document.getElementById('kyc-container').style.display = 'none';
+                        document.getElementById('kyc-pending').style.display = 'block';
+                        document.getElementById('kyc-pending').innerHTML = `
+                            <i class="fas fa-times-circle" style="font-size: 50px; color: var(--accent-red); margin-bottom: 15px;"></i>
+                            <h3 style="color: var(--accent-red);">KYC REJECTED</h3>
+                            <p style="color: #fff; background:rgba(239, 68, 68, 0.1); padding:10px; border-radius:10px; margin: 10px 0;"><b>Reason:</b> ${user.kyc_rejection_reason || 'Invalid documents'}</p>
+                            <p style="color: #888;">You can try re-submitting in <b>${remainingMin} minutes</b>.</p>
+                        `;
+                    } else {
+                        // More than 1 hour, allow re-submission
+                        document.getElementById('withdraw-form').style.display = 'none';
+                        document.getElementById('kyc-container').style.display = 'block';
+                        document.getElementById('kyc-pending').style.display = 'none';
+
+                        // Clear old fields for re-submission
+                        document.getElementById('kycFullName').value = "";
+                        document.getElementById('kycAadhar').value = "";
+                        document.getElementById('kycPan').value = "";
+                        document.getElementById('kycAccount').value = "";
+                        document.getElementById('kycIfsc').value = "";
+
+                        // Update title to indicate re-submission
+                        document.querySelector('#kyc-container h3').innerHTML = `<i class="fas fa-redo"></i> RE-SUBMIT KYC`;
+                    }
                 } else {
                     document.getElementById('withdraw-form').style.display = 'none';
                     document.getElementById('kyc-container').style.display = 'block';

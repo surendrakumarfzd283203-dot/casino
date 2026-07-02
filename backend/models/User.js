@@ -16,6 +16,7 @@ const UserSchema = new mongoose.Schema({
     referral_rewarded: { type: Boolean, default: false },
     kyc_status: { type: String, default: "pending" }, // pending, verified, rejected
     kyc_rejection_reason: { type: String, default: null },
+    kyc_rejected_at: { type: Date, default: null },
     kyc_data: {
         full_name: { type: String, default: "" },
         aadhar_no: { type: String, default: "" },
